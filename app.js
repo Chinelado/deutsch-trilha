@@ -177,6 +177,7 @@ function go(v, arg) {
   $$('button', nav).forEach((b) => (b.onclick = () => go(b.dataset.v)));
   ({ home, trilha, cards, perfil, intro, onboard, extras, guide })[v](arg);
   if (v !== 'trilha') scrollTo(0, 0);
+  updateBadge();
 }
 
 /* ---------- boas-vindas ---------- */
@@ -340,6 +341,7 @@ function home() {
     <p class="mut">Estou colocando mais exercícios de ${INT[top.k].d}. As outras sete continuam aparecendo para eu seguir medindo.</p>
     <button class="ghost" id="goP">Ver meu perfil →</button></div>
   </div>
+  ${!S.hideApp && nDone() >= 1 ? appCard(true) : ''}
   ${weekCard()}
   ${pendingHw() !== undefined ? hwCard(pendingHw(), '🏠 Tarefa de casa · ' + esc(LESSONS[pendingHw()].de)) : ''}
   ${cur ? `<div class="card"><div class="row"><h3 class="grow">Sua jornada</h3><button class="ghost" id="goT">Ver trilha completa →</button></div><div class="mini">${miniPath(Array.from({ length: Math.min(5, TOTAL - cur + 1) }, (_, i) => cur + i))}</div></div>` : ''}
@@ -353,7 +355,7 @@ function home() {
   if ($('#goT')) $('#goT').onclick = () => go('trilha');
   $('#goP').onclick = () => go('perfil'); $('#goE').onclick = () => go('extras');
   $$('.mnode:not([disabled])').forEach((b) => (b.onclick = () => go('intro', +b.dataset.d)));
-  wireSeen(app, home); wireHw(app, home);
+  wireSeen(app, home); wireHw(app, home); wireAppCard();
 }
 
 /* ---------- trilha A1–C2 ---------- */
@@ -876,6 +878,7 @@ function perfil() {
   <div class="badges">${BADGES.map(([id, e, n, d]) => `<div class="badge ${S.badges[id] ? '' : 'off'}" title="${d}"><b>${e}</b>${n}<br><small>${d}</small></div>`).join('')}</div>
   <h2>📔 Diário</h2>
   <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(x.x ? '🎬 ' + x.x : LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
+  ${appCard(false)}
   <h2>Ajustes</h2>
   <div class="card"><label>Meta diária (min)<select id="goal">${[30, 60, 90, 120, 180].map((g) => `<option ${g === S.goal ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
   <label class="row"><input type="checkbox" id="aud" ${S.audio ? 'checked' : ''}> Áudio em alemão (voz do navegador)</label>
@@ -884,6 +887,7 @@ function perfil() {
   <div class="row" style="margin-top:10px"><button id="exp">⬇️ Exportar backup</button><button id="imp">⬆️ Importar backup</button><input type="file" id="file" accept=".json" hidden></div>
   <p class="mut">O progresso fica só neste navegador. Use o backup para levar a outro dispositivo.</p>
   <button class="link" id="reset">Apagar todo o progresso</button></div>`;
+  wireAppCard();
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
   $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = 'deutsch-trilha-' + today() + '.json'; a.click(); };
@@ -895,4 +899,60 @@ function perfil() {
   $('#reset').onclick = () => { if (confirm('Apagar todo o progresso deste dispositivo? Isso não pode ser desfeito.')) { localStorage.removeItem(KEY); S = fresh(); go('onboard'); } };
 }
 
-go(S.start ? 'home' : 'onboard');
+/* ---------- app instalável, offline e lembrete ---------- */
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installEvt = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; if (view === 'perfil' || view === 'home') go(view); });
+addEventListener('appinstalled', () => { installEvt = null; toast('📲 App instalado! Abra pelo ícone na tela inicial.'); });
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch((e) => console.error('Falha ao ativar o modo offline:', e));
+}
+addEventListener('offline', () => toast('📴 Sem internet: tudo continua funcionando, menos os links externos.'));
+addEventListener('online', () => toast('🌐 Conectado de novo.'));
+function updateBadge() { // número de cartas pendentes no ícone do app (onde o sistema permite)
+  try { const n = dueKeys().length; if ('setAppBadge' in navigator) (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {}); } catch (e) { /* recurso opcional */ }
+}
+function reminderLinks(time) {
+  const [h, m] = (time || '19:00').split(':').map(Number), t = new Date();
+  t.setDate(t.getDate() + (t.getHours() * 60 + t.getMinutes() >= h * 60 + m ? 1 : 0)); t.setHours(h, m, 0, 0);
+  const end = new Date(t.getTime() + S.goal * 60000), pad = (n) => String(n).padStart(2, '0');
+  const fmt = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  const url = location.origin + location.pathname, title = '🇩🇪 Alemão: lição do dia';
+  const desc = `Lição, cartas e missão do dia na Deutsch-Trilha: ${url}`;
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Deutsch-Trilha//PT-BR', 'BEGIN:VEVENT', `UID:lembrete-${Date.now()}@deutsch-trilha`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')}`, `DTSTART:${fmt(t)}`, `DTEND:${fmt(end)}`, 'RRULE:FREQ=DAILY',
+    `SUMMARY:${title}`, `DESCRIPTION:${desc}`, `URL:${url}`, 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Hora do alemão!', 'TRIGGER:PT0M', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const g = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) + '&details=' + encodeURIComponent(desc) +
+    '&dates=' + fmt(t) + '/' + fmt(end) + '&recur=' + encodeURIComponent('RRULE:FREQ=DAILY') + '&ctz=' + encodeURIComponent(tz);
+  return { ics, g };
+}
+function appCard(compact) {
+  const inst = standalone() ? '<p>✅ Você está usando o app instalado. Ele funciona sem internet.</p>'
+    : installEvt ? '<button class="pri" id="instBtn">📲 Instalar o app</button>'
+      : isIOS() ? '<p>No iPhone ou iPad, abra no <b>Safari</b>, toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>.</p>'
+        : '<p>No <b>Chrome ou Edge do celular</b>: menu <b>⋮</b> → <b>Instalar app</b> (ou "Adicionar à tela inicial"). No <b>computador</b>: ícone de instalar na barra de endereço.</p>';
+  if (compact) return standalone() ? '' : `<div class="card appc"><div class="row"><h3 class="grow">📲 Leve a trilha no bolso</h3><button class="ghost" id="hideApp">Agora não</button></div><p class="mut">Instale como app: abre pelo ícone, em tela cheia, e funciona sem internet.</p>${inst}</div>`;
+  return `<div class="card appc"><h3>📲 App e lembrete diário</h3>${inst}
+  <p class="mut">Depois da primeira abertura, lições, cartas, áudio da voz do aparelho e progresso funcionam sem internet. Só os links da aba Extras precisam de conexão.</p>
+  <h3 style="margin-top:16px">⏰ Lembrete todo dia</h3>
+  <p class="mut">Escolha o horário e crie um evento diário na sua agenda: o celular avisa na hora certa, mesmo com o app fechado.</p>
+  <div class="row"><input type="time" id="remT" value="${S.remind || '19:00'}" style="width:auto"><a class="btn" id="remG" target="_blank" rel="noopener noreferrer">📅 Google Agenda</a><button id="remI">⬇️ Outra agenda (.ics)</button></div></div>`;
+}
+function wireAppCard() {
+  if ($('#instBtn')) $('#instBtn').onclick = async () => { installEvt.prompt(); const r = await installEvt.userChoice; if (r.outcome === 'accepted') installEvt = null; };
+  if ($('#hideApp')) $('#hideApp').onclick = () => { S.hideApp = today(); save(); $('#hideApp').closest('.card').remove(); };
+  const t = $('#remT'); if (!t) return;
+  const upd = () => { S.remind = t.value; save(); $('#remG').href = reminderLinks(t.value).g; };
+  t.onchange = upd; upd();
+  $('#remI').onclick = () => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([reminderLinks(t.value).ics], { type: 'text/calendar' }));
+    a.download = 'lembrete-alemao.ics'; a.click(); toast('📅 Abra o arquivo baixado para adicionar o lembrete à sua agenda.');
+  };
+}
+
+// Atalhos do ícone do app (?abrir=cards) e primeira tela.
+const abrir = new URLSearchParams(location.search).get('abrir');
+go(!S.start ? 'onboard' : ['home', 'cards', 'trilha', 'extras', 'guide', 'perfil'].includes(abrir) ? abrir : 'home');
