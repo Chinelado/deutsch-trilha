@@ -149,6 +149,7 @@ async function tts(cfg, item) {
       return Buffer.from(await res.arrayBuffer());
     } catch (e) {
       if (/quota_exceeded|insufficient/i.test(e.detail || '')) throw Object.assign(new Error('Créditos da ElevenLabs esgotados.'), { fatal: true });
+      if (e.status === 402) throw Object.assign(new Error('Esta voz exige plano pago na ElevenLabs (o plano grátis não usa vozes da Voice Library pela API).'), { fatal: true });
       if (e.status === 401 || e.status === 403) throw Object.assign(new Error('Chave recusada pela ElevenLabs (' + e.message + ').'), { fatal: true });
       if (e.status === 422 || e.status === 400) throw e; // problema neste texto: pula
       if (attempt >= 5) throw e;
@@ -272,6 +273,6 @@ try {
   else if (cmd === 'indice') console.log(`Índice com ${writeIndex()} áudios.`);
   else { console.error(`Comando desconhecido: ${cmd}. Use simular, vozes, amostra, gerar, refazer ou indice.`); process.exit(1); }
 } catch (e) {
-  console.error('Erro:', e.message);
-  process.exit(1);
+  console.error('Erro:', e.status === 401 && /missing_permissions/.test(e.detail || '') ? 'a chave da API não tem a permissão necessária: ' + e.message : e.message);
+  process.exitCode = 1; // sem process.exit(): no Windows, sair com uma conexão aberta derruba o Node
 }
