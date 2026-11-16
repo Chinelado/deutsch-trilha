@@ -1,5 +1,7 @@
 # Imagens das lições Pocket (prompts para o ChatGPT)
 
+> **Atualização:** depois de revisar a função de cada imagem, o app usa só 8 destas 48 (Apotheke, Anmeldung, Pfandautomat, Bierdeckel, placas de trânsito, pratos do Biergarten, doces do Weihnachtsmarkt e lixeiras), num bloco "👀 Repare" com legenda do que observar. O critério e os motivos estão em [PROMPTS-AULAS.md](PROMPTS-AULAS.md).
+
 As lições Pocket já funcionam sem imagens: os painéis, placas, cardápios e etiquetas são desenhados pelo próprio app, com áudio em cada palavra. As imagens abaixo são a "foto de abertura" de cada lição e, em algumas, um detalhe extra.
 
 ## Como gerar e salvar

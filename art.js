@@ -95,10 +95,11 @@ function enhanceAudio(root) {
     const t = el.textContent.trim(); if (!t || t.startsWith('-') || !isGerman(t)) return;
     el.insertAdjacentHTML('afterbegin', `<button class="spk sm" data-say="${esc(sayText(t))}" aria-label="Ouvir">🔊</button>`);
   });
-  root.querySelectorAll('.deep p > b, .deep li > b, .box b, .why b, .quiz details > p, .bw, .hint b').forEach((el) => {
+  root.querySelectorAll('.deep p > b, .deep li > b, .box b, .why b, .quiz details > p, .bw, .hint b, figcaption b').forEach((el) => {
     if (el.dataset.au || el.closest('#ex .opts, .line, .pool') || el.closest('[data-say]')) return; el.dataset.au = '1';
     const t = (el.matches('.bw') ? (el.querySelector('b') || el).textContent : el.textContent).trim();
-    if (!t || !isGerman(t)) return;
+    // nas legendas das imagens todo negrito é alemão (nomes como Bierdeckel não estão no vocabulário das lições)
+    if (!t || !(el.matches('figcaption b') ? /\p{L}{2}/u.test(t) : isGerman(t))) return;
     el.classList.add('sayw'); el.dataset.say = sayText(t); el.title = 'Toque para ouvir';
   });
 }
@@ -199,7 +200,7 @@ function guideImgs(root) {
   });
 }
 // Ilustrações de uma lição: images/aulas/licao-001.webp (principal) e licao-001-b.webp (detalhe), se existirem.
-const lessonImgs = (l) => { const n = 'licao-' + String(l.i + 1).padStart(3, '0'); return `<div class="limgs">${[n, n + '-b'].map((x) => `<figure class="gimg" data-gimg="${x}" data-dir="aulas" hidden><img alt="${esc(l.pt)}" decoding="async"></figure>`).join('')}</div>`; };
+const lessonImgs = (l) => { const n = 'licao-' + String(l.i + 1).padStart(3, '0'); return `<div class="limgs">${[n, n + '-b'].map((x) => `<figure class="gimg" data-gimg="${x}" data-dir="aulas" hidden><img alt="${esc(l.pt)}" decoding="async">${typeof IMG_CAP !== 'undefined' && IMG_CAP[x] ? `<figcaption>${inl(IMG_CAP[x])}</figcaption>` : ''}</figure>`).join('')}</div>`; };
 
 /* ---------- facilitação gráfica: esquemas por lição ---------- */
 const VICON = { F: '🧱', T: '⏳', S: '📏', P: '🔀', V: '⚖️', M: '📊', E: '🧮' };

@@ -44,7 +44,7 @@ function loadApp() {
   const ctx = { console, esc };
   vm.createContext(ctx);
   const code = files.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n')
-    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, isGerman, visHTML, vozDe, splitFala,'
+    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, IMG_CAP: typeof IMG_CAP === "undefined" ? {} : IMG_CAP, isGerman, visHTML, vozDe, splitFala,'
     + ' POCKETS: typeof POCKETS === "undefined" ? [] : POCKETS, pocketTexts: typeof pocketTexts === "undefined" ? () => [] : pocketTexts };';
   vm.runInContext(code, ctx, { filename: 'deutsch-trilha' });
   return ctx.__app;
@@ -100,6 +100,10 @@ function inventory(A) {
   });
   grupo = 'Pocket';
   A.POCKETS.forEach((pk) => A.pocketTexts(pk).forEach((t) => add(t, '', 'pocket')));
+  // palavras em negrito das legendas das imagens (bloco Repare do Pocket e ilustrações das lições)
+  const bolds = (txt, cat) => (String(txt).match(/\*\*(.+?)\*\*/g) || []).map((b) => b.slice(2, -2)).forEach((b) => { if (/\p{L}{2}/u.test(b)) add(b, 'a', cat); }); // nas legendas todo negrito é alemão
+  bolds((/const PK_LOOK = \{([\s\S]*?)\n\};/.exec(fs.readFileSync(path.join(ROOT, 'pocket.js'), 'utf8').replace(/\r\n/g, '\n')) || [])[1] || '', 'pocket');
+  grupo = 'A1'; Object.values(A.IMG_CAP).forEach((t) => bolds(t, 'imagens'));
   return [...items.values()];
 }
 

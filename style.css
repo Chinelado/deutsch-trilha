@@ -479,3 +479,7 @@ button.sel.ok { border-color: var(--ok); background: var(--okbg); box-shadow: no
 
 /* ilustrações das lições (até duas, lado a lado no computador) */
 .limgs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; } .limgs .gimg { margin: 0 0 14px; }
+
+/* Pocket: imagens didáticas com legenda do que observar (sem cortar detalhes) */
+.pk-look .pk-img { margin: 6px 0 0; } .pk-look .pk-img img { max-height: none; object-fit: contain; }
+.pk-look figcaption { margin-top: 10px; line-height: 1.5; }

@@ -3,6 +3,18 @@
 
 // Imagens geradas (PROMPTS-POCKET.md) listadas em images/pocket/index.json: só essas são pedidas ao servidor.
 let PKIMG = new Set();
+// Imagens que ficam: só as que mostram algo que você precisa reconhecer no mundo real e que o app não desenha bem
+// (um símbolo, uma máquina, uma forma de placa, um prato). Cenas só decorativas foram retiradas.
+const PK_LOOK = {
+  apotheke: 'O **A** vermelho marca toda **Apotheke**: é por ele que você acha uma farmácia na rua. Na vitrine, a placa **Notdienst** indica a farmácia de plantão.',
+  anmeldung: 'O painel chama a sua senha (**A 047**) e mostra o guichê (**12**): é o mesmo número da sua **Wartemarke**. Quando ele aparecer, vá direto ao guichê indicado.',
+  'supermarkt-detalhe': 'Este é o **Pfandautomat**: você coloca as garrafas e latas com Pfand, a máquina imprime o **Pfandbon** e o caixa desconta o valor da compra.',
+  'kneipe-detalhe': 'Repare nos riscos no porta-copos: cada risco é uma bebida. No fim da noite, a conta sai do **Bierdeckel**.',
+  'auto-detalhe': 'Na estrada, a forma da placa fala antes da palavra: octógono vermelho = **Stopp**; triângulo de ponta para baixo = **Vorfahrt achten** (dê a preferência); círculo vermelho com faixa branca = **Einfahrt verboten**; placa azul com a pista = **Autobahn**.',
+  'biergarten-detalhe': 'Da esquerda para a direita: **Brezn** (pretzel), **Obatzda** (pasta de queijo) e **Radi** (rabanete fatiado), com a **Maß**, a caneca de um litro.',
+  'weihnachtsmarkt-detalhe': 'No cone, **gebrannte Mandeln** (amêndoas caramelizadas); na mão, um **Lebkuchenherz** (coração de pão de mel); e o **Glühwein** na caneca, que tem **Tassenpfand**: devolva a caneca para recuperar o depósito.',
+  muell: 'As cores das lixeiras: **gelb** (embalagens e plástico), **blau** (papel), **braun** (orgânico, a **Biotonne**) e **grau** ou **schwarz** (o resto, **Restmüll**).',
+};
 fetch('images/pocket/index.json').then((r) => (r.ok ? r.json() : [])).then((j) => { PKIMG = new Set(j); }).catch(() => {});
 
 // Grupos da lista em Extras: o que não estiver em "viagem" aparece em "Morar na Alemanha".
@@ -72,10 +84,10 @@ function pocket(id) {
   const paras = dl.map((d) => d.who + ': ' + d.de);
   app.innerHTML = `<button class="ghost back" id="bk">← Extras</button>
   <div class="lhead"><div class="gbig">${p.e}</div><div><span class="eyebrow">Pocket · ${p.lv} · 5 a 10 min</span><h1>${esc(p.t)}</h1><p class="mut">${esc(p.pt)}</p></div></div>
-  ${(p.img || []).filter((im) => PKIMG.has(im.f)).map((im) => `<figure class="pk-img"><img src="images/pocket/${im.f}.webp" decoding="async" alt="${esc(im.alt)}" onload="this.parentNode.classList.add('ok')" onerror="this.parentNode.remove()"></figure>`).join('')}
   <div class="card"><h3>🎬 A cena</h3><p>${inl(p.cena)}</p></div>
   <h2>🗺️ Toque e ouça</h2><p class="mut">Toque em qualquer palavra das ilustrações para ouvir a pronúncia.</p>
   ${p.ill.map((il) => `<div class="pk-ill">${pkIll(il)}</div>`).join('')}
+  ${(p.img || []).filter((im) => PK_LOOK[im.f] && PKIMG.has(im.f)).map((im) => `<div class="card pk-look"><h3>👀 Repare</h3><figure class="pk-img"><img src="images/pocket/${im.f}.webp" decoding="async" alt="${esc(im.alt)}" onload="this.parentNode.classList.add('ok')" onerror="this.closest('.pk-look').remove()"><figcaption>${inl(PK_LOOK[im.f])}</figcaption></figure></div>`).join('')}
   <h2>💬 Você diz</h2><div class="card pk-list">${fr.map((x) => `<p>${spk(x.de)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}
     <button id="pkCards" ${inCards === fr.length ? 'disabled' : ''}>${inCards === fr.length ? '✓ Frases nas cartas de revisão' : `🃏 Pôr as ${fr.length} frases nas cartas de revisão`}</button></div>
   <h2>👂 Você vai ouvir</h2><div class="card pk-list">${ou.map((x) => `<p>${spk(x.de)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}</div>

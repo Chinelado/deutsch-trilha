@@ -17,7 +17,6 @@ const GUIDE = [
 // ---------- 🚀 Primeiros passos ----------
 { id: 'n01', cat: 'start', e: '🗺️', t: 'Boas-vindas à trilha', s: 'O mapa do A1 ao C2 em três minutos', body: `
 Que bom ter você aqui! 🎉 Esta trilha foi feita para quem **nunca estudou outra língua**. Você não precisa saber nada de alemão nem de gramática: tudo é explicado do zero, em português, em aulas curtinhas como esta.
-IMG guia-mapa | A trilha é uma subida com seis acampamentos, do A1 ao C2.
 # Seis degraus, uma régua mundial
 O mundo inteiro mede o conhecimento de uma língua com a mesma régua, o **Quadro Europeu Comum de Referência**. É a régua das provas do Goethe-Institut, a instituição oficial do alemão.
 | Nível | Você consegue… | Semanas aqui |
@@ -46,7 +45,6 @@ Depende do seu ritmo. Para chegar ao B1, somando lições, cartas e alemão fora
 ` },
 { id: 'n02', cat: 'start', e: '📅', t: 'Seu dia de estudo', s: 'As quatro etapas de cada dia, e por que errar ajuda', body: `
 Todo dia na trilha segue o mesmo roteiro de quatro etapas. Com o caminho sempre igual, você gasta energia aprendendo alemão, e não descobrindo o que fazer. 😉
-IMG guia-rotina | As quatro etapas do dia formam um ciclo.
 @ P:As 4 etapas do dia;📖 Aprender=a aula do dia, com áudio;🎯 Praticar=14 exercícios curtos;🃏 Revisar=as cartas de memória;🌍 Usar=alemão fora do app
 # 1. Aprender
 Leia a aula com calma e toque em 🔊 em cada exemplo. Repita em voz alta: a boca também precisa aprender.
@@ -65,7 +63,6 @@ Quando você erra e logo vê o porquê, o cérebro guarda a regra **melhor** do 
 ` },
 { id: 'n03', cat: 'start', e: '🧠', t: 'Truques da memória', s: 'Como fazer o alemão grudar na cabeça', body: `
 Saber uma regra não basta: você precisa **usar sem pensar**, como faz com o português. Estes cinco truques vêm da ciência da memória. A trilha já aplica todos, mas quem conhece os truques estuda melhor.
-IMG guia-memoria | Cada revisão no momento certo faz a lembrança durar mais.
 # Truque 1: tente lembrar antes de olhar
 Reler dá a sensação de que você aprendeu, mas engana. O que fixa é **puxar da memória**: tentar lembrar antes de ver a resposta, mesmo que erre.
 > Nas cartas, diga a resposta **em voz alta** antes de virar.
@@ -98,7 +95,7 @@ a, e, i, o, u soam quase como em português, só que mais "limpas": o **a** é s
 ~ Kino = cinema
 # O trema: ä, ö, ü
 Os dois pontinhos mudam o som da vogal. Não são enfeite: **schon** (já) e **schön** (bonito) são palavras diferentes!
-IMG guia-trema | O formato da boca para ä, ö e ü.
+IMG guia-trema | A boca em cada som: lábios abertos no ä, em bico no ö, em bico apertado no ü.
 | Letra | Como fazer | Exemplo |
 | ä | como o "é" de café | Käse (queijo) |
 | ö | diga "ê" com os lábios em bico, como para "ô" | schön (bonito) |
@@ -125,7 +122,6 @@ IMG guia-trema | O formato da boca para ä, ö e ü.
 ` },
 { id: 'n05', cat: 'sons', e: '🐝', t: 'Consoantes surpresa', s: 'w soa v, z soa ts, sch soa ch', body: `
 A maioria das consoantes soa como em português. Algumas pregam peças, e são justamente as que mais aparecem. Aqui estão as surpresas, uma de cada vez.
-IMG guia-consoantes | As consoantes que mudam de som.
 # O trio W, V e Z
 | Escrita | Som | Exemplo |
 | w | "v" | Wasser (água) |
@@ -164,7 +160,7 @@ BR O **ß** (chamado "eszett") é só um jeito de escrever "ss" depois de vogal 
 Último trecho dos sons! São os detalhes que fazem você soar como quem fala alemão de verdade.
 # O ch tem dois sons
 Quem decide é a letra que vem **antes** dele:
-IMG guia-ch | O ch raspado e o ch chiado, como um gato bravo.
+IMG guia-ch | Onde a língua faz o ch: no fundo da boca em Buch (raspado), atrás dos dentes em ich (chiado).
 | Depois de… | Som | Exemplo |
 | a, o, u | raspado no fundo da garganta, como o "rr" carioca de "carro" | Buch (livro), acht (oito) |
 | i, e, ä, ö, ü e consoantes | um chiado suave, como um gato bravo | ich (eu), nicht (não) |
@@ -204,7 +200,6 @@ Hora de falar! 🎤 Com as frases desta categoria você já consegue cumprimenta
 ~ Hallo! = Olá! (sempre funciona)
 ~ Hi! = Oi! (entre amigos)
 # Pelo relógio
-IMG guia-relogio | Cada hora do dia tem o seu cumprimento.
 @ P:O dia em alemão;Guten Morgen!=de manhã, até umas 11h;Guten Tag!=durante o dia, mais formal;Guten Abend!=à noite, ao chegar;Gute Nacht!=na hora de dormir
 ~ Guten Morgen! = Bom dia!
 ~ Guten Tag! = Bom dia! / Boa tarde!
@@ -229,7 +224,6 @@ BR Em português, "boa noite" serve para chegar e para sair. Em alemão são doi
 ` },
 { id: 'n08', cat: 'frases', e: '✨', t: 'Palavras mágicas', s: 'Danke, Bitte, Entschuldigung e companhia', body: `
 Algumas palavras abrem portas em qualquer lugar. Com estas você já é uma pessoa educada em alemão! ✨
-IMG guia-magicas | As palavras mágicas do dia a dia.
 # Obrigada e por favor
 ~ Danke! = Obrigada! / Obrigado!
 ~ Danke schön! = Muito obrigada!
@@ -255,7 +249,6 @@ GO Na próxima vez que alguém te agradecer hoje, responda "Bitte!" em pensament
 ` },
 { id: 'n09', cat: 'frases', e: '🆘', t: 'Socorro, não entendi!', s: 'Frases para pedir ajuda e ganhar tempo', body: `
 Não entender faz parte. O segredo é **saber pedir ajuda em alemão**: assim a conversa continua e você aprende no caminho. Estas frases são o seu kit de sobrevivência. 🆘
-IMG guia-socorro | Pedir ajuda mantém a conversa viva.
 # Quando não entender
 ~ Ich verstehe das nicht. = Eu não entendo isso.
 ~ Noch einmal, bitte. = Mais uma vez, por favor.
@@ -279,7 +272,6 @@ GO Diga em voz alta, sem olhar: "olá", "obrigada", "eu não entendo", "mais uma
 ` },
 { id: 'n10', cat: 'frases', e: '🔢', t: 'Contar até 12', s: 'Os números que você usa já no dia 1', body: `
 Números estão em todo lugar: preços, horários, telefone, idade. De 0 a 12 é a base de todos os outros. Conte junto com o áudio! 🔢
-IMG guia-numeros | Contando de 0 a 12 nos dedos.
 # De 0 a 6
 ~ null = zero
 ~ eins = um
@@ -311,7 +303,6 @@ BR **elf** é "onze" (nada de elfo!) e **zwölf** é "doze". Ao telefone muita g
 // ---------- 🧩 Como o alemão funciona ----------
 { id: 'n11', cat: 'base', e: '🧱', t: 'As peças da frase', s: 'Substantivo, verbo, artigo… com exemplos do português', body: `
 Gramática é só o **manual de montagem** de uma língua: quais peças existem e como elas se encaixam. Você já usa tudo isso em português sem perceber. Aqui damos nome às peças, porque esses nomes aparecem nas lições. 🧱
-IMG guia-pecas | Cada peça da frase tem uma cor e uma função.
 @ F:Uma frase, três peças;Quem?^s|Faz o quê?^v|O quê?^o;Anna|trinkt|Kaffee.;Ich|lerne|Deutsch.;Wir|kaufen|Brot.
 # Substantivo: o nome das coisas
 Pessoa, lugar, objeto, animal ou ideia: Ana, casa, Brasil, cachorro, amor.
@@ -341,7 +332,6 @@ O **adjetivo** descreve uma coisa: casa **grande**. O **advérbio** diz como, qu
 ` },
 { id: 'n12', cat: 'base', e: '🙋', t: 'Eu, você, ele: os pronomes', s: 'Quem é quem, e como o verbo muda com cada um', body: `
 Pronomes são atalhos para não repetir nomes: em vez de "a Ana mora em Berlim, a Ana trabalha muito", dizemos "**ela** trabalha muito". 🙋
-IMG guia-pronomes | Quem é quem: ich, du, er, sie, es.
 | Quem | Português | Alemão |
 | eu | eu | ich |
 | você (informal) | você, tu | du |
@@ -386,7 +376,6 @@ Em alemão, qualquer nome de coisa leva letra maiúscula, e não só nomes de pe
 ~ Der Hund schläft. = O cachorro dorme.
 # Três gêneros: der, die, das
 Além do masculino (**der**) e do feminino (**die**), existe o **neutro** (**das**). E o gênero muitas vezes **não bate** com o português:
-IMG guia-generos | Três casinhas, três cores: der, die, das.
 @ V:Três famílias, três cores;der · azul|der Mond (a lua)|der Tisch (a mesa)|der Löffel (a colher);die · vermelho|die Sonne (o sol)|die Lampe (o abajur)|die Gabel (o garfo);das · verde|das Mädchen (a menina)|das Buch (o livro)|das Messer (a faca)
 ~ der Mond = a lua
 ~ die Sonne = o sol
@@ -407,7 +396,6 @@ IMG guia-generos | Três casinhas, três cores: der, die, das.
 ` },
 { id: 'n14', cat: 'base', e: '🚂', t: 'O verbo no vagão 2', s: 'A regra de ouro da frase alemã', body: `
 Esta é **a** regra de ouro do alemão. Imagine a frase como um trem: o vagão 2 é sempre do verbo conjugado. 🚂
-IMG guia-trem | O verbo conjugado sempre viaja no vagão 2.
 @ F:O verbo é sempre o vagão 2;Vagão 1^s|Vagão 2: verbo^v|Resto^c;Ich|lerne|heute Deutsch.;Heute|lerne|ich Deutsch.;Am Montag|arbeite|ich.
 # O vagão 1 pode mudar
 No vagão 1 pode ir o sujeito, o tempo, o lugar ou outra coisa. O verbo **não sai do vagão 2**:
@@ -438,7 +426,6 @@ Repare como a palavra para "eu" muda conforme a função na frase:
 | quem recebe | ele **me** vê | er sieht **mich** |
 | depois de preposição | para **mim** | für **mich** |
 É a mesma pessoa, mas a forma muda: eu, me, mim. O alemão faz isso também com os **artigos**. Essas formas se chamam **casos**.
-IMG guia-casos | A mesma palavra troca de roupa conforme o papel na frase.
 # O artigo troca de roupa
 Pense no artigo como um ator que troca de figurino conforme o papel. O cachorro como sujeito é **der Hund**; como objeto direto, vira **den Hund**:
 ~ Der Hund schläft. = O cachorro dorme.
@@ -454,7 +441,6 @@ Nominativo no dia 1, acusativo no dia 9, dativo no dia 16. O genitivo só aparec
 ` },
 { id: 'n16', cat: 'base', e: '🤝', t: 'du ou Sie?', s: 'Informal ou formal: quando usar cada um', body: `
 Em alemão há duas formas de dizer "você": **du** (informal) e **Sie** (formal). Escolher bem faz diferença na primeira impressão. 🤝
-IMG guia-dusie | du com amigos, Sie com desconhecidos e no trabalho.
 @ V:du ou Sie?;du · informal|amigos e família|crianças|colegas de curso|quem ofereceu o du;Sie · formal|desconhecidos|lojas e restaurantes|trabalho|pessoas mais velhas
 # Sie: sempre com maiúscula
 ~ Sprechen Sie Deutsch? = O senhor fala alemão?
@@ -474,7 +460,6 @@ BR O **Sie** é como o nosso "o senhor / a senhora", mas usado muito mais: até 
 ` },
 { id: 'n17', cat: 'base', e: '🏁', t: 'Desafio final', s: 'Revise tudo brincando e ganhe o selo Bereit!', body: `
 Você chegou ao fim do Comece aqui! 🎉 Antes do dia 1, um desafio rápido com um pouco de cada aula. Sem pressão: errou, leu a explicação, aprendeu.
-IMG guia-final | Mochila pronta para a trilha!
 # Rodada 1: sons
 ?? 🔊 Wein || Wein || Wien >> ei soa "ai": Wein, vinho.
 ?? 🔊 zehn || zehn || sehen || Zahn >> z soa "ts": zehn, dez.
