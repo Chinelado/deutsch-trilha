@@ -121,22 +121,106 @@ Bright aisle of a German supermarket: shelves with fruit and vegetables in crate
 A bottle return machine in a German supermarket: a woman inserts an empty plastic bottle into the round opening of the machine, a small paper voucher comes out of a slot. A label on the machine reads exactly "Pfandautomat". Clean, bright, friendly. Landscape 3:2.
 ```
 
-## Sugestões de novas lições Pocket
+## Segunda leva: morar na Alemanha e mais passeios
 
-Temas que funcionam bem no mesmo formato (cena + ilustrações + frases + diálogo + teste):
+Use o mesmo bloco de estilo do início (se abrir uma conversa nova no ChatGPT, cole o bloco de novo antes).
+
+### 20. 🚨 Emergência — `notfall.png`
+```
+A German city street in the afternoon. A cyclist sits on the sidewalk next to his fallen bicycle, holding his head; a paramedic in a red-and-yellow high-visibility uniform kneels beside him with a medical bag. A white ambulance with orange-red stripes and blue lights is parked at the curb (no logos, no lettering). A young woman stands nearby holding a phone to her ear. Calm, reassuring mood, nothing graphic, no blood. Landscape 3:2.
+```
+
+### 21. 🚨 Emergência, detalhe — `notfall-detalhe.png`
+```
+Close-up of a hand holding a smartphone; the screen shows a phone dialer with the large digits "112" typed in and a green call button. Softly blurred street and blue emergency lights in the background. Only the digits "112" as text. Landscape 3:2.
+```
+
+### 22. 🏛️ Registro de residência — `anmeldung.png`
+```
+Waiting room of a German citizens' office (Bürgeramt): rows of chairs, people waiting calmly, a woman holding a small paper ticket and a folder of documents. On the wall, a digital display shows the ticket number "A 047" next to the counter number "12". Clean, slightly bureaucratic but friendly atmosphere, plants, daylight. Only the texts "A 047" and "12". Landscape 3:2.
+```
+
+### 23. 🏠 Visita a apartamento — `wohnung.png`
+```
+Bright, empty apartment in an old German building (Altbau): high ceilings with stucco, wooden parquet floor, tall windows, a small balcony door open to green trees. A female landlady shows the living room to a young man who is looking around with interest. No furniture except a radiator under the window. No readable text. Landscape 3:2.
+```
+
+### 24. 🏠 Visita a apartamento, detalhe — `wohnung-detalhe.png`
+```
+Top-down view on a wooden table: a printed apartment listing with a simple floor plan drawing of a two-room flat, a pen, a set of old keys and a cup of coffee. The listing shows the large heading "2-Zimmer-Wohnung" and the line "Warmmiete 860 €"; all other lines are illegible fine lines. Only these exact texts. Landscape 3:2.
+```
+
+### 25. 🩺 Marcar consulta — `arzttermin.png`
+```
+Reception desk of a German general practitioner's office: a friendly female receptionist in a light blue top talks on a headset while a female patient hands over a health insurance card. Behind the desk, shelves with folders and a plant; a small waiting area with chairs on the side. Clean, calm, daylight. No readable text. Landscape 3:2.
+```
+
+### 26. 💇 Cabeleireiro — `friseur.png`
+```
+Modern, cozy hair salon in Germany: a male hairdresser cuts the hair of a smiling woman sitting in front of a large mirror, comb and scissors in hand. Warm lighting, plants, shelves with hair products without brand names. A small price board on the wall reads exactly "Preisliste". Landscape 3:2.
+```
+
+### 27. 📱 Plano de celular — `handy.png`
+```
+Inside a bright mobile phone shop in Germany: a female sales assistant shows a SIM card to a male customer at a counter, smartphones displayed on tables, a large poster on the wall reads exactly "Prepaid" in bold letters. No brand names, no logos. Landscape 3:2.
+```
+
+### 28. 🚕 Táxi — `taxi.png`
+```
+Night scene in front of a German train station: a cream-colored (ivory) taxi with a yellow roof sign that reads exactly "TAXI" waits at the curb. The driver lifts a suitcase into the trunk while a female traveler stands beside it. Wet pavement reflecting warm streetlights and the illuminated station entrance. Only the word "TAXI". Landscape 3:2.
+```
+
+### 29. 🎄 Mercado de Natal — `weihnachtsmarkt.png`
+```
+Festive German Christmas market at dusk on a historic square: wooden stalls with warm string lights, a big decorated Christmas tree, a small carousel, people in winter coats holding steaming mugs. A stall roof sign reads exactly "Glühwein". Light snow, cozy and magical atmosphere. Landscape 3:2.
+```
+
+### 30. 🎄 Mercado de Natal, detalhe — `weihnachtsmarkt-detalhe.png`
+```
+Close-up of a pair of gloved hands holding a red ceramic Christmas market mug filled with steaming mulled wine, next to a paper cone of caramelized almonds and a gingerbread heart decorated with icing (the heart has no text). Blurred warm lights in the background. No readable text. Landscape 3:2.
+```
+
+### 31. ⚽ Estádio de futebol — `stadion.png`
+```
+Inside a packed German football stadium on a sunny afternoon: a wall of fans in a standing section holding up scarves, green pitch below, two teams in plain red and plain white kits (no logos, no club names). In the foreground, two women in the seated section cheer with raised arms. A scoreboard in the distance shows only "2 : 1". Landscape 3:2.
+```
+
+### 32. 🎉 Festa — `party.png`
+```
+Warm house party in the living room of an old German apartment (Altbau): fairy lights, a bookshelf, a table with snacks, bottles and a homemade cake. Small groups of people in their twenties and thirties chat and laugh; in the foreground a young woman and a young man introduce themselves with a handshake, each holding a glass. No readable text. Landscape 3:2.
+```
+
+### 33. 🌳 Biergarten — `biergarten.png`
+```
+Bavarian beer garden on a sunny Sunday: long wooden tables and benches under large chestnut trees with dappled sunlight, people of all ages sharing tables, one-liter beer mugs, pretzels. In the background, a wooden self-service counter with a small sign that reads exactly "Selbstbedienung". Relaxed, joyful mood. Landscape 3:2.
+```
+
+### 34. 🌳 Biergarten, detalhe — `biergarten-detalhe.png`
+```
+Close-up on a wooden beer garden table: a one-liter glass beer mug (Maß) with golden beer and foam, a large soft pretzel, a small bowl of orange Obatzda cheese spread with sliced onions, and thin sliced white radish. Dappled sunlight through chestnut leaves. No text, no brand names. Landscape 3:2.
+```
+
+### 35. 📦 Correio — `post.png`
+```
+Counter of a German post office: a female customer hands a cardboard parcel to a male postal clerk, a customs declaration form lies on the counter, shelves with parcels and envelopes in the background, a small scale on the counter. Generic yellow accents, no brand names, no logos. No readable text. Landscape 3:2.
+```
+
+### 36. 🏋️ Academia — `fitness.png`
+```
+Bright modern gym in Germany with large windows: rows of treadmills and weight machines, a male trainer in a plain t-shirt explains a machine to a woman in sportswear holding a towel. On the wall, a class schedule board with the heading "Kursplan" (other lines illegible). No brand logos. Landscape 3:2.
+```
+
+## Ideias para a próxima leva
 
 | Tema | Ilustrações sugeridas |
 |---|---|
-| 🚨 Emergência e polícia (Notfall) | número 112, placa de hospital, formulário de ocorrência |
-| 🏛️ Registro de residência (Anmeldung no Bürgeramt) | senha de atendimento, formulário, comprovante |
-| 🏠 Visita a apartamento (Wohnungsbesichtigung) | anúncio com Kaltmiete e Warmmiete, planta do apartamento |
-| 🩺 Marcar consulta médica (Arzttermin) | cartão do plano de saúde, placa do consultório com horários |
-| 💇 No cabeleireiro (Beim Friseur) | tabela de preços, fotos de cortes |
-| 📱 Chip e plano de celular (Handyvertrag) | tabela de planos, contrato com prazo de cancelamento |
-| 🚕 Táxi e aplicativos (Taxi) | taxímetro, recibo |
-| 🎄 Mercado de Natal (Weihnachtsmarkt) | barracas, caneca de Glühwein com Pfand |
-| ⚽ Jogo de futebol (im Stadion) | ingresso, placar, cantos da torcida |
-| 🎉 Conversa em festa (Smalltalk auf der Party) | convite, cartões com perguntas |
-| 🌳 No Biergarten | cardápio, caneca de 1 litro (Maß), Pfand do copo |
-| 📦 Correio e encomendas (Post und Paket) | aviso de entrega, etiqueta de pacote |
-| 🏋️ Academia (im Fitnessstudio) | contrato, quadro de aulas |
+| 🏦 Abrir conta no banco (Konto eröffnen) | formulário, cartão de débito, tela de app bancário |
+| 🦷 No dentista (beim Zahnarzt) | ficha de anamnese, placa do consultório |
+| 🚲 Alugar bicicleta (Fahrrad mieten) | tabela de preços, mapa de ciclovias |
+| 🚗 Alugar carro (Autovermietung) | contrato, placas de trânsito alemãs |
+| 🏕️ Camping e trilha (Wandern) | placa de trilha, mapa com altitudes |
+| 🎬 No cinema (im Kino) | ingresso, programação com OmU (legendado) |
+| ♻️ Separar o lixo (Mülltrennung) | lixeiras coloridas com o que vai em cada uma |
+| 🏫 Escola e creche (Kita und Schule) | bilhete de aviso aos pais, calendário escolar |
+| 🔧 Problema no apartamento (Hausverwaltung) | aviso no mural, formulário de reparo |
+| 🍝 Convite para jantar (Einladung zum Essen) | mesa posta, cartão de agradecimento |

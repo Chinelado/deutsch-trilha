@@ -5,12 +5,16 @@
 let PKIMG = new Set();
 fetch('images/pocket/index.json').then((r) => (r.ok ? r.json() : [])).then((j) => { PKIMG = new Set(j); }).catch(() => {});
 
+// Grupos da lista em Extras: o que não estiver em "viagem" aparece em "Morar na Alemanha".
+const PK_VIAGEM = new Set(['flughafen', 'weg', 'restaurant', 'kneipe', 'einkaufen', 'sehenswuerdigkeiten', 'hotel', 'bahnhof', 'baeckerei', 'taxi', 'weihnachtsmarkt', 'biergarten', 'stadion']);
 function pocketList() {
-  const done = S.pockets || {};
-  return `<h2>🧳 Lições Pocket</h2>
-  <p class="mut">Situações reais em 5 a 10 minutos: painéis, placas, cardápios e etiquetas com áudio em cada palavra. Ótimas antes de uma viagem.</p>
-  <div class="pkgrid">${POCKETS.map((p) => { const r = done[p.id];
-    return `<button class="pkc" data-pk="${p.id}"><span class="pke">${p.e}</span><span class="grow"><b>${esc(p.t)}</b><small>${esc(p.pt)} · ${p.lv}${r ? ` · ✓ ${r.ok}/${r.n}` : ''}</small></span></button>`; }).join('')}</div>`;
+  const done = S.pockets || {}, n = Object.keys(done).filter((id) => POCKETS.some((p) => p.id === id)).length;
+  const card = (p) => { const r = done[p.id];
+    return `<button class="pkc" data-pk="${p.id}"><span class="pke">${p.e}</span><span class="grow"><b>${esc(p.t)}</b><small>${esc(p.pt)} · ${p.lv}${r ? ` · ✓ ${r.ok}/${r.n}` : ''}</small></span></button>`; };
+  return `<h2>🧳 Lições Pocket <small class="mut">${n}/${POCKETS.length} feitas</small></h2>
+  <p class="mut">Situações reais em 5 a 10 minutos: painéis, placas, cardápios e etiquetas com áudio em cada palavra.</p>
+  <h3>✈️ Viagem e passeio</h3><div class="pkgrid">${POCKETS.filter((p) => PK_VIAGEM.has(p.id)).map(card).join('')}</div>
+  <h3>🏠 Morar na Alemanha</h3><div class="pkgrid">${POCKETS.filter((p) => !PK_VIAGEM.has(p.id)).map(card).join('')}</div>`;
 }
 
 const pkSay = (t) => (/\p{L}/u.test(t) ? ` data-say="${esc(t)}"` : '');
@@ -22,7 +26,7 @@ function pkIll(il) {
   switch (il.k) {
     case 'board': {
       const st = (s) => (/fällt aus|annulliert|geschlossen/.test(s) ? 'bad' : /verspätet|\+|wechsel/i.test(s) ? 'warn' : s ? 'ok' : '');
-      return `<div class="pk-board ${il.estilo || ''}"><div class="pkb-h">${il.estilo === 'trem' ? '🚆' : '✈️'} ${esc(il.t)}</div><div class="tw"><table>
+      return `<div class="pk-board ${il.estilo || ''}"><div class="pkb-h">${{ trem: '🚆', placar: '⚽' }[il.estilo] || '✈️'} ${esc(il.t)}</div><div class="tw"><table>
         <tr>${pkPairs(il.cols).map((c) => `<th${pkSay(c.de)}>${esc(c.de)}<small>${esc(c.pt)}</small></th>`).join('')}</tr>
         ${il.rows.map((r) => `<tr>${r.map((v, i) => (i === r.length - 1 ? `<td class="st ${st(v)}"${pkSay(v)}>${esc(v)}</td>` : `<td>${esc(v)}</td>`)).join('')}</tr>`).join('')}
       </table></div>${pkLeg(il.leg)}</div>`;
