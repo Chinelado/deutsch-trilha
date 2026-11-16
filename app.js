@@ -22,7 +22,7 @@ const WEEKS = LESSONS.length / 6, TOTAL = WEEKS * 7;
 const fresh = () => ({
   name: '', goal: 60, audio: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
   done: {}, cards: {}, stats: Object.fromEntries(IK.map((k) => [k, { n: 0, ok: 0, rn: 0, rok: 0, t: 0 }])),
-  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {},
+  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {},
 });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) { console.error('Falha ao ler o progresso salvo:', e); }
@@ -102,11 +102,12 @@ function markActive() {
 const secsToday = () => S.time[today()] || 0;
 function mission() {
   const d = daily();
-  return { lesson: d.lesson, cards: dueKeys().length === 0, time: secsToday() >= S.goal * 60 };
+  const t = today(), extra = Object.values(S.hw).some((o) => Object.values(o).includes(t)) || Object.values(S.seen).includes(t);
+  return { lesson: d.lesson, cards: dueKeys().length === 0, time: secsToday() >= S.goal * 60, extra };
 }
 function checkDaily() {
   const m = mission(), d = daily();
-  if (m.lesson && m.cards && m.time && !d.perfect) { d.perfect = true; S.perfect++; addXP(30); toast('🌟 Dia perfeito! +30 XP'); checkBadges(); save(); }
+  if (m.lesson && m.cards && m.time && m.extra && !d.perfect) { d.perfect = true; S.perfect++; addXP(30); toast('🌟 Dia perfeito! +30 XP'); checkBadges(); save(); }
 }
 const levelDone = (a, b) => { for (let d = a * 7 + 1; d <= b * 7; d++) if (!S.done[d]) return false; return true; };
 const nDone = () => Object.keys(S.done).length;
@@ -137,6 +138,10 @@ const BADGES = [
   ['b2', '🏆', 'B2', 'Nível B2 concluído', () => levelDone(13, 25)],
   ['c1', '💎', 'C1', 'Semanas de C1 concluídas', () => levelDone(25, 28)],
   ['c2', '👑', 'C2', 'Semanas de C2 concluídas', () => levelDone(28, 30)],
+  ['hw10', '🏠', 'Mão na massa', '10 tarefas de casa feitas', () => hwTotal() >= 10],
+  ['hw50', '🏡', 'Rotina alemã', '50 tarefas de casa feitas', () => hwTotal() >= 50],
+  ['wq1', '🎯', 'Semana completa', 'Cumpriu uma missão da semana', () => Object.keys(S.wq).length >= 1],
+  ['wq4', '🏆', 'Mês de imersão', 'Cumpriu quatro missões da semana', () => Object.keys(S.wq).length >= 4],
   ['x5', '🎬', 'Explorador', '5 conteúdos extras vistos', () => Object.keys(S.seen).length >= 5],
   ['x20', '🌍', 'Imersão', '20 conteúdos extras vistos', () => Object.keys(S.seen).length >= 20],
 ];
@@ -207,9 +212,77 @@ function extraCard(x) {
 function wireSeen(root, rerender) {
   $$('[data-seen]', root).forEach((b) => (b.onclick = () => {
     const id = b.dataset.seen; if (S.seen[id]) return;
-    S.seen[id] = today(); addXP(10); toast('🎬 +10 XP por estudar fora da plataforma');
-    checkBadges(); save(); rerender();
+    const box = b.closest('.xcard') || b.parentElement, f = document.createElement('div');
+    f.className = 'xnote';
+    f.innerHTML = '<p class="mut">O que você aprendeu? Anote três palavras ou uma frase. Opcional, vale +10 XP extra e vai para o seu diário.</p><textarea rows="2" spellcheck="false"></textarea><div class="row"><button class="pri">Salvar</button></div>';
+    b.disabled = true; box.append(f); f.querySelector('textarea').focus();
+    f.querySelector('button').onclick = () => {
+      const note = f.querySelector('textarea').value.trim(), x = EXTRAS.find((e) => e.id === id);
+      let xp = 10; S.seen[id] = today();
+      if (note.split(/\s+/).length >= 2) { xp += 10; S.diary.push({ d: today(), t: note, x: x.n }); }
+      if (weekChallenge().id === id) { xp += 40; toast('🏆 Desafio da semana cumprido!'); }
+      addXP(xp); toast('🎬 +' + xp + ' XP por estudar fora da plataforma');
+      markActive(); weekCheck(); checkBadges(); checkDaily(); save(); rerender();
+    };
   }));
+}
+
+/* ---------- tarefas de casa e missão da semana ---------- */
+const lessonLevel = (i) => phaseOf(Math.floor(i / 6)).id;
+function lessonExtra(i) { const pool = EXTRAS.filter((x) => x.lvs.includes(lessonLevel(i))); return pool[(i * 7) % pool.length]; }
+const XVERB = { yt: 'Assista a um vídeo do canal', mus: 'Ouça a música', film: 'Assista a um trecho do filme', serie: 'Assista a um episódio de', pod: 'Ouça um episódio de', book: 'Leia algumas páginas de', site: 'Leia um texto em', ref: 'Explore', app: 'Converse 10 minutos usando', doc: 'Assista a um trecho de' };
+function hwTasks(i) {
+  const l = LESSONS[i], x = lessonExtra(i);
+  return [
+    { k: 'a', e: '🏠', h: 'Na vida real', t: HW[l.de] || 'Escreva três frases sobre a sua vida usando: ' + l.gt + '.' },
+    { k: 'b', e: XT[x.t][0], h: 'Mergulho', t: XVERB[x.t] + ' ' + x.n + ' e anote três palavras novas no diário.', x },
+    { k: 'c', e: '🎙️', h: 'Em voz alta', t: 'Leia o diálogo da lição em voz alta duas vezes, imitando o áudio (shadowing).' },
+  ];
+}
+const hwDone = (i, t) => !!((S.hw[i] || {})[t.k] || (t.x && S.seen[t.x.id]));
+const hwTotal = () => Object.values(S.hw).reduce((a, o) => a + Object.keys(o).length, 0);
+function hwCard(i, title = '🏠 Tarefa de casa') {
+  const ts = hwTasks(i), n = ts.filter((t) => hwDone(i, t)).length;
+  return `<div class="card hw"><div class="row"><h3 class="grow">${title}</h3><small class="mut">${n}/3 · +15 XP cada</small></div>
+  <p class="mut">Para levar o alemão para o seu dia. Faça hoje ou amanhã e marque aqui.</p>
+  ${ts.map((t) => `<div class="hwt ${hwDone(i, t) ? 'ok' : ''}"><span class="hwe">${t.e}</span><div class="grow"><b>${t.h}</b><p>${esc(t.t)}</p>${t.x ? `<a href="${t.x.link}" target="_blank" rel="noopener noreferrer">Abrir ${esc(t.x.n)} ↗</a>` : ''}</div>
+  <button data-hw="${i}:${t.k}" ${hwDone(i, t) ? 'disabled' : ''}>${hwDone(i, t) ? '✓ Feito' : 'Feito'}</button></div>`).join('')}</div>`;
+}
+function wireHw(root, rerender) {
+  $$('[data-hw]', root).forEach((b) => (b.onclick = () => {
+    const [i, k] = b.dataset.hw.split(':'), t = hwTasks(+i).find((x) => x.k === k);
+    (S.hw[i] = S.hw[i] || {})[k] = today();
+    if (t.x && !S.seen[t.x.id]) S.seen[t.x.id] = today();
+    addXP(15); toast('🏠 Tarefa feita! +15 XP'); markActive(); weekCheck(); checkBadges(); checkDaily(); save();
+    if (rerender) rerender(); else { b.disabled = true; b.textContent = '✓ Feito'; b.closest('.hwt').classList.add('ok'); }
+  }));
+}
+const weekStart = () => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+const inWeek = (s) => !!s && s >= weekStart();
+const WQ = { hw: 5, xs: 2 };
+function weekStats() {
+  return { hw: Object.values(S.hw).reduce((a, o) => a + Object.values(o).filter(inWeek).length, 0), xs: Object.values(S.seen).filter(inWeek).length };
+}
+function weekCheck() {
+  const k = weekStart(), s = weekStats();
+  if (!S.wq[k] && s.hw >= WQ.hw && s.xs >= WQ.xs) { S.wq[k] = today(); addXP(100); if (S.freezes < 2) S.freezes++; toast('🎯 Missão da semana cumprida! +100 XP e uma proteção 🧊'); }
+}
+function weekChallenge() {
+  const k = weekStart(), lv = curLevel(), pool = EXTRAS.filter((x) => x.lvs.includes(lv));
+  let h = 7; for (const c of k + lv) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return pool[h % pool.length];
+}
+function weekCard() {
+  const s = weekStats(), done = !!S.wq[weekStart()], pc = (a, b) => Math.min(100, Math.round((a / b) * 100));
+  return `<div class="card week"><div class="row"><h3 class="grow">🎯 Missão da semana</h3><small class="mut">${done ? '✓ cumprida' : 'vale +100 XP e uma proteção 🧊'}</small></div>
+  <div class="wqrow"><span>🏠 Tarefas de casa</span><div class="bar"><i style="width:${pc(s.hw, WQ.hw)}%"></i></div><small>${Math.min(s.hw, WQ.hw)}/${WQ.hw}</small></div>
+  <div class="wqrow"><span>🎬 Conteúdos extras</span><div class="bar"><i style="width:${pc(s.xs, WQ.xs)}%"></i></div><small>${Math.min(s.xs, WQ.xs)}/${WQ.xs}</small></div>
+  <h4 class="wch">🏆 Desafio da semana <small class="mut">vale +50 XP</small></h4>${extraCard(weekChallenge())}</div>`;
+}
+function pendingHw() {
+  const ls = Object.entries(S.done).map(([d, v]) => ({ d: +d, at: v.d || '' })).filter((o) => !dayInfo(o.d).review)
+    .sort((a, b) => b.at.localeCompare(a.at) || b.d - a.d).map((o) => dayInfo(o.d).li);
+  return ls.find((i) => hwTasks(i).some((t) => !hwDone(i, t)));
 }
 
 /* ---------- hoje ---------- */
@@ -257,12 +330,15 @@ function home() {
     <div class="check"><span>${m.lesson ? '✅' : '⬜'}</span><span class="${m.lesson ? 'done' : ''}">Concluir a lição do dia</span></div>
     <div class="check"><span>${m.cards ? '✅' : '⬜'}</span><span class="${m.cards ? 'done' : ''}">Zerar as cartas de revisão${due ? ' (' + due + ')' : ''}</span></div>
     <div class="check"><span>${m.time ? '✅' : '⬜'}</span><span class="${m.time ? 'done' : ''}">Estudar <span id="clock">${clockText()}</span></span></div>
-    <small class="mut">${daily().perfect ? '🌟 Dia perfeito conquistado!' : m.lesson && left > 0 ? `Faltam ${left} min. ${due ? 'Que tal zerar as cartas?' : 'Um treino extra fecha a conta.'}` : 'As três juntas valem o bônus de Dia Perfeito (+30 XP).'}</small>
+    <div class="check"><span>${m.extra ? '✅' : '⬜'}</span><span class="${m.extra ? 'done' : ''}">Fazer uma tarefa de casa ou ver um conteúdo extra</span></div>
+    <small class="mut">${daily().perfect ? '🌟 Dia perfeito conquistado!' : m.lesson && left > 0 ? `Faltam ${left} min. ${due ? 'Que tal zerar as cartas?' : 'Um treino extra fecha a conta.'}` : 'As quatro juntas valem o bônus de Dia Perfeito (+30 XP).'}</small>
     <div class="row" style="margin-top:12px">${due ? `<button id="goC">🃏 Revisar ${due}</button>` : ''}${nDone() ? '<button id="goX">💪 Treino extra</button>' : ''}</div></div>
     <div class="card"><h3>${INT[top.k].e} Seu ponto forte ${hasData ? 'até agora' : '(palpite inicial)'}</h3><p><b>${INT[top.k].n}</b></p>
     <p class="mut">Estou colocando mais exercícios de ${INT[top.k].d}. As outras sete continuam aparecendo para eu seguir medindo.</p>
     <button class="ghost" id="goP">Ver meu perfil →</button></div>
   </div>
+  ${weekCard()}
+  ${pendingHw() !== undefined ? hwCard(pendingHw(), '🏠 Tarefa de casa · ' + esc(LESSONS[pendingHw()].de)) : ''}
   ${cur ? `<div class="card"><div class="row"><h3 class="grow">Sua jornada</h3><button class="ghost" id="goT">Ver trilha completa →</button></div><div class="mini">${miniPath(Array.from({ length: Math.min(5, TOTAL - cur + 1) }, (_, i) => cur + i))}</div></div>` : ''}
   <div class="row"><h2 class="grow">🎬 Para estudar fora daqui</h2><button class="ghost" id="goE">Ver todos →</button></div>
   <div class="xgrid">${pickExtras(curLevel(), 3).map(extraCard).join('')}</div>`;
@@ -274,7 +350,7 @@ function home() {
   if ($('#goT')) $('#goT').onclick = () => go('trilha');
   $('#goP').onclick = () => go('perfil'); $('#goE').onclick = () => go('extras');
   $$('.mnode:not([disabled])').forEach((b) => (b.onclick = () => go('intro', +b.dataset.d)));
-  wireSeen(app, home);
+  wireSeen(app, home); wireHw(app, home);
 }
 
 /* ---------- trilha A1–C2 ---------- */
@@ -409,22 +485,23 @@ function intro(day) {
   app.innerHTML = `<button class="ghost back" id="bk">← Trilha</button>
   <div class="lhead" style="--lc:${LVCOL[d.level]}">${levelBadge(d.level, 60)}<div><span class="eyebrow">${d.level} · Semana ${d.w + 1} · Dia ${day}</span><h1>${esc(l.de)}</h1><p class="mut">${esc(l.pt)}</p></div></div>
   <details class="card how" ${d.level === 'A1' ? 'open' : ''}><summary>🗓️ Como estudar esta lição</summary>${studyTips(d.level)}</details>
-  ${l.deep ? `<div class="card deep"><h2 class="dh">📖 Aula passo a passo</h2>${deepHTML(l.deep)}</div>` : ''}
-  <div class="card"><h3>🧩 ${l.deep ? 'Resumo da regra' : 'Gramática'}: ${esc(l.gt)}</h3><p>${esc(l.gx)}</p>
+  <div class="card deep"><h2 class="dh">📖 Aula passo a passo</h2>${l.deep ? (visFor(l) ? `<h3 class="step">🗺️ Veja no esquema</h3>${visFor(l)}` : '') + deepHTML(l.deep) : autoDeep(l)}</div>
+  ${l.deep ? `<div class="card"><h3>🧩 Resumo da regra: ${esc(l.gt)}</h3><p>${esc(l.gx)}</p>
   ${l.pts.length ? `<h3 style="margin-top:14px">Como funciona</h3><ul class="pts">${l.pts.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
   <h3 style="margin-top:14px">Exemplos</h3>
   ${l.ge.map((e) => `<p>${spk(e.de)}<span class="de">${esc(e.de)}</span><br><small>${esc(e.pt)}</small></p>`).join('')}
   ${l.ex.length ? `<h3 style="margin-top:14px">No dia a dia</h3>${l.ex.map((e) => `<p>${spk(e.de)}<span class="de">${esc(e.de)}</span><br><small>${esc(e.pt)}</small></p>`).join('')}` : ''}</div>
-  ${l.bd ? `<div class="card"><h3>🔎 Frase desmontada</h3><p class="mut">Cada peça da frase e o papel que ela cumpre. As cores são as mesmas em todas as lições.</p>${breakdownHTML(l.bd)}</div>` : ''}
+  ${l.bd ? `<div class="card"><h3>🔎 Frase desmontada</h3><p class="mut">Cada peça da frase e o papel que ela cumpre. As cores são as mesmas em todas as lições.</p>${breakdownHTML(l.bd)}</div>` : ''}` : ''}
   <div class="card"><h3>📚 Vocabulário</h3><small>Cores: <span class="g-m">der</span> · <span class="g-f">die</span> · <span class="g-n">das</span></small>
   <table>${l.v.map((v, j) => `${v.x && !l.v[j - 1].x ? '<tr><td colspan="3"><small>Vocabulário ampliado</small></td></tr>' : ''}<tr><td>${spk(v.de)}</td><td class="de ${gcls(v.de)}">${esc(v.de)}</td><td>${v.em} ${esc(v.pt)}</td></tr>`).join('')}</table></div>
   <div class="card"><h3>💬 Conversa</h3>
   ${l.dlg.map((x, i) => `<div class="bubble ${i % 2 ? 'b' : ''}">${spk(x.de)}<span class="de">${esc(x.de)}</span><small>${esc(x.pt)}</small></div>`).join('')}</div>
   <button class="pri big" id="st">Praticar (14 exercícios)</button>
+  ${hwCard(d.li)}
   <h2>🎬 Para ir além</h2><div class="xgrid">${pickExtras(d.level, 2).map(extraCard).join('')}</div>`;
   $('#st').onclick = () => startSession('lesson', day);
   $('#bk').onclick = () => go('trilha');
-  wireSeen(app, () => intro(day));
+  wireSeen(app, () => intro(day)); wireHw(app, () => intro(day));
 }
 
 /* ---------- sessão de exercícios ---------- */
@@ -500,6 +577,7 @@ function finish() {
   <div class="card"><h3>Como você foi em cada caminho</h3>
   ${Object.entries(s.by).map(([k, [o, n]]) => `<div class="prow"><span>${INT[k].e} ${INT[k].n}</span><div class="bar"><i style="width:${Math.round((o / n) * 100)}%"></i></div><small>${o}/${n}</small></div>`).join('')}
   ${s.kind === 'lesson' ? '<small>As ' + s.ctxs[0].v.length + ' palavras da lição entram nas suas cartas a partir de amanhã. É nessa revisão que eu meço a retenção.</small>' : ''}</div>
+  ${s.kind === 'lesson' ? hwCard(dayInfo(s.day).li, '🏠 Agora, a tarefa de casa') : ''}
   ${left > 0 ? `<p class="mut">Faltam ${left} min para a sua meta de hoje.</p>` : '<p class="mut">Meta de tempo de hoje cumprida. 👏</p>'}
   ${due ? `<button class="pri big" id="fC">🃏 Revisar ${due} cartas agora</button>` : ''}
   <button class="big" id="fX" style="margin-top:8px">💪 Treino extra</button>
@@ -509,6 +587,7 @@ function finish() {
   $('#fX').onclick = () => startSession('extra');
   if ($('#fN')) $('#fN').onclick = () => go('intro', cur);
   $('#fH').onclick = () => go('home');
+  wireHw(app);
   scrollTo(0, 0);
 }
 
@@ -775,7 +854,7 @@ function perfil() {
   <h2>Conquistas (${Object.keys(S.badges).length}/${BADGES.length})</h2>
   <div class="badges">${BADGES.map(([id, e, n, d]) => `<div class="badge ${S.badges[id] ? '' : 'off'}" title="${d}"><b>${e}</b>${n}<br><small>${d}</small></div>`).join('')}</div>
   <h2>📔 Diário</h2>
-  <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
+  <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(x.x ? '🎬 ' + x.x : LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
   <h2>Ajustes</h2>
   <div class="card"><label>Meta diária (min)<select id="goal">${[30, 60, 90, 120, 180].map((g) => `<option ${g === S.goal ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
   <label class="row"><input type="checkbox" id="aud" ${S.audio ? 'checked' : ''}> Áudio em alemão (voz do navegador)</label>

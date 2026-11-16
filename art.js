@@ -81,6 +81,53 @@ function deepHTML(md) {
   return h;
 }
 
+/* ---------- facilitação gráfica: esquemas por lição ---------- */
+const VICON = { F: '🧱', T: '⏳', S: '📏', P: '🔀', V: '⚖️', M: '📊', E: '🧮' };
+const VOPS = new Set(['+', '=', '→', ',']);
+const kv = (p) => { const e = p.indexOf('='); return e < 0 ? [p, ''] : [p.slice(0, e), p.slice(e + 1)]; };
+function visHTML(spec) {
+  const seg = spec.split(';'), k = seg[0][0], title = seg[0].slice(2), rest = seg.slice(1);
+  let body = '';
+  if (k === 'F') {
+    const hs = rest[0].split('|').map((h) => h.split('^'));
+    body = `<div class="tw"><div class="fgrid" style="grid-template-columns:repeat(${hs.length},minmax(88px,auto))">${hs.map(([t, c]) => `<div class="fh k-${c || 'c'}">${inl(t)}</div>`).join('')}${rest.slice(1).map((r) => { const cs = r.split('|'); return hs.map(([, c], i) => `<div class="fc k-${c || 'c'}">${cs[i] ? inl(cs[i]) : '<span class="mut">·</span>'}</div>`).join(''); }).join('')}</div></div>`;
+  } else if (k === 'T') {
+    const ev = rest.map((p) => { const [a, ex] = kv(p), [lab, pos] = a.split('@'); return { lab, pos: +pos || 0, ex }; }).sort((a, b) => a.pos - b.pos);
+    body = `<div class="tl">${ev.map((e) => `<div class="tli ${e.pos < 0 ? 'past' : e.pos > 0 ? 'fut' : 'now'}"><span class="tdot"></span><span class="ttag">${e.pos < 0 ? 'passado' : e.pos > 0 ? 'futuro' : 'agora'}</span><b>${inl(e.lab)}</b>${e.ex ? `<span class="de">${inl(e.ex)}</span>` : ''}</div>`).join('')}</div>`;
+  } else if (k === 'S') {
+    const [l, r] = rest[0].split('|'), it = rest.slice(1).map(kv);
+    body = `<div class="tw"><div class="scale" style="min-width:${it.length * 108}px"><div class="sends"><span>${inl(l)}</span><span>${inl(r)}</span></div><div class="sbar"></div><div class="sitems" style="grid-template-columns:repeat(${it.length},1fr)">${it.map(([a, b]) => `<div><span class="sdot"></span><b class="de">${inl(a)}</b><small>${inl(b)}</small></div>`).join('')}</div></div></div>`;
+  } else if (k === 'P') {
+    body = `<div class="flow">${rest.map(kv).map(([a, b], i) => `${i ? '<span class="farr" aria-hidden="true">→</span>' : ''}<div class="fstep"><span class="fn">${i + 1}</span><b>${inl(a)}</b>${b ? `<span class="de">${inl(b)}</span>` : ''}</div>`).join('')}</div>`;
+  } else if (k === 'V') {
+    body = `<div class="vs">${rest.map((c) => { const [t, ...ls] = c.split('|'); return `<div class="vcol"><b>${inl(t)}</b>${ls.map((x) => `<span>${inl(x)}</span>`).join('')}</div>`; }).join('')}</div>`;
+  } else if (k === 'M') {
+    const rows = rest.map((r) => r.split('|'));
+    body = `<div class="tw"><table class="dt vm">${rows.map((r, i) => `<tr>${r.map((c, j) => (i === 0 ? `<th>${inl(c)}</th>` : `<td class="${j === 0 ? 'm0' : ''}">${inl(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`;
+  } else if (k === 'E') {
+    body = `<div class="eq">${rest[0].split('|').map((t) => { if (VOPS.has(t.trim())) return `<span class="eop">${t.trim()}</span>`; const [x, c] = t.split('^'); return `<span class="bw k-${c || 'c'}"><b>${inl(x)}</b></span>`; }).join('')}</div>`;
+  }
+  return `<div class="vbox"><div class="vt">${VICON[k] || '🗺️'} ${inl(title)}</div>${body}</div>`;
+}
+const visFor = (l) => (typeof VIS !== 'undefined' && VIS[l.de] ? VIS[l.de].map(visHTML).join('') : '');
+
+// Aula montada em passos a partir do conteúdo da lição (B1 em diante), com os esquemas visuais.
+function autoDeep(l) {
+  let n = 0;
+  const st = (t) => `<h3 class="step">Passo ${++n}: ${t}</h3>`;
+  const exP = (e) => `<p>${spk(e.de)}<span class="de">${esc(e.de)}</span><br><small>${esc(e.pt)}</small></p>`;
+  const vis = visFor(l);
+  return `${st('a ideia')}<p>${esc(l.gx)}</p>
+  ${vis ? st('veja no esquema') + vis : ''}
+  ${l.pts.length ? st('como funciona, ponto a ponto') + `<ol class="pts num">${l.pts.map((p) => `<li>${esc(p)}</li>`).join('')}</ol>` : ''}
+  ${st('exemplos')}<div class="exs">${l.ge.map(exP).join('')}</div>
+  ${l.ex.length ? st('no dia a dia') + `<div class="exs">${l.ex.map(exP).join('')}</div>` : ''}
+  ${l.bd ? st('a frase por dentro') + breakdownHTML(l.bd) : ''}
+  ${st('armadilhas')}${l.cz.filter((c) => c.why).map((c) => `<div class="box warn"><span class="bl">⚠️ ${esc(fill(c))}</span>Não é ${c.w.map((w) => '«' + esc(w) + '»').join(' nem ')}: ${esc(c.why)}.</div>`).join('')}
+  <div class="quiz"><h4>✍️ Teste rápido</h4><p class="mut">Escolha a resposta de cabeça, ou em voz alta, antes de tocar para conferir.</p>
+  ${l.cz.map((c) => `<details><summary>${esc(c.q)} <small class="mut">(${[c.a, ...c.w].sort().map(esc).join(' · ')})</small></summary><p>${esc(c.a)}${c.why ? ': ' + esc(c.why) : ''}</p></details>`).join('')}</div>`;
+}
+
 /* ---------- frase desmontada ---------- */
 const RGROUP = { s: 'Sujeito', v: 'Verbo conjugado', v2: 'Fim do verbo', o: 'Objetos', p: 'Atributos', c: 'Complementos', n: 'Negação', w: 'Conectores' };
 const RHELP = {
