@@ -46,7 +46,10 @@ function say(t, rate = 0.9) {
   u.lang = 'de-DE'; if (deVoice) u.voice = deVoice; u.rate = rate; speechSynthesis.speak(u);
 }
 const spk = (t) => (hasTTS && S.audio ? `<button class="spk" data-say="${esc(t)}" aria-label="Ouvir">🔊</button>` : '');
-document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say); });
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say, b.dataset.say.split(' ').length < 3 ? 0.8 : 0.9); });
+// Toda vez que algo novo aparece na tela, as palavras alemãs ganham áudio.
+let enhRaf = 0;
+new MutationObserver(() => { cancelAnimationFrame(enhRaf); enhRaf = requestAnimationFrame(() => enhanceAudio(app)); }).observe(app, { childList: true, subtree: true });
 
 /* ---------- trilha ---------- */
 function dayInfo(d) {
@@ -494,6 +497,7 @@ function intro(day) {
   ${l.bd ? `<div class="card"><h3>🔎 Frase desmontada</h3><p class="mut">Cada peça da frase e o papel que ela cumpre. As cores são as mesmas em todas as lições.</p>${breakdownHTML(l.bd)}</div>` : ''}` : ''}
   <div class="card"><h3>📚 Vocabulário</h3><small>Cores: <span class="g-m">der</span> · <span class="g-f">die</span> · <span class="g-n">das</span></small>
   <table>${l.v.map((v, j) => `${v.x && !l.v[j - 1].x ? '<tr><td colspan="3"><small>Vocabulário ampliado</small></td></tr>' : ''}<tr><td>${spk(v.de)}</td><td class="de ${gcls(v.de)}">${esc(v.de)}</td><td>${v.em} ${esc(v.pt)}</td></tr>`).join('')}</table></div>
+  ${newWordsCard(l)}
   <div class="card"><h3>💬 Conversa</h3>
   ${l.dlg.map((x, i) => `<div class="bubble ${i % 2 ? 'b' : ''}">${spk(x.de)}<span class="de">${esc(x.de)}</span><small>${esc(x.pt)}</small></div>`).join('')}</div>
   <button class="pri big" id="st">Praticar (14 exercícios)</button>
@@ -502,6 +506,20 @@ function intro(day) {
   $('#st').onclick = () => startSession('lesson', day);
   $('#bk').onclick = () => go('trilha');
   wireSeen(app, () => intro(day)); wireHw(app, () => intro(day));
+}
+
+/* ---------- palavras novas da lição ---------- */
+let KNOWN = null;
+const knownFor = (i) => { if (!KNOWN) KNOWN = knownIndex(); return KNOWN[i].unknown; };
+function newWordsCard(l) {
+  const rest = knownFor(l.i), sup = SUP[l.de] || [];
+  if (!sup.length && !rest.length) return '';
+  const orig = (w) => { const m = new RegExp('(^|[^\\p{L}])(' + w + ')(?![\\p{L}])', 'iu').exec(l.usedText || ''); return m ? m[2] : w; };
+  const tr = (w) => `https://translate.google.com/?sl=de&tl=pt&text=${encodeURIComponent(w)}&op=translate`;
+  return `<div class="card"><h3>🆕 Palavras novas desta lição</h3>
+  <p class="mut">Elas aparecem nos exemplos, no diálogo e nos exercícios de hoje, além do vocabulário principal. Ouça cada uma antes de praticar.</p>
+  <table>${sup.map((s) => `<tr><td>${spk(s.de)}</td><td class="de ${gcls(s.de)}">${esc(s.de)}</td><td>${esc(s.pt)}</td></tr>`).join('')}
+  ${rest.map((w) => { const o = orig(w); return `<tr><td>${spk(o)}</td><td class="de">${esc(o)}</td><td><a href="${tr(o)}" target="_blank" rel="noopener noreferrer">ver tradução ↗</a></td></tr>`; }).join('')}</table></div>`;
 }
 
 /* ---------- sessão de exercícios ---------- */
@@ -747,8 +765,10 @@ const GEN = {
   // Interpessoal: reagir dentro de uma conversa.
   int(les, el, done) {
     const p = rnd(2) * 2, a = les.dlg[p], b = les.dlg[p + 1];
-    const near = LESSONS.filter((l) => l !== les && Math.abs(l.i - les.i) < 12);
-    const ds = sample(near, 2).map((l) => l.dlg[1 + rnd(2) * 2]);
+    // Respostas erradas vêm desta lição ou de lições anteriores: só palavras que a pessoa já viu.
+    const pool = [...les.dlg.filter((x, j) => j % 2 === 1 && x !== b), ...les.ge, ...les.ex,
+      ...LESSONS.filter((l) => l.i < les.i && les.i - l.i < 12).map((l) => l.dlg[1 + rnd(2) * 2])].filter((x) => x.de !== b.de);
+    const ds = sample([...new Map(pool.map((x) => [x.de, x])).values()], 2);
     mcq(el, `<p class="q">Qual é a melhor resposta nesta conversa?</p><div class="bubble">${spk(a.de)}<span class="de">${esc(a.de)}</span><small>${esc(a.pt)}</small></div>`,
       shuffle([b.de, ...ds.map((d) => d.de)]), b.de, (ok, g) => done(ok, [], b.de + ' = ' + b.pt, b.de, whyReply(a, b, ds, g)), 'col');
     setTimeout(() => { if (el.isConnected) say(a.de); }, 350);
@@ -773,11 +793,12 @@ const GEN = {
   // Naturalista: classificar por gênero ou achar o intruso do tema.
   nat(les, el, done) {
     const nouns = les.v.filter((v) => gender(v.de) && !/^die (Eltern|Leute|Schmerzen|Nachrichten|Nebenkosten|Kenntnisse|Zähne|Geschwister)/.test(v.de));
-    if (nouns.length && Math.random() < 0.5) {
+    const far = LESSONS.filter((l) => l.i <= les.i - 3); // o intruso vem de uma lição já estudada
+    if (nouns.length && (Math.random() < 0.5 || !far.length)) {
       const v = pick(nouns), art = v.de.split(' ')[0];
       mcq(el, `<p class="q">Em qual família esta palavra entra?<b>${v.em} ${esc(v.de.replace(/^\w+ /, ''))}</b></p><p class="hint">${esc(v.pt)}</p>`, ['der', 'die', 'das'], art, (ok, g) => done(ok, [v.k], v.de + ' = ' + v.pt, v.de, `<p>Você escolheu <i>${esc(g)}</i>, mas é <b class="${gcls(v.de)}">${esc(v.de)}</b>. O gênero em alemão não acompanha o do português (${esc(v.pt)}).${genderHint(v.de)}</p>`));
     } else {
-      const far = LESSONS.filter((l) => Math.abs(l.i - les.i) >= 3), from = pick(far), odd = pick(from.v), vs = sample(les.v, 3);
+      const from = pick(far), odd = pick(from.v), vs = sample(les.v, 3);
       mcq(el, `<p class="q">Qual palavra <u>não</u> pertence ao grupo?<b>${esc(les.pt)}</b></p>`, shuffle([...vs.map((v) => v.de), odd.de]), odd.de,
         (ok, g) => { const c = vs.find((v) => v.de === g) || odd; done(ok, vs.map((v) => v.k), [...vs, odd].map((v) => v.de + ' = ' + v.pt).join(' · '), '',
           `<p>Você marcou ${q(c.de)}, que significa ${q(c.pt)} e faz parte do vocabulário desta lição (${esc(les.pt)}).</p><p>O intruso era <b>${esc(odd.de)}</b> (${esc(odd.pt)}), que vem de outra lição: ${q(from.pt)}.</p>`); });

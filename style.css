@@ -39,6 +39,9 @@ button.link { border: 0; background: none; padding: 0; text-decoration: underlin
 .done { color: var(--mut); text-decoration: line-through; }
 .de { font-weight: 600; } .g-m { color: var(--m); } .g-f { color: var(--f); } .g-n { color: var(--n); }
 .spk { border: 0; background: none; padding: 2px 6px; font-size: 1.05rem; }
+.spk.sm { font-size: .82rem; padding: 0 4px 0 0; vertical-align: baseline; opacity: .75; } .spk.sm:hover { opacity: 1; }
+.sayw { cursor: pointer; text-decoration: underline dotted color-mix(in srgb, var(--blue2) 70%, transparent); text-underline-offset: 3px; }
+.sayw:hover { color: var(--blue2); } .bw.sayw { text-decoration: none; } .bw.sayw:hover { filter: brightness(1.15); }
 table { width: 100%; border-collapse: collapse; } td { padding: 7px 4px; border-top: 1px solid var(--line); vertical-align: top; }
 .bubble { background: var(--bg3); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 10px 14px; margin: 8px 0; max-width: 88%; }
 .bubble.b { margin-left: auto; background: rgba(0, 121, 242, .16); border-color: rgba(0, 121, 242, .4); border-radius: 14px 14px 4px 14px; }

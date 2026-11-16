@@ -50,6 +50,57 @@ function pathSVG(days, cur, step = 100) {
   return { svg: `<svg viewBox="0 0 ${PATH_W} ${H}" width="${PATH_W}" height="${H}" class="path">${marks}${lines}${nodes}</svg>`, P };
 }
 
+/* ---------- áudio em qualquer palavra alemã ---------- */
+// Reconhece se um trecho é alemão comparando com todas as palavras alemãs da trilha e com palavras comuns do português.
+const PT_STOP = new Set(('a o e é de do da dos das em no na nos nas um uma uns umas que com para por não se os as ao aos à às eu ele ela eles elas você vocês nós sim mas ou como mais ' +
+  'muito quando onde qual quem isso isto esse essa este esta seu sua meu minha tem ter ser estar foi são está pode cada sem sobre entre até depois antes também já ainda só então ' +
+  'porque pois nem pelo pela pelos pelas lhe me te dele dela forma verbo artigo plural singular sujeito objeto caso feminino masculino neutro exemplo regra fim posição meio resto ' +
+  'presente passado futuro agora pessoa tipo quando sentido uso dia dias hoje ontem amanhã casa vida').split(' '));
+const DE_EXTRA = ('ich du er sie es wir ihr mich dich ihn uns euch mir dir ihm ihnen sich mein dein sein unser euer meine deine seine ihre unsere eure meinen meinem meiner deinen ihren ' +
+  'der die das den dem des ein eine einen einem einer eines kein keine keinen keinem keiner bin bist ist sind seid war warst waren wart habe hast hat haben habt hatte hattest hatten hattet ' +
+  'werde wirst wird werden werdet wurde wurden worden kann kannst können könnt konnte muss musst müssen müsst musste darf darfst dürfen dürft durfte will willst wollen wollt wollte ' +
+  'soll sollst sollen sollt sollte möchte möchtest möchten möchtet könnte würde hätte wäre sei heiße heißt heißen komme kommst kommt kommen wohne wohnst wohnt wohnen spreche sprichst ' +
+  'spricht sprechen lerne lernst lernt fahre fährst fährt lese liest esse isst nehme nimmst nimmt sehe siehst sieht schlafe schläfst schläft arbeite arbeitest arbeitet tanze tanzt ' +
+  'spiele spielst spielt koche kochst kocht gemacht gekauft gelernt gespielt gearbeitet gegessen getrunken gesehen gelesen geschrieben geschlafen genommen gegangen gefahren geflogen ' +
+  'gekommen geblieben gewesen aufgestanden studiert besucht verstanden eingekauft angerufen null eins zwei drei vier fünf sechs sieben acht neun zehn elf zwölf dreizehn sechzehn ' +
+  'siebzehn zwanzig dreißig vierzig fünfzig sechzig siebzig achtzig neunzig hundert uhr halb viertel montag dienstag mittwoch donnerstag freitag samstag sonntag im am ins ans zum zur ' +
+  'beim vom aus bei mit seit von zu auf an unter über neben hinter zwischen für ohne gegen durch weil denn dass wenn als ob obwohl und aber oder deshalb trotzdem sonst dann wer was wo ' +
+  'woher wohin wann wie warum nicht doch ja nein gern lieber besser mehr').split(' ');
+const words = (t) => (String(t).toLowerCase().replace(/\*\*/g, '').match(/\p{L}+/gu) || []);
+let DE_SET = null;
+function deSet() {
+  if (DE_SET) return DE_SET;
+  const s = new Set(DE_EXTRA), add = (t) => words(t).forEach((w) => s.add(w));
+  LESSONS.forEach((l) => {
+    l.v.forEach((v) => add(v.de)); [...l.ge, ...l.ex, ...l.dlg].forEach((e) => add(e.de));
+    l.cz.forEach((c) => { add(c.q.replace('___', ' ')); add(c.a); c.w.forEach(add); });
+    if (l.bd) l.bd.t.forEach((x) => add(x.w));
+  });
+  PT_STOP.forEach((w) => s.delete(w));
+  return (DE_SET = s);
+}
+function isGerman(t) {
+  const ws = words(t.replace(/\(.*?\)/g, ' ')); if (!ws.length) return false;
+  let de = 0, pt = 0;
+  ws.forEach((w) => { if (deSet().has(w)) de++; else if (PT_STOP.has(w) || /[ãõçáéíóúâêôà]/.test(w)) pt++; });
+  return de > 0 && de >= pt && de / ws.length >= 0.5;
+}
+const sayText = (t) => t.replace(/\*\*/g, '').replace(/\(.*?\)/g, ' ').replace(/\s+/g, ' ').trim();
+function enhanceAudio(root) {
+  if (!hasTTS || !S.audio) return;
+  root.querySelectorAll('.dt td, .dt th, .fc, .vcol span, .vcol b, .sitems b, .fstep b, .fstep .de, .tli b, .tli .de, .gloss .de').forEach((el) => {
+    if (el.dataset.au || el.closest('#ex')) return; el.dataset.au = '1';
+    const t = el.textContent.trim(); if (!t || t.startsWith('-') || !isGerman(t)) return;
+    el.insertAdjacentHTML('afterbegin', `<button class="spk sm" data-say="${esc(sayText(t))}" aria-label="Ouvir">🔊</button>`);
+  });
+  root.querySelectorAll('.deep p > b, .deep li > b, .box b, .why b, .quiz details > p, .bw, .hint b').forEach((el) => {
+    if (el.dataset.au || el.closest('#ex .opts, .line, .pool') || el.closest('[data-say]')) return; el.dataset.au = '1';
+    const t = (el.matches('.bw') ? (el.querySelector('b') || el).textContent : el.textContent).trim();
+    if (!t || !isGerman(t)) return;
+    el.classList.add('sayw'); el.dataset.say = sayText(t); el.title = 'Toque para ouvir';
+  });
+}
+
 /* ---------- aulas em texto marcado (guia e A1) ---------- */
 const inl = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 function deepHTML(md) {
