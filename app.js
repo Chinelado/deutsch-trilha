@@ -39,14 +39,46 @@ if (hasTTS) {
   const lv = () => { deVoice = speechSynthesis.getVoices().filter((v) => /^de/i.test(v.lang)).sort((a, b) => rank(a) - rank(b))[0] || null; };
   lv(); speechSynthesis.onvoiceschanged = lv;
 }
-function say(t, rate = 0.9) {
-  if (!hasTTS || !S.audio) return;
-  speechSynthesis.cancel();
+/* Áudios gravados (ElevenLabs): audio/index.json lista os que existem; cada um fica em audio/xx/<hash>.mp3.
+   A chave é o texto limpo (e a voz, nos diálogos), com o mesmo hash usado por tools/audio-elevenlabs.mjs. */
+const audioKey = (t, slot = 'a') => (slot === 'a' ? '' : slot + '|') + String(t).replace(/\*\*/g, '').replace(/\(.*?\)/g, ' ').replace(/___/g, ' ').replace(/\s+/g, ' ').trim();
+function cyrb53(str, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+let AUD = null, clip = null;
+fetch('audio/index.json').then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.h) AUD = new Set(j.h); }).catch(() => {});
+function stopClip() { if (clip) { clip.onended = clip.onerror = null; clip.pause(); clip = null; } }
+// Toca o áudio gravado, se existir (na voz pedida ou, na falta dela, em outra). Devolve false para usar a voz do navegador.
+// Se o arquivo não carregar (sem internet e ainda fora do cache), chama onfail para cair na voz do navegador.
+function playClip(t, slot = 'a', rate = 1, onend, onfail) {
+  if (!AUD) return false;
+  const h = [slot, 'a', 'b', 'c', 'd'].map((s) => cyrb53(audioKey(t, s))).find((x) => AUD.has(x));
+  if (!h) return false;
+  stopClip(); if (hasTTS) speechSynthesis.cancel();
+  const a = (clip = new Audio(`audio/${h.slice(0, 2)}/${h}.mp3`));
+  a.playbackRate = rate; a.preservesPitch = true;
+  a.onended = () => { if (clip === a) clip = null; if (onend) onend(); };
+  a.onerror = () => { if (clip !== a) return; clip = null; console.warn('Áudio gravado indisponível, usando a voz do navegador:', t); (onfail || onend || (() => {}))(); };
+  a.play().catch((e) => { if (e.name !== 'AbortError' && a.onerror) a.onerror(); });
+  return true;
+}
+function ttsSay(t, rate) {
+  if (!hasTTS) return;
+  stopClip(); speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(t.replace(/___/g, ' '));
   u.lang = 'de-DE'; if (deVoice) u.voice = deVoice; u.rate = rate; speechSynthesis.speak(u);
 }
-const spk = (t) => (hasTTS && S.audio ? `<button class="spk" data-say="${esc(t)}" aria-label="Ouvir">🔊</button>` : '');
-document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say, b.dataset.say.split(' ').length < 3 ? 0.8 : 0.9); });
+function say(t, rate = 0.9, slot = 'a') {
+  if (!S.audio) return;
+  // palavras soltas tocam um pouco mais devagar
+  if (!playClip(t, slot, rate < 0.85 ? 0.9 : 1, null, () => ttsSay(t, rate))) ttsSay(t, rate);
+}
+const spk = (t, slot) => ((hasTTS || AUD) && S.audio ? `<button class="spk" data-say="${esc(t)}"${slot ? ` data-v="${slot}"` : ''} aria-label="Ouvir">🔊</button>` : '');
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say, b.dataset.say.split(' ').length < 3 ? 0.8 : 0.9, b.dataset.v || 'a'); });
 // Toda vez que algo novo aparece na tela, as palavras alemãs ganham áudio.
 let enhRaf = 0;
 new MutationObserver(() => { cancelAnimationFrame(enhRaf); enhRaf = requestAnimationFrame(() => enhanceAudio(app)); }).observe(app, { childList: true, subtree: true });
@@ -174,7 +206,7 @@ const clockText = () => Math.floor(secsToday() / 60) + ' / ' + S.goal + ' min';
 /* ---------- navegação ---------- */
 let view = 'home';
 function go(v, arg) {
-  view = v; sess = null; if (hasTTS) speechSynthesis.cancel();
+  view = v; sess = null; stopClip(); if (hasTTS) speechSynthesis.cancel();
   const tabs = [['home', '🏠', 'Hoje'], ['trilha', '🗺️', 'Trilha'], ['cards', '🃏', 'Cartas'], ['guide', '📘', 'Guia'], ['extras', '🎬', 'Extras'], ['perfil', '🧠', 'Perfil']];
   const due = dueKeys().length;
   nav.hidden = !S.start;
@@ -523,7 +555,7 @@ function intro(day) {
   <table>${l.v.map((v, j) => `${v.x && !l.v[j - 1].x ? '<tr><td colspan="3"><small>Vocabulário ampliado</small></td></tr>' : ''}<tr><td>${spk(v.de)}</td><td class="de ${gcls(v.de)}">${esc(v.de)}</td><td>${v.em} ${esc(v.pt)}</td></tr>`).join('')}</table></div>
   ${newWordsCard(l)}
   <div class="card"><h3>💬 Conversa</h3>
-  ${l.dlg.map((x, i) => `<div class="bubble ${i % 2 ? 'b' : ''}">${spk(x.de)}<span class="de">${esc(x.de)}</span><small>${esc(x.pt)}</small></div>`).join('')}</div>
+  ${l.dlg.map((x, i) => `<div class="bubble ${i % 2 ? 'b' : ''}">${spk(x.de, i % 2 ? 'b' : '')}<span class="de">${esc(x.de)}</span><small>${esc(x.pt)}</small></div>`).join('')}</div>
   <button class="pri big" id="st">Praticar (14 exercícios)</button>
   ${hwCard(d.li)}
   <h2>🎬 Para ir além</h2><div class="xgrid">${pickExtras(d.level, 2).map(extraCard).join('')}</div>`;
@@ -907,7 +939,8 @@ function perfil() {
   <div class="card"><label>Meta diária (min)<select id="goal">${[30, 60, 90, 120, 180].map((g) => `<option ${g === S.goal ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
   <label class="row"><input type="checkbox" id="aud" ${S.audio ? 'checked' : ''}> Áudio em alemão (voz do navegador)</label>
   <label class="row"><input type="checkbox" id="supc" ${supOn() ? 'checked' : ''}> Incluir as palavras de apoio (🆕) nas cartas de revisão</label>
-  ${hasTTS && deVoice ? `<p class="mut">Voz em uso: ${esc(deVoice.name)} ${spk('Guten Tag! Ich bin deine deutsche Stimme.')}</p>` : ''}
+  ${AUD ? `<p class="mut">🎙️ ${AUD.size.toLocaleString('pt-BR')} áudios gravados com voz natural (ElevenLabs). O que ainda não foi gravado usa a voz do navegador.</p>` : ''}
+  ${hasTTS && deVoice ? `<p class="mut">Voz do navegador: ${esc(deVoice.name)} ${spk('Guten Tag! Ich bin deine deutsche Stimme.')}</p>` : ''}
   ${hasTTS && !deVoice ? '<p class="mut">⚠️ Não encontrei uma voz alemã neste navegador; a pronúncia sai errada. Abra a plataforma no Chrome ou no Edge, que trazem voz alemã própria, ou instale a voz em Configurações do Windows → Hora e idioma → Fala → Adicionar vozes → Alemão.</p>' : ''}
   <div class="row" style="margin-top:10px"><button id="exp">⬇️ Exportar backup</button><button id="imp">⬆️ Importar backup</button><input type="file" id="file" accept=".json" hidden></div>
   <p class="mut">O progresso fica só neste navegador. Use o backup para levar a outro dispositivo.</p>
@@ -934,23 +967,30 @@ function textsList() {
     return `<button class="txi ${o ? '' : 'lock'}" ${o ? `data-tx="${t.id}"` : 'disabled'}><span class="tag">${t.lv}</span><span class="grow"><b>${t.kind === 'escuta' ? '🎧' : '📖'} ${esc(t.t)}</b><small>${o ? (r ? `✓ ${r.ok}/${r.n} acertos` : 'Semana ' + t.w) : '🔒 libera na semana ' + t.w}</small></span></button>`; }).join('')}</div>`;
 }
 let readTok = 0, RATE = 0.9;
-function stopRead() { readTok++; if (hasTTS) speechSynthesis.cancel(); $$('.tpara.on').forEach((x) => x.classList.remove('on')); }
+function stopRead() { readTok++; stopClip(); if (hasTTS) speechSynthesis.cancel(); $$('.tpara.on').forEach((x) => x.classList.remove('on')); }
 const splitWho = (p) => { const m = /^([^:.!?]{2,32}):\s(.+)$/s.exec(p); return m ? { who: m[1], txt: m[2] } : { who: '', txt: p }; };
 function readFrom(paras, from) {
-  if (!hasTTS) return toast('Este navegador não tem voz para leitura.');
+  if (!hasTTS && !AUD) return toast('Este navegador não tem voz para leitura.');
   stopRead(); const tok = ++readTok;
-  const voices = speechSynthesis.getVoices().filter((v) => /^de/i.test(v.lang)), who = {};
+  const voices = hasTTS ? speechSynthesis.getVoices().filter((v) => /^de/i.test(v.lang)) : [], who = {};
   const voiceFor = (w) => { if (!w || voices.length < 2) return deVoice; if (!(w in who)) who[w] = voices[Object.keys(who).length % voices.length]; return who[w]; };
+  // Cada personagem tem uma voz gravada fixa (a, b, c, d), na ordem em que aparece no texto, igual ao gerador de áudios.
+  const slots = {}; paras.forEach((p) => { const { who: w } = splitWho(p); if (w && !(w in slots)) slots[w] = 'abcd'[Object.keys(slots).length % 4]; });
   let i = from;
   const next = () => {
     if (tok !== readTok) return;
     $$('.tpara.on').forEach((x) => x.classList.remove('on'));
     if (i >= paras.length) return;
     const el = document.querySelector(`.tpara[data-i="${i}"]`); if (el) { el.classList.add('on'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-    const { who: w, txt } = splitWho(paras[i]), u = new SpeechSynthesisUtterance(txt);
-    u.lang = 'de-DE'; const v = voiceFor(w); if (v) u.voice = v; u.rate = RATE;
-    u.onend = () => { i++; next(); }; u.onerror = () => { if (tok === readTok) { i++; next(); } };
-    speechSynthesis.speak(u);
+    const { who: w, txt } = splitWho(paras[i]), adv = () => { if (tok === readTok) { i++; next(); } };
+    const tts = () => {
+      if (!hasTTS || tok !== readTok) return adv();
+      const u = new SpeechSynthesisUtterance(txt);
+      u.lang = 'de-DE'; const v = voiceFor(w); if (v) u.voice = v; u.rate = RATE;
+      u.onend = () => { i++; next(); }; u.onerror = adv;
+      speechSynthesis.speak(u);
+    };
+    if (!playClip(txt, w ? slots[w] : 'a', RATE / 0.9, adv, tts)) tts(); // gravação em velocidade normal = opção "calma"
   };
   next();
 }

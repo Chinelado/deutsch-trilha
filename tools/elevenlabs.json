@@ -1,0 +1,14 @@
+{
+  "modelo": "eleven_multilingual_v2",
+  "formato": "mp3_44100_64",
+  "velocidade": 0.95,
+  "estabilidade": 0.5,
+  "similaridade": 0.75,
+  "paralelo": 2,
+  "vozes": {
+    "a": "",
+    "b": "",
+    "c": "",
+    "d": ""
+  }
+}
