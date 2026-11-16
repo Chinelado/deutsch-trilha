@@ -79,7 +79,7 @@ async function cloudBoot() {
       const was = cloudUser; cloudUser = session ? session.user : null;
       if (ev === 'PASSWORD_RECOVERY') { cloudRecovery = true; if (booted && view === 'perfil') go('perfil'); }
       if (booted && ev === 'SIGNED_IN' && !was) cloudAfterLogin(true);
-      if (ev === 'SIGNED_OUT') refreshCloudUI();
+      if (ev === 'SIGNED_OUT') refreshCloudUI(true);
     });
     const { data } = await sb.auth.getSession();
     booted = true;
@@ -126,7 +126,14 @@ function cloudOnboard() {
   if (!cloudOn()) return '';
   return `<div class="card" style="margin-top:16px"><h3>☁️ Já usa a trilha em outro aparelho?</h3><p class="mut">Entre com seu e-mail e senha para trazer o seu progresso.</p>${cloudForm()}</div>`;
 }
-function refreshCloudUI() { if (view === 'perfil') go('perfil'); else { const l = document.getElementById('cLast'); if (l && cloudLast) l.textContent = 'Última sincronização: ' + cloudLast.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } }
+// Atualiza só o cartão da conta, sem redesenhar a página (redesenhar o Perfil a cada sincronização jogava a página para o topo).
+// full = true quando muda o estado da conta (entrou, saiu); senão, só o horário da última sincronização.
+function refreshCloudUI(full) {
+  const card = document.getElementById('cloudCard'); if (!card) return;
+  const l = document.getElementById('cLast');
+  if (!full && l) { if (cloudLast) l.textContent = 'Última sincronização: ' + cloudLast.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); return; }
+  card.outerHTML = cloudCard(); wireCloud();
+}
 function wireCloud() {
   if (!cloudOn()) return;
   const msg = (t) => { const m = document.getElementById('cMsg'); if (m) m.textContent = t; };
