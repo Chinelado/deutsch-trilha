@@ -44,18 +44,19 @@ function loadApp() {
   const ctx = { console, esc };
   vm.createContext(ctx);
   const code = files.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n')
-    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, VIS: typeof VIS === "undefined" ? {} : VIS, isGerman, visHTML };';
+    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, VIS: typeof VIS === "undefined" ? {} : VIS, isGerman, visHTML, vozDe, splitFala };';
   vm.runInContext(code, ctx, { filename: 'deutsch-trilha' });
   return ctx.__app;
 }
-const splitWho = (p) => { const m = /^([^:.!?]{2,32}):\s(.+)$/s.exec(p); return m ? { who: m[1], txt: m[2] } : { who: '', txt: p }; };
 const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
-/* Lista tudo o que o app fala. slot = voz: a (padrão), b (2ª pessoa dos diálogos), c e d (mais personagens nos textos). */
+/* Lista tudo o que o app fala. A voz de cada frase vem de data/vozes.js (vozDe), a mesma regra que o app usa para tocar:
+   a e c = femininas, b e d = masculinas; diálogos e textos longos seguem o gênero de cada personagem. */
 function inventory(A) {
   const items = new Map();
-  const add = (text, slot = 'a', cat = '') => {
+  const add = (text, _slot, cat = '') => {
     const t = sayText(text); if (t.length < 2 || t.startsWith('-') || !/\p{L}/u.test(t)) return;
+    const slot = A.vozDe(t);
     const key = audioKey(t, slot); if (!items.has(key)) items.set(key, { key, text: t, slot, cat, hash: cyrb53(key) });
   };
   const deepLines = (md, cat) => {
@@ -69,7 +70,7 @@ function inventory(A) {
   A.LESSONS.forEach((l) => {
     l.v.forEach((v) => add(v.de, 'a', 'vocabulário'));
     [...l.ge, ...l.ex].forEach((e) => add(e.de, 'a', 'exemplos'));
-    l.dlg.forEach((e, i) => add(e.de, i % 2 ? 'b' : 'a', 'diálogos')); // 2ª pessoa do diálogo com outra voz; o app reaproveita o áudio nos exercícios
+    l.dlg.forEach((e) => add(e.de, '', 'diálogos'));
     l.cz.forEach((c) => add(c.q.replace('___', c.a), 'a', 'lacunas'));
     if (l.bd) { add(l.bd.t.map((x) => x.w).join(' '), 'a', 'frase desmontada'); l.bd.t.forEach((x) => { if (A.isGerman(x.w)) add(x.w, 'a', 'frase desmontada'); }); }
     if (l.deep) deepLines(l.deep, 'aulas');
@@ -77,12 +78,7 @@ function inventory(A) {
   Object.values(A.SUP).flat().forEach((s) => add(s.de, 'a', 'palavras de apoio'));
   A.GUIDE.forEach((g) => deepLines(g.body, 'guia'));
   A.TEXTS.forEach((t) => {
-    const slots = {}, order = ['a', 'b', 'c', 'd'];
-    t.paras.forEach((p) => {
-      const { who, txt } = splitWho(p);
-      const slot = who ? (slots[who] = slots[who] || order[Object.keys(slots).length % order.length]) : 'a';
-      add(txt, slot, 'textos longos');
-    });
+    t.paras.forEach((p) => add(A.splitFala(p).txt, '', 'textos longos'));
     t.gl.split('|').forEach((g) => add(g.split('=')[0], 'a', 'textos longos'));
   });
   Object.values(A.VIS).flat().forEach((spec) => {
@@ -301,8 +297,18 @@ try {
   else if (cmd === 'gerar') await generate(items, cfg, opt('limite'));
   else if (cmd === 'refazer') await redo(items, cfg, rest.filter((x) => !x.startsWith('--')).join(' '));
   else if (cmd === 'conferir') check(items, cfg);
+  else if (cmd === 'limpar') {
+    // apaga áudios que nenhuma frase atual usa (por exemplo, gravados com a voz errada antes de uma correção)
+    const keep = new Set(items.map((x) => x.hash)); let n = 0;
+    if (fs.existsSync(OUT)) for (const d of fs.readdirSync(OUT)) {
+      const dir = path.join(OUT, d); if (!fs.statSync(dir).isDirectory()) continue;
+      for (const f of fs.readdirSync(dir)) if (f.endsWith('.mp3') && !keep.has(f.slice(0, -4))) { fs.unlinkSync(path.join(dir, f)); n++; }
+      if (!fs.readdirSync(dir).length) fs.rmdirSync(dir);
+    }
+    console.log(`${n} áudios sem uso apagados. Índice com ${writeIndex()} áudios.`);
+  }
   else if (cmd === 'indice') console.log(`Índice com ${writeIndex()} áudios.`);
-  else { console.error(`Comando desconhecido: ${cmd}. Use simular, vozes, amostra, gerar, refazer ou indice.`); process.exit(1); }
+  else { console.error(`Comando desconhecido: ${cmd}. Use simular, vozes, amostra, gerar, refazer, conferir, limpar ou indice.`); process.exit(1); }
 } catch (e) {
   console.error('Erro:', e.status === 401 && /missing_permissions/.test(e.detail || '') ? 'a chave da API não tem a permissão necessária: ' + e.message : e.message);
   process.exitCode = 1; // sem process.exit(): no Windows, sair com uma conexão aberta derruba o Node

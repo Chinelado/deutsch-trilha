@@ -41,7 +41,7 @@ if (hasTTS) {
 }
 /* Áudios gravados (ElevenLabs): audio/index.json lista os que existem; cada um fica em audio/xx/<hash>.mp3.
    A chave é o texto limpo (e a voz, nos diálogos), com o mesmo hash usado por tools/audio-elevenlabs.mjs. */
-const audioKey = (t, slot = 'a') => (slot === 'a' ? '' : slot + '|') + String(t).replace(/\*\*/g, '').replace(/\(.*?\)/g, ' ').replace(/___/g, ' ').replace(/\s+/g, ' ').trim();
+const audioKey = (t, slot = 'a') => (slot === 'a' ? '' : slot + '|') + vozKey(t); // vozKey e vozDe: data/vozes.js
 function cyrb53(str, seed = 0) {
   let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
   for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
@@ -72,13 +72,14 @@ function ttsSay(t, rate) {
   const u = new SpeechSynthesisUtterance(t.replace(/___/g, ' '));
   u.lang = 'de-DE'; if (deVoice) u.voice = deVoice; u.rate = rate; speechSynthesis.speak(u);
 }
-function say(t, rate = 0.9, slot = 'a') {
+function say(t, rate = 0.9, slot) {
   if (!S.audio) return;
+  slot = slot || vozDe(t); // a voz de quem fala a frase (diálogos e textos têm personagem)
   // palavras soltas tocam um pouco mais devagar
   if (!playClip(t, slot, rate < 0.85 ? 0.9 : 1, null, () => ttsSay(t, rate))) ttsSay(t, rate);
 }
 const spk = (t, slot) => ((hasTTS || AUD) && S.audio ? `<button class="spk" data-say="${esc(t)}"${slot ? ` data-v="${slot}"` : ''} aria-label="Ouvir">🔊</button>` : '');
-document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say, b.dataset.say.split(' ').length < 3 ? 0.8 : 0.9, b.dataset.v || 'a'); });
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say, b.dataset.say.split(' ').length < 3 ? 0.8 : 0.9, b.dataset.v); });
 // Toda vez que algo novo aparece na tela, as palavras alemãs ganham áudio.
 let enhRaf = 0;
 new MutationObserver(() => { cancelAnimationFrame(enhRaf); enhRaf = requestAnimationFrame(() => enhanceAudio(app)); }).observe(app, { childList: true, subtree: true });
@@ -555,7 +556,7 @@ function intro(day) {
   <table>${l.v.map((v, j) => `${v.x && !l.v[j - 1].x ? '<tr><td colspan="3"><small>Vocabulário ampliado</small></td></tr>' : ''}<tr><td>${spk(v.de)}</td><td class="de ${gcls(v.de)}">${esc(v.de)}</td><td>${v.em} ${esc(v.pt)}</td></tr>`).join('')}</table></div>
   ${newWordsCard(l)}
   <div class="card"><h3>💬 Conversa</h3>
-  ${l.dlg.map((x, i) => `<div class="bubble ${i % 2 ? 'b' : ''}">${spk(x.de, i % 2 ? 'b' : '')}<span class="de">${esc(x.de)}</span><small>${esc(x.pt)}</small></div>`).join('')}</div>
+  ${l.dlg.map((x, i) => `<div class="bubble ${i % 2 ? 'b' : ''}">${spk(x.de)}<span class="de">${esc(x.de)}</span><small>${esc(x.pt)}</small></div>`).join('')}</div>
   <button class="pri big" id="st">Praticar (14 exercícios)</button>
   ${hwCard(d.li)}
   <h2>🎬 Para ir além</h2><div class="xgrid">${pickExtras(d.level, 2).map(extraCard).join('')}</div>`;
@@ -968,14 +969,13 @@ function textsList() {
 }
 let readTok = 0, RATE = 0.9;
 function stopRead() { readTok++; stopClip(); if (hasTTS) speechSynthesis.cancel(); $$('.tpara.on').forEach((x) => x.classList.remove('on')); }
-const splitWho = (p) => { const m = /^([^:.!?]{2,32}):\s(.+)$/s.exec(p); return m ? { who: m[1], txt: m[2] } : { who: '', txt: p }; };
+const splitWho = splitFala; // data/vozes.js (reconhece também "Dr. Wagner:")
 function readFrom(paras, from) {
   if (!hasTTS && !AUD) return toast('Este navegador não tem voz para leitura.');
   stopRead(); const tok = ++readTok;
   const voices = hasTTS ? speechSynthesis.getVoices().filter((v) => /^de/i.test(v.lang)) : [], who = {};
   const voiceFor = (w) => { if (!w || voices.length < 2) return deVoice; if (!(w in who)) who[w] = voices[Object.keys(who).length % voices.length]; return who[w]; };
   // Cada personagem tem uma voz gravada fixa (a, b, c, d), na ordem em que aparece no texto, igual ao gerador de áudios.
-  const slots = {}; paras.forEach((p) => { const { who: w } = splitWho(p); if (w && !(w in slots)) slots[w] = 'abcd'[Object.keys(slots).length % 4]; });
   let i = from;
   const next = () => {
     if (tok !== readTok) return;
@@ -990,7 +990,7 @@ function readFrom(paras, from) {
       u.onend = () => { i++; next(); }; u.onerror = adv;
       speechSynthesis.speak(u);
     };
-    if (!playClip(txt, w ? slots[w] : 'a', RATE / 0.9, adv, tts)) tts(); // gravação em velocidade normal = opção "calma"
+    if (!playClip(txt, vozDe(txt), RATE / 0.9, adv, tts)) tts(); // gravação em velocidade normal = opção "calma"
   };
   next();
 }
