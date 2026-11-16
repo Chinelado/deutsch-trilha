@@ -44,7 +44,8 @@ function loadApp() {
   const ctx = { console, esc };
   vm.createContext(ctx);
   const code = files.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n')
-    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, VIS: typeof VIS === "undefined" ? {} : VIS, isGerman, visHTML, vozDe, splitFala };';
+    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, isGerman, visHTML, vozDe, splitFala,'
+    + ' POCKETS: typeof POCKETS === "undefined" ? [] : POCKETS, pocketTexts: typeof pocketTexts === "undefined" ? () => [] : pocketTexts };';
   vm.runInContext(code, ctx, { filename: 'deutsch-trilha' });
   return ctx.__app;
 }
@@ -54,10 +55,11 @@ const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&qu
    a e c = femininas, b e d = masculinas; diálogos e textos longos seguem o gênero de cada personagem. */
 function inventory(A) {
   const items = new Map();
+  let grupo = 'A1'; // nível (A1…C2) ou "Pocket": define em que pacote o áudio entra no download offline
   const add = (text, _slot, cat = '') => {
     const t = sayText(text); if (t.length < 2 || t.startsWith('-') || !/\p{L}/u.test(t)) return;
     const slot = A.vozDe(t);
-    const key = audioKey(t, slot); if (!items.has(key)) items.set(key, { key, text: t, slot, cat, hash: cyrb53(key) });
+    const key = audioKey(t, slot); if (!items.has(key)) items.set(key, { key, text: t, slot, cat, grupo, hash: cyrb53(key) });
   };
   const deepLines = (md, cat) => {
     md.split('\n').map((x) => x.trim()).forEach((x) => {
@@ -67,29 +69,38 @@ function inventory(A) {
     });
     (md.match(/\*\*(.+?)\*\*/g) || []).forEach((b) => { if (A.isGerman(b)) add(b, 'a', cat); });
   };
+  const visSpec = (spec) => {
+    let html = ''; try { html = A.visHTML(spec); } catch { return; }
+    // elementos sem outros blocos dentro (célula, chip, palavra), que é onde o app põe o botão de áudio
+    for (const m of html.matchAll(/<(div|span|b|td|th)\b[^>]*>((?:(?!<\/?(?:div|span|td|th)\b).)*?)<\/\1>/gs)) {
+      const t = decode(m[2].replace(/<[^>]+>/g, '')).trim(); if (t && A.isGerman(t)) add(t, 'a', 'esquemas');
+    }
+  };
+  const levelOf = (i) => { const w = Math.floor(i / 6); return (A.PHASES.find((p) => w >= p.weeks[0] && w < p.weeks[1]) || A.PHASES[A.PHASES.length - 1]).id; };
+  grupo = 'A1';
+  A.GUIDE.forEach((g) => deepLines(g.body, 'guia'));
   A.LESSONS.forEach((l) => {
+    grupo = levelOf(l.i);
     l.v.forEach((v) => add(v.de, 'a', 'vocabulário'));
     [...l.ge, ...l.ex].forEach((e) => add(e.de, 'a', 'exemplos'));
     l.dlg.forEach((e) => add(e.de, '', 'diálogos'));
     l.cz.forEach((c) => add(c.q.replace('___', c.a), 'a', 'lacunas'));
     if (l.bd) { add(l.bd.t.map((x) => x.w).join(' '), 'a', 'frase desmontada'); l.bd.t.forEach((x) => { if (A.isGerman(x.w)) add(x.w, 'a', 'frase desmontada'); }); }
     if (l.deep) deepLines(l.deep, 'aulas');
+    (A.SUP[l.de] || []).forEach((s) => add(s.de, 'a', 'palavras de apoio'));
+    (A.VIS[l.de] || []).forEach(visSpec);
   });
-  Object.values(A.SUP).flat().forEach((s) => add(s.de, 'a', 'palavras de apoio'));
-  A.GUIDE.forEach((g) => deepLines(g.body, 'guia'));
   A.TEXTS.forEach((t) => {
+    grupo = t.lv;
     t.paras.forEach((p) => add(A.splitFala(p).txt, '', 'textos longos'));
     t.gl.split('|').forEach((g) => add(g.split('=')[0], 'a', 'textos longos'));
   });
-  Object.values(A.VIS).flat().forEach((spec) => {
-    let html = ''; try { html = A.visHTML(spec); } catch { return; }
-    // elementos sem outros blocos dentro (célula, chip, palavra), que é onde o app põe o botão de áudio
-    for (const m of html.matchAll(/<(div|span|b|td|th)\b[^>]*>((?:(?!<\/?(?:div|span|td|th)\b).)*?)<\/\1>/gs)) {
-      const t = decode(m[2].replace(/<[^>]+>/g, '')).trim(); if (t && A.isGerman(t)) add(t, 'a', 'esquemas');
-    }
-  });
+  grupo = 'Pocket';
+  A.POCKETS.forEach((pk) => A.pocketTexts(pk).forEach((t) => add(t, '', 'pocket')));
   return [...items.values()];
 }
+
+let allItems = null; // inventário completo, usado para os pacotes de download offline
 
 /* ---------- configuração ---------- */
 const DEFAULT_CFG = {
@@ -160,14 +171,21 @@ async function tts(cfg, item) {
 }
 
 /* ---------- índice para o app ---------- */
-function writeIndex() {
-  const h = [];
+function writeIndex(items) {
+  const h = [], size = {};
   if (fs.existsSync(OUT)) for (const d of fs.readdirSync(OUT)) {
     const dir = path.join(OUT, d); if (!fs.statSync(dir).isDirectory()) continue;
-    for (const f of fs.readdirSync(dir)) if (f.endsWith('.mp3') && fs.statSync(path.join(dir, f)).size > 0) h.push(f.slice(0, -4));
+    for (const f of fs.readdirSync(dir)) { const st = fs.statSync(path.join(dir, f)); if (f.endsWith('.mp3') && st.size > 0) { h.push(f.slice(0, -4)); size[f.slice(0, -4)] = st.size; } }
   }
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify({ v: 1, n: h.length, h: h.sort() }));
+  // pacotes para o download offline: audio/levels.json = { A1: { n, mb, h: [...] }, … }
+  if (items) {
+    const lv = {};
+    items.forEach((x) => { if (!size[x.hash]) return; const g = (lv[x.grupo] = lv[x.grupo] || { n: 0, bytes: 0, h: [] }); g.n++; g.bytes += size[x.hash]; g.h.push(x.hash); });
+    Object.values(lv).forEach((g) => { g.mb = Math.round(g.bytes / 1e5) / 10; delete g.bytes; });
+    fs.writeFileSync(path.join(OUT, 'levels.json'), JSON.stringify(lv));
+  }
   return h.length;
 }
 
@@ -224,7 +242,7 @@ async function generate(items, cfg, limitArg) {
         fs.writeFileSync(f + '.tmp', buf); fs.renameSync(f + '.tmp', f);
         ok++;
         if (ok % 25 === 0) { process.stdout.write(`  ${fmt(ok)}/${fmt(queue.length)} prontos (${Math.round((Date.now() - t0) / 1000)} s)\n`); }
-        if (ok % 200 === 0) writeIndex();
+        if (ok % 200 === 0) writeIndex(allItems);
       } catch (e) {
         fail++; console.error(`  ✗ "${x.text.slice(0, 50)}": ${e.message}`);
         if (e.fatal) { stop = true; }
@@ -232,7 +250,7 @@ async function generate(items, cfg, limitArg) {
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, cfg.paralelo) }, worker));
-  const n = writeIndex();
+  const n = writeIndex(allItems);
   console.log(`\nPronto: ${fmt(ok)} gerados, ${fmt(fail)} com erro, ${fmt(realCost)} créditos gastos. Índice com ${fmt(n)} áudios em audio/index.json.`);
   if (queue.length < todo.length) console.log(`Ainda faltam ${fmt(todo.length - ok)} áudios. Rode de novo com outro --limite para continuar.`);
 }
@@ -289,8 +307,9 @@ const [cmd = 'simular', ...rest] = process.argv.slice(2);
 const opt = (name) => { const i = rest.indexOf('--' + name); return i >= 0 ? rest[i + 1] : undefined; };
 try {
   const cfg = loadCfg();
-  const needItems = cmd !== 'vozes' && cmd !== 'indice';
+  const needItems = cmd !== 'vozes';
   const items = needItems ? inventory(loadApp()) : [];
+  allItems = items;
   if (cmd === 'simular') await simulate(items, cfg);
   else if (cmd === 'vozes') await listVoices();
   else if (cmd === 'amostra') await sample(items, cfg);
@@ -305,9 +324,9 @@ try {
       for (const f of fs.readdirSync(dir)) if (f.endsWith('.mp3') && !keep.has(f.slice(0, -4))) { fs.unlinkSync(path.join(dir, f)); n++; }
       if (!fs.readdirSync(dir).length) fs.rmdirSync(dir);
     }
-    console.log(`${n} áudios sem uso apagados. Índice com ${writeIndex()} áudios.`);
+    console.log(`${n} áudios sem uso apagados. Índice com ${writeIndex(items)} áudios.`);
   }
-  else if (cmd === 'indice') console.log(`Índice com ${writeIndex()} áudios.`);
+  else if (cmd === 'indice') console.log(`Índice com ${writeIndex(items)} áudios.`);
   else { console.error(`Comando desconhecido: ${cmd}. Use simular, vozes, amostra, gerar, refazer, conferir, limpar ou indice.`); process.exit(1); }
 } catch (e) {
   console.error('Erro:', e.status === 401 && /missing_permissions/.test(e.detail || '') ? 'a chave da API não tem a permissão necessária: ' + e.message : e.message);

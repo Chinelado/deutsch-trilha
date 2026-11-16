@@ -13,8 +13,20 @@ const VOZ_DLG = {
   'Talkshow': 'ba', // "Frau Ministerin"
 };
 
-// Textos longos: voz de cada personagem. Narração sem nome = 'a'.
+// Textos longos: voz de cada personagem. Narração sem nome = 'a', a não ser que '' diga outra (narrador homem).
 const VOZ_TXT = {
+  t16: { Lena: 'a', Paulo: 'b' },
+  t18: { Verkäuferin: 'a', Kunde: 'b' },
+  t19: { '': 'b' }, // carta do Tom
+  t20: { Ärztin: 'a', 'Herr Lang': 'b' },
+  t22: { Mieterin: 'a', 'Herr Wolf': 'b' },
+  t23: { '': 'a', 'Julia, 29': 'a', 'Thomas, 52': 'd', 'Karin, 67': 'c', 'Jonas, 17': 'b' },
+  t24: { Sprecherin: 'a' },
+  t26: { Sachbearbeiterin: 'a', 'Herr Costa': 'b' },
+  t28: { 'Frau Albers': 'a', 'Herr Demir': 'b', 'Frau Kraus': 'c' },
+  t30: { Lara: 'a', Mehmet: 'b' },
+  t32: { Moderatorin: 'a', 'Prof. Richter': 'b' },
+  t34: { 'Frau Hartmann': 'a', 'Herr Seidel': 'b' },
   t02: { Reisende: 'a', Mitarbeiter: 'b' },
   t04: { 'Frau Koch': 'a', 'Frau Souza': 'c' },
   t05: { 'Markus, 45, Vater': 'b', 'Aylin, 17, Schülerin': 'a', 'Herr Becker, 58, Lehrer': 'd', 'Sofia, 34, Mutter': 'c' },
@@ -40,11 +52,12 @@ function vozMapa() {
   const m = new Map(), put = (t, s) => { const k = vozKey(t); if (k && !m.has(k)) m.set(k, s); };
   Object.entries(VOZ_FRASE).forEach(([t, s]) => put(t, s));
   LESSONS.forEach((l) => { const v = VOZ_DLG[l.de] || 'ab'; l.dlg.forEach((d, i) => put(d.de, v[i % 2])); });
+  if (typeof POCKETS !== 'undefined') POCKETS.forEach((p) => pkDlg(p).forEach((d) => put(d.de, d.v)));
   TEXTS.forEach((t) => {
     const fixed = VOZ_TXT[t.id] || {}, order = {};
     t.paras.forEach((p) => {
       const { who, txt } = splitFala(p);
-      if (!who) return put(txt, 'a');
+      if (!who) return put(txt, fixed[''] || 'a');
       const s = fixed[who] || (order[who] = order[who] || 'abcd'[Object.keys(order).length % 4]);
       put(txt, s);
     });

@@ -26,7 +26,7 @@ function mergeStates(a, b) {
   m.time = merge(a.time, b.time, Math.max);
   m.daily = merge(a.daily, b.daily, (p, q) => ({ lesson: p.lesson || q.lesson, cards: Math.max(p.cards || 0, q.cards || 0), perfect: p.perfect || q.perfect }));
   m.hw = merge(a.hw, b.hw, (p, q) => ({ ...q, ...p }));
-  for (const k of ['badges', 'seen', 'guide', 'wq', 'reads']) m[k] = { ...(b[k] || {}), ...(a[k] || {}) };
+  for (const k of ['badges', 'seen', 'guide', 'wq', 'reads', 'pockets']) m[k] = { ...(b[k] || {}), ...(a[k] || {}) };
   for (const k of ['reviews', 'maxCombo', 'spoken', 'perfect']) m[k] = Math.max(a[k] || 0, b[k] || 0);
   const seen = new Set();
   m.diary = [...(a.diary || []), ...(b.diary || [])].filter((x) => { const k = x.d + '|' + x.t; if (seen.has(k)) return false; seen.add(k); return true; }).sort((x, y) => x.d.localeCompare(y.d));

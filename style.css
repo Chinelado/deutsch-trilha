@@ -284,3 +284,92 @@ button.ok { background: var(--okbg); border-color: var(--ok); } button.no { back
 #toasts { position: fixed; top: 14px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 9; }
 .toast { background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 99px; font-weight: 600; animation: pop .25s; max-width: 90%; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+
+/* áudios sem internet */
+.offrow { display: grid; grid-template-columns: 150px 1fr 150px; gap: 10px; align-items: center; padding: 6px 0; }
+.offrow span { display: flex; flex-direction: column; } .offrow small { color: var(--mut); font-size: .8rem; }
+.offrow button { font-size: .85rem; padding: 7px 10px; }
+@media (max-width: 480px) { .offrow { grid-template-columns: 1fr 130px; } .offrow .bar { grid-column: 1 / -1; grid-row: 2; } }
+
+/* ---------- lições Pocket ---------- */
+.pkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.pkc { display: flex; gap: 12px; align-items: center; text-align: left; padding: 12px 14px; }
+.pkc .pke { font-size: 1.8rem; } .pkc small { display: block; color: var(--mut); font-size: .8rem; }
+.pk-img { margin: 0 0 14px; display: none; } .pk-img.ok { display: block; } .pk-img img { width: 100%; max-height: 360px; object-fit: cover; border-radius: var(--r); display: block; border: 1px solid var(--line); }
+.pk-ill { margin: 12px 0 18px; }
+.pk-ill [data-say] { cursor: pointer; }
+.pkw { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 10px; text-align: left; }
+.pkw small, .pk-ill small { color: var(--mut); font-size: .76rem; font-weight: 400; }
+.pkw.sm { padding: 2px 6px; background: transparent; border-color: transparent; }
+.pk-leg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+/* painel de partidas */
+.pk-board { background: #0a0d12; border: 2px solid #2a2f3a; border-radius: 10px; padding: 12px; font-family: ui-monospace, Consolas, monospace; }
+.pkb-h { color: #ffd84a; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+.pk-board table { width: 100%; border-collapse: collapse; color: #ffd84a; font-size: .92rem; }
+.pk-board th { text-align: left; color: #fff; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid #333a48; white-space: nowrap; }
+.pk-board th small { display: block; color: #8b93a6; }
+.pk-board td { padding: 7px 8px; border-bottom: 1px dashed #222834; white-space: nowrap; }
+.pk-board.trem { background: #0b1b3a; border-color: #1d3b73; } .pk-board.trem table, .pk-board.trem .pkb-h { color: #fff; }
+.pk-board td.st.ok { color: #4fd18b; } .pk-board td.st.warn { color: #ffb020; } .pk-board td.st.bad { color: #ff5f6d; font-weight: 700; }
+.pk-board .pk-leg .pkw { font-family: 'IBM Plex Sans', sans-serif; }
+/* placas */
+.pk-signs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.pk-sign { display: flex; gap: 10px; align-items: center; text-align: left; padding: 10px 12px; border-radius: 8px; background: #fff; color: #111; border: 0; }
+.pk-sign .ic { font-size: 1.5rem; } .pk-sign b { display: block; } .pk-sign small { color: #444 !important; }
+.pk-signs.aero .pk-sign { background: #ffd200; }
+.pk-signs.rua .pk-sign, .pk-signs.trem .pk-sign { background: #1e4fa3; color: #fff; } .pk-signs.rua small, .pk-signs.trem small { color: #d6e2ff !important; }
+.pk-signs.pub .pk-sign { background: #3b2a1c; color: #f6e7c8; } .pk-signs.pub small { color: #d9c49b !important; }
+.pk-signs.museu .pk-sign { background: #6b4a2e; color: #fff; } .pk-signs.museu small { color: #f1dfcb !important; }
+.pk-signs.hotel .pk-sign { background: #0f5e46; color: #fff; } .pk-signs.hotel small { color: #cdeee1 !important; }
+.pk-signs.apo .pk-sign { background: #e30613; color: #fff; } .pk-signs.apo small { color: #ffd9db !important; }
+.pk-signs.loja .pk-sign { background: #111; color: #fff; border: 1px solid #333; } .pk-signs.loja small { color: #bbb !important; }
+/* cardápio */
+.pk-menu { background: #f8f1e3; color: #2a2118; border-radius: 10px; padding: 18px 20px; font-family: Georgia, serif; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); max-width: 640px; }
+.pk-menu small { color: #7a6a55 !important; }
+.pkm-h { text-align: center; border-bottom: 2px solid #c9b48f; padding-bottom: 8px; margin-bottom: 8px; } .pkm-h b { font-size: 1.4rem; display: block; } .pkm-h small { letter-spacing: .2em; text-transform: uppercase; }
+.pkm-s h4 { margin: 12px 0 4px; color: #8a3b12; font-variant: small-caps; font-size: 1.05rem; }
+.pkm-i { display: flex; align-items: baseline; gap: 6px; padding: 4px; border-radius: 6px; } .pkm-i:hover { background: rgba(138, 59, 18, .08); }
+.pkm-i span { display: flex; flex-direction: column; } .pkm-i i { flex: 1; border-bottom: 1px dotted #b8a27c; margin: 0 4px; } .pkm-i em { font-style: normal; font-weight: 700; white-space: nowrap; }
+.pkm-n { text-align: center; font-size: .85rem; margin-top: 12px; display: flex; flex-direction: column; }
+.pk-menu.quadro { background: #1f2a24; color: #f3f1e8; border: 8px solid #6b4a2e; }
+.pk-menu.quadro small { color: #c9d1c4 !important; } .pk-menu.quadro .pkm-s h4 { color: #ffd84a; } .pk-menu.quadro .pkm-i i, .pk-menu.quadro .pkm-h { border-color: #6f7d73; }
+/* etiquetas de preço */
+.pk-tags { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; padding-top: 8px; }
+.pk-tag { position: relative; background: #fff; color: #111; border-radius: 6px; padding: 16px 12px 10px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); transform: rotate(-1.2deg); }
+.pk-tag:nth-child(even) { transform: rotate(1.4deg); }
+.pk-tag::before { content: ''; position: absolute; top: 8px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--bg); }
+.pk-tag b { display: block; } .pk-tag small { color: #555 !important; } .pk-tag .pr { margin-top: 8px; display: flex; gap: 8px; align-items: baseline; }
+.pk-tag s { color: #888; } .pk-tag strong { font-size: 1.35rem; color: #d40000; }
+.pk-tag .selo { position: absolute; top: -10px; left: -6px; background: #d40000; color: #fff; font-weight: 700; font-size: .78rem; padding: 3px 8px; border-radius: 4px; }
+.pk-tags.mercado .pk-tag { background: #fff7a8; border-radius: 2px; } .pk-tags.mercado .pk-tag::before { display: none; }
+/* cartão de embarque e passagem */
+.pk-ticket { background: #fff; color: #111; border-radius: 12px; overflow: hidden; max-width: 560px; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
+.pkt-h { background: #0b2a5b; color: #fff; padding: 10px 14px; font-weight: 700; letter-spacing: .04em; }
+.pkt-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 4px 10px; padding: 12px 14px; border-top: 2px dashed #c7cdd8; }
+.pkt-f { display: flex; flex-direction: column; } .pkt-f .pkw { color: #0b2a5b; } .pkt-f .pkw small { color: #666 !important; }
+.pkt-f span { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 1.05rem; padding-left: 6px; }
+/* nota fiscal */
+.pk-receipt { background: #fdfdf8; color: #222; max-width: 380px; padding: 16px 16px 26px; font-family: ui-monospace, Consolas, monospace; font-size: .9rem; box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  clip-path: polygon(0 0, 100% 0, 100% 97%, 95% 100%, 90% 97%, 85% 100%, 80% 97%, 75% 100%, 70% 97%, 65% 100%, 60% 97%, 55% 100%, 50% 97%, 45% 100%, 40% 97%, 35% 100%, 30% 97%, 25% 100%, 20% 97%, 15% 100%, 10% 97%, 5% 100%, 0 97%); }
+.pkr-h { text-align: center; font-weight: 700; border-bottom: 1px dashed #999; padding-bottom: 6px; margin-bottom: 6px; }
+.pkr-l, .pkr-t { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; }
+.pkr-l span:first-child { display: flex; flex-direction: column; } .pkr-l small { color: #777 !important; font-family: 'IBM Plex Sans', sans-serif; }
+.pkr-t { border-top: 2px solid #222; margin-top: 6px; padding-top: 6px; font-weight: 700; font-size: 1.05rem; }
+/* quadro de informações */
+.pk-info { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; max-width: 640px; }
+.pki-h { font-weight: 700; margin-bottom: 6px; }
+.pki-l { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding: 3px 0; } .pki-l > span { font-weight: 600; text-align: right; }
+.pki-l .pkw { background: transparent; border-color: transparent; }
+.pk-info.papel { background: #fbfaf6; color: #1d1d1d; border-color: #ddd; } .pk-info.papel .pki-l { border-color: #e4e2da; } .pk-info.papel .pkw { color: #1d1d1d; } .pk-info.papel small { color: #666 !important; }
+.pk-info.placa { background: #f3ead8; color: #3a2b17; border: 3px solid #8a6a3d; } .pk-info.placa .pki-h { font-family: Georgia, serif; font-size: 1.2rem; text-align: center; }
+.pk-info.placa .pki-l { border-color: #d8c6a3; } .pk-info.placa .pkw { color: #3a2b17; } .pk-info.placa small { color: #7a6343 !important; }
+/* mapa e caminho */
+.pk-map { max-width: 560px; } .pkmap-h { font-weight: 700; margin-bottom: 6px; }
+.pkmap-g { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: #4a5165; padding: 16px; border-radius: 12px; }
+.pkmap-b { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px; background: #dfe8d6; color: #1f2a1a; border: 0; border-radius: 6px; min-height: 92px; justify-content: center; }
+.pkmap-b span { font-size: 1.5rem; } .pkmap-b small { color: #4d5a45 !important; }
+.pkmap-b.here { background: #ffcf4a; box-shadow: 0 0 0 3px #ff8a3d; }
+.pk-route { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.pk-step { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px; text-align: left; } .pk-step span { font-size: 1.4rem; }
+.pk-list p { margin: 8px 0; }
+@media (max-width: 480px) { .pk-board { font-size: .82rem; padding: 8px; } .pkmap-g { gap: 10px; padding: 10px; } .pkmap-b { min-height: 76px; } }

@@ -22,7 +22,7 @@ const WEEKS = LESSONS.length / 6, TOTAL = WEEKS * 7;
 const fresh = () => ({
   name: '', goal: 60, audio: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
   done: {}, cards: {}, stats: Object.fromEntries(IK.map((k) => [k, { n: 0, ok: 0, rn: 0, rok: 0, t: 0 }])),
-  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {}, reads: {},
+  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {}, reads: {}, pockets: {},
 });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) { console.error('Falha ao ler o progresso salvo:', e); }
@@ -94,6 +94,7 @@ const phaseDays = (p) => Array.from({ length: (p.weeks[1] - p.weeks[0]) * 7 }, (
 function currentDay() { for (let d = 1; d <= TOTAL; d++) if (!S.done[d]) return d; return null; }
 const doneLessons = () => Object.keys(S.done).map(Number).map(dayInfo).filter((i) => !i.review).map((i) => LESSONS[i.li]);
 const vocab = (k) => {
+  if (k.startsWith('p:')) { const [, id, j] = k.split(':'), p = POCKETS.find((x) => x.id === id), f = p ? pkPairs(p.frases)[j] : null; return { k, de: f ? f.de : '?', pt: f ? f.pt : '?', em: p ? p.e : '' }; }
   if (k.startsWith('s:')) { const [, i, j] = k.split(':'), sp = (SUP[LESSONS[i].de] || [])[j] || { de: '?', pt: '?' }; return { k, de: sp.de, pt: sp.pt, em: '' }; }
   const [i, j] = k.split(':'); return LESSONS[i].v[j];
 };
@@ -185,7 +186,9 @@ const BADGES = [
   ['wq1', '🎯', 'Semana completa', 'Cumpriu uma missão da semana', () => Object.keys(S.wq).length >= 1],
   ['wq4', '🏆', 'Mês de imersão', 'Cumpriu quatro missões da semana', () => Object.keys(S.wq).length >= 4],
   ['rd5', '📖', 'Leser', '5 textos longos lidos', () => Object.keys(S.reads).length >= 5],
-  ['rd15', '📚', 'Bücherwurm', 'Todos os 15 textos longos', () => Object.keys(S.reads).length >= TEXTS.length],
+  ['rd15', '📚', 'Bücherwurm', 'Todos os textos longos', () => Object.keys(S.reads).length >= TEXTS.length],
+  ['pk3', '🧳', 'Mala pronta', '3 lições Pocket concluídas', () => Object.keys(S.pockets || {}).length >= 3],
+  ['pkall', '🌍', 'Pronta para a Alemanha', 'Todas as lições Pocket', () => Object.keys(S.pockets || {}).length >= POCKETS.length],
   ['x5', '🎬', 'Explorador', '5 conteúdos extras vistos', () => Object.keys(S.seen).length >= 5],
   ['x20', '🌍', 'Imersão', '20 conteúdos extras vistos', () => Object.keys(S.seen).length >= 20],
 ];
@@ -217,7 +220,7 @@ function go(v, arg) {
     `<div class="nav-foot">🔥 ${shownStreak()} · ⭐ ${S.xp} XP</div>`;
   $$('button', nav).forEach((b) => (b.onclick = () => go(b.dataset.v)));
   stopRead();
-  ({ home, trilha, cards, perfil, intro, onboard, extras, guide, nivel, texto })[v](arg);
+  ({ home, trilha, cards, perfil, intro, onboard, extras, guide, nivel, texto, pocket })[v](arg);
   if (v !== 'trilha') scrollTo(0, 0);
   updateBadge();
 }
@@ -514,6 +517,7 @@ function extras(lv) {
   const mine = list.filter(fitsProfile), rest = list.filter((x) => !fitsProfile(x));
   app.innerHTML = `<h1>🎬 Conteúdos de apoio</h1>
   <p class="mut">Músicas, filmes, séries, vídeos, podcasts, livros e leituras para usar o alemão fora da plataforma. Cada item marcado como visto vale 10 XP e conta para as conquistas.</p>
+  ${pocketList()}
   ${textsList()}
   ${lvTabs(xLevel, 'data-xl')}
   <div class="chips">${['all', ...Object.keys(XT)].map((t) => `<button class="chipb ${t === xType ? 'on' : ''}" data-xt="${t}">${t === 'all' ? 'Tudo' : XT[t][0] + ' ' + XT[t][1]}</button>`).join('')}</div>
@@ -523,6 +527,7 @@ function extras(lv) {
   <div class="card tip"><h3>💡 Como tirar mais proveito</h3><ul class="pts"><li>Use legenda em alemão, não em português. Se travar, volte 10 segundos e ouça de novo.</li><li>Anote três palavras novas de cada conteúdo e use cada uma numa frase no exercício de diário.</li><li>Repita em voz alta uma fala curta, imitando ritmo e entonação (shadowing).</li><li>Os links sem site oficial abrem uma busca, para você escolher a fonte que preferir.</li></ul></div>`;
   $$('[data-xl]').forEach((b) => (b.onclick = () => extras(b.dataset.xl)));
   $$('[data-tx]').forEach((b) => (b.onclick = () => go('texto', b.dataset.tx)));
+  $$('[data-pk]').forEach((b) => (b.onclick = () => go('pocket', b.dataset.pk)));
   $$('[data-xt]').forEach((b) => (b.onclick = () => { xType = b.dataset.xt; extras(); }));
   wireSeen(app, () => extras());
 }
@@ -934,6 +939,7 @@ function perfil() {
   <h2>📔 Diário</h2>
   <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(x.x ? '🎬 ' + x.x : LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
   ${cloudCard()}
+  ${offlineCard()}
   ${appCard(false)}
   <div class="card"><h3>🎯 Teste de nivelamento</h3><p class="mut">Já sabia alemão antes da trilha? O teste indica o seu nível e pula os dias que você já domina.</p><button id="toP">Fazer o teste</button></div>
   <h2>Ajustes</h2>
@@ -946,7 +952,7 @@ function perfil() {
   <div class="row" style="margin-top:10px"><button id="exp">⬇️ Exportar backup</button><button id="imp">⬆️ Importar backup</button><input type="file" id="file" accept=".json" hidden></div>
   <p class="mut">O progresso fica só neste navegador. Use o backup para levar a outro dispositivo.</p>
   <button class="link" id="reset">Apagar todo o progresso</button></div>`;
-  wireAppCard(); wireCloud();
+  wireAppCard(); wireCloud(); wireOffline();
   $('#toP').onclick = () => go('nivel');
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
@@ -959,6 +965,86 @@ function perfil() {
   };
   $('#reset').onclick = () => { if (confirm('Apagar todo o progresso deste dispositivo? Isso não pode ser desfeito.')) { localStorage.removeItem(KEY); S = fresh(); go('onboard'); } };
 }
+
+/* ---------- áudios para usar sem internet ---------- */
+// audio/levels.json traz, para cada nível (e para as lições Pocket), a lista de áudios e o tamanho do pacote.
+// Os arquivos vão para o cache "deutsch-trilha-audio", o mesmo que o service worker consulta antes da internet.
+const AUDIO_CACHE = 'deutsch-trilha-audio';
+let packs = null, dl = null; // dl = download em andamento { id, done, total, stop }
+const offOK = () => 'caches' in window && !!AUD;
+async function loadPacks() {
+  if (!packs) { const r = await fetch('audio/levels.json'); if (!r.ok) throw new Error('lista de áudios indisponível (' + r.status + ')'); packs = await r.json(); }
+  return packs;
+}
+const audioUrl = (h) => `audio/${h.slice(0, 2)}/${h}.mp3`;
+async function savedSet() {
+  const c = await caches.open(AUDIO_CACHE);
+  return new Set((await c.keys()).map((r) => r.url.split('/').pop().replace('.mp3', '')));
+}
+const PACK_NAME = { Pocket: '🧳 Pocket' };
+function offlineCard() {
+  if (!offOK()) return '';
+  return `<div class="card" id="offCard"><h3>📥 Áudios sem internet</h3>
+  <p class="mut">Baixe os áudios de um nível para estudar no metrô, no avião ou sem dados móveis. O que você já ouviu fica guardado sozinho.</p>
+  <div id="offList"><p class="mut">Verificando o que já está salvo…</p></div></div>`;
+}
+async function renderOffline() {
+  const box = document.getElementById('offList'); if (!box) return;
+  try {
+    const [p, have] = await Promise.all([loadPacks(), savedSet()]);
+    const ids = Object.keys(p).sort((a, b) => (a === 'Pocket') - (b === 'Pocket') || a.localeCompare(b));
+    const row = (id) => {
+      const g = p[id], n = g.h.filter((h) => have.has(h)).length, full = n >= g.n, run = dl && dl.id === id;
+      const label = run ? `⏳ ${Math.round((dl.done / dl.total) * 100)}% · Parar` : full ? '✓ Salvo' : n ? `Completar (${Math.round((1 - n / g.n) * g.mb)} MB)` : `Baixar ${g.mb} MB`;
+      return `<div class="offrow"><span><b>${PACK_NAME[id] || id}</b><small>${n.toLocaleString('pt-BR')} de ${g.n.toLocaleString('pt-BR')} áudios</small></span>
+        <div class="bar"><i style="width:${Math.round((run ? (n + dl.done) / g.n : n / g.n) * 100)}%"></i></div>
+        <button data-off="${id}" ${full && !run ? 'disabled' : ''} class="${run ? 'ghost' : ''}">${label}</button></div>`;
+    };
+    const totalMb = Math.round(ids.reduce((s, id) => s + p[id].mb, 0));
+    let est = '';
+    if (navigator.storage && navigator.storage.estimate) { const e = await navigator.storage.estimate(); est = `Espaço usado pelo app: ${Math.round((e.usage || 0) / 1e6)} MB.`; }
+    box.innerHTML = ids.map(row).join('') + `<div class="row" style="margin-top:10px">
+      <button id="offAll" ${dl ? 'disabled' : ''}>Baixar tudo (${totalMb} MB)</button>
+      <button class="ghost" id="offDel" ${dl || !have.size ? 'disabled' : ''}>Apagar áudios salvos</button></div>
+      <p class="mut">${est} Use Wi-Fi para os pacotes grandes.</p>`;
+    $$('[data-off]', box).forEach((b) => (b.onclick = () => (dl && dl.id === b.dataset.off ? (dl.stop = true) : downloadPack([b.dataset.off]))));
+    $('#offAll').onclick = () => downloadPack(ids);
+    $('#offDel').onclick = async () => {
+      if (!confirm('Apagar os áudios salvos neste aparelho? Eles voltam a ser baixados quando você tocar neles.')) return;
+      await caches.delete(AUDIO_CACHE); toast('Áudios salvos apagados'); renderOffline();
+    };
+  } catch (e) { console.error('Erro ao listar os áudios offline:', e); box.innerHTML = `<p class="mut">⚠️ Não consegui ver os pacotes de áudio: ${esc(e.message)}. Confira a internet e abra o Perfil de novo.</p>`; }
+}
+async function downloadPack(ids) {
+  if (dl) return;
+  dl = { id: ids[0], done: 0, total: 1, stop: false, fail: 0 }; // marca já no clique: evita dois downloads ao mesmo tempo
+  try {
+    const p = await loadPacks(), have = await savedSet(), c = await caches.open(AUDIO_CACHE);
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); // pede para o navegador não apagar o cache
+    for (const id of ids) {
+      const todo = p[id].h.filter((h) => !have.has(h));
+      if (!todo.length) continue;
+      dl = { id, done: 0, total: todo.length, stop: false, fail: 0 };
+      renderOffline();
+      let i = 0, last = 0;
+      const worker = async () => {
+        while (!dl.stop && i < todo.length) {
+          const h = todo[i++];
+          try { const r = await fetch(audioUrl(h), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); await c.put(audioUrl(h), r); }
+          catch (e) { dl.fail++; if (dl.fail > 20) { dl.stop = true; throw new Error('muitas falhas seguidas (' + e.message + ')'); } }
+          dl.done++;
+          if (Date.now() - last > 700) { last = Date.now(); renderOffline(); }
+        }
+      };
+      await Promise.all(Array.from({ length: 6 }, worker));
+      const stopped = dl.stop, fail = dl.fail;
+      if (stopped) { dl = null; toast('Download pausado. Toque de novo para continuar de onde parou.'); break; }
+      toast(fail ? `📥 ${PACK_NAME[id] || id}: salvo, com ${fail} áudios a tentar de novo` : `📥 ${PACK_NAME[id] || id} salvo para usar sem internet`);
+    }
+  } catch (e) { console.error('Erro ao baixar os áudios:', e); toast('⚠️ Download interrompido: ' + e.message); }
+  dl = null; renderOffline();
+}
+function wireOffline() { if (offOK()) renderOffline(); }
 
 /* ---------- textos longos: leitura e escuta ---------- */
 const textOpen = (t) => { const c = currentDay() || TOTAL + 1; return (t.w - 1) * 7 + 1 <= c || !!S.reads[t.id]; };

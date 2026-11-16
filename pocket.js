@@ -1,0 +1,106 @@
+/* Lições Pocket (aba Extras): situações reais com ilustrações interativas, frases, diálogo com vozes e teste.
+   Os dados ficam em data/pockets.js. Toda palavra das ilustrações tem data-say: tocar = ouvir. */
+
+// Imagens geradas (PROMPTS-POCKET.md) listadas em images/pocket/index.json: só essas são pedidas ao servidor.
+let PKIMG = new Set();
+fetch('images/pocket/index.json').then((r) => (r.ok ? r.json() : [])).then((j) => { PKIMG = new Set(j); }).catch(() => {});
+
+function pocketList() {
+  const done = S.pockets || {};
+  return `<h2>🧳 Lições Pocket</h2>
+  <p class="mut">Situações reais em 5 a 10 minutos: painéis, placas, cardápios e etiquetas com áudio em cada palavra. Ótimas antes de uma viagem.</p>
+  <div class="pkgrid">${POCKETS.map((p) => { const r = done[p.id];
+    return `<button class="pkc" data-pk="${p.id}"><span class="pke">${p.e}</span><span class="grow"><b>${esc(p.t)}</b><small>${esc(p.pt)} · ${p.lv}${r ? ` · ✓ ${r.ok}/${r.n}` : ''}</small></span></button>`; }).join('')}</div>`;
+}
+
+const pkSay = (t) => (/\p{L}/u.test(t) ? ` data-say="${esc(t)}"` : '');
+const pkWord = (de, pt, cls = '') => `<button class="pkw ${cls}"${pkSay(de)}><b>${esc(de)}</b>${pt ? `<small>${esc(pt)}</small>` : ''}</button>`;
+const pkLeg = (s) => (s ? `<div class="pk-leg">${pkPairs(s).map((x) => pkWord(x.de, x.pt)).join('')}</div>` : '');
+
+// Uma ilustração por tipo: painel, placas, cardápio, etiquetas, cartão, nota, quadro de informações, mapa e caminho.
+function pkIll(il) {
+  switch (il.k) {
+    case 'board': {
+      const st = (s) => (/fällt aus|annulliert|geschlossen/.test(s) ? 'bad' : /verspätet|\+|wechsel/i.test(s) ? 'warn' : s ? 'ok' : '');
+      return `<div class="pk-board ${il.estilo || ''}"><div class="pkb-h">${il.estilo === 'trem' ? '🚆' : '✈️'} ${esc(il.t)}</div><div class="tw"><table>
+        <tr>${pkPairs(il.cols).map((c) => `<th${pkSay(c.de)}>${esc(c.de)}<small>${esc(c.pt)}</small></th>`).join('')}</tr>
+        ${il.rows.map((r) => `<tr>${r.map((v, i) => (i === r.length - 1 ? `<td class="st ${st(v)}"${pkSay(v)}>${esc(v)}</td>` : `<td>${esc(v)}</td>`)).join('')}</tr>`).join('')}
+      </table></div>${pkLeg(il.leg)}</div>`;
+    }
+    case 'signs':
+      return `<div class="pk-signs ${il.estilo || ''}">${pkIcons(il.items).map((s) => `<button class="pk-sign"${pkSay(s.de)}><span class="ic">${s.ic}</span><span><b>${esc(s.de)}</b><small>${esc(s.pt)}</small></span></button>`).join('')}</div>`;
+    case 'menu':
+      return `<div class="pk-menu ${il.estilo || ''}"><div class="pkm-h"><b${pkSay(il.t)}>${esc(il.t)}</b><small>${esc(il.sub || '')}</small></div>
+        ${il.secoes.map((s) => `<div class="pkm-s"><h4${pkSay(s.n)}>${esc(s.n)} <small>${esc(s.pt)}</small></h4>
+          ${pkPairs(s.itens).map((x) => `<div class="pkm-i"${pkSay(x.de)}><span><b>${esc(x.de)}</b><small>${esc(x.pt)}</small></span><i></i><em>${esc(x.r[0] || '')} €</em></div>`).join('')}</div>`).join('')}
+        ${il.nota ? (() => { const [de, pt] = il.nota.split('='); return `<p class="pkm-n"${pkSay(de)}>${esc(de)}<small>${esc(pt || '')}</small></p>`; })() : ''}</div>`;
+    case 'tags':
+      return `<div class="pk-tags ${il.estilo || ''}">${pkPairs(il.tags).map((t) => { const [preco, antigo, selo] = t.r;
+        return `<div class="pk-tag"${pkSay(t.de)}>${selo ? `<span class="selo"${pkSay(selo)}>${esc(selo)}</span>` : ''}<b>${esc(t.de)}</b><small>${esc(t.pt)}</small>
+          <div class="pr">${antigo ? `<s>${esc(antigo)}</s>` : ''}<strong>${esc(preco)}</strong></div></div>`; }).join('')}</div>`;
+    case 'ticket':
+      return `<div class="pk-ticket"><div class="pkt-h">${esc(il.t)}</div><div class="pkt-g">${pkPairs(il.campos).map((c) => `<div class="pkt-f">${pkWord(c.de, c.pt, 'sm')}<span>${esc(c.r[0] || '')}</span></div>`).join('')}</div></div>`;
+    case 'receipt': {
+      const [tl, tv] = il.total.split('=');
+      return `<div class="pk-receipt"><div class="pkr-h">${esc(il.t)}</div>
+        ${pkPairs(il.linhas).map((x) => `<div class="pkr-l"${pkSay(x.de)}><span>${esc(x.de)}<small>${esc(x.pt)}</small></span><span>${esc(x.r[0] || '')}</span></div>`).join('')}
+        <div class="pkr-t"${pkSay(tl)}><span>${esc(tl)}</span><span>${esc(tv)} €</span></div></div>${pkLeg(il.extra)}`;
+    }
+    case 'info':
+      return `<div class="pk-info ${il.estilo || ''}"><div class="pki-h">${esc(il.t)}</div>${pkPairs(il.linhas).map((x) => `<div class="pki-l">${pkWord(x.de, x.pt)}${x.r[0] ? `<span>${esc(x.r[0])}</span>` : ''}</div>`).join('')}</div>`;
+    case 'map':
+      return `<div class="pk-map"><div class="pkmap-h">${esc(il.t)}</div><div class="pkmap-g">${pkIcons(il.items).map((b) => `<button class="pkmap-b ${/hier/.test(b.de) ? 'here' : ''}"${pkSay(b.de)}><span>${b.ic}</span><b>${esc(b.de)}</b><small>${esc(b.pt)}</small></button>`).join('')}</div>${pkLeg(il.leg)}</div>`;
+    case 'route':
+      return `<div class="pk-route">${pkIcons(il.items).map((s) => `<button class="pk-step"${pkSay(s.de)}><span>${s.ic}</span><b>${esc(s.de)}</b><small>${esc(s.pt)}</small></button>`).join('')}</div>`;
+    default: return '';
+  }
+}
+
+function pocket(id) {
+  const p = POCKETS.find((x) => x.id === id);
+  if (!p) return go('extras');
+  S.pockets = S.pockets || {};
+  const fr = pkPairs(p.frases), ou = pkPairs(p.ouvir), dl = pkDlg(p), r = S.pockets[id];
+  const ck = (j) => 'p:' + id + ':' + j, inCards = fr.filter((_, j) => S.cards[ck(j)]).length;
+  const paras = dl.map((d) => d.who + ': ' + d.de);
+  app.innerHTML = `<button class="ghost back" id="bk">← Extras</button>
+  <div class="lhead"><div class="gbig">${p.e}</div><div><span class="eyebrow">Pocket · ${p.lv} · 5 a 10 min</span><h1>${esc(p.t)}</h1><p class="mut">${esc(p.pt)}</p></div></div>
+  ${(p.img || []).filter((im) => PKIMG.has(im.f)).map((im) => `<figure class="pk-img"><img src="images/pocket/${im.f}.png" alt="${esc(im.alt)}" onload="this.parentNode.classList.add('ok')" onerror="this.parentNode.remove()"></figure>`).join('')}
+  <div class="card"><h3>🎬 A cena</h3><p>${inl(p.cena)}</p></div>
+  <h2>🗺️ Toque e ouça</h2><p class="mut">Toque em qualquer palavra das ilustrações para ouvir a pronúncia.</p>
+  ${p.ill.map((il) => `<div class="pk-ill">${pkIll(il)}</div>`).join('')}
+  <h2>💬 Você diz</h2><div class="card pk-list">${fr.map((x) => `<p>${spk(x.de)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}
+    <button id="pkCards" ${inCards === fr.length ? 'disabled' : ''}>${inCards === fr.length ? '✓ Frases nas cartas de revisão' : `🃏 Pôr as ${fr.length} frases nas cartas de revisão`}</button></div>
+  <h2>👂 Você vai ouvir</h2><div class="card pk-list">${ou.map((x) => `<p>${spk(x.de)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}</div>
+  <h2>🎭 A cena em diálogo</h2><div class="card tplayer"><div class="row"><button class="pri" id="pkPlay">▶ Ouvir a cena</button><button id="pkStop">⏹ Parar</button></div></div>
+  <div class="card ttext">${dl.map((d, i) => `<div class="tpara" data-i="${i}">${spk(d.de)}<b class="twho">${esc(d.who)}:</b> <span class="de">${esc(d.de)}</span><br><small>${esc(d.pt)}</small></div>`).join('')}</div>
+  <div class="box br"><span class="bl">🇩🇪 Dica cultural</span>${inl(p.dica)}</div>
+  <h2>✅ Teste rápido</h2><div class="card">${r ? `<p class="mut">Você já fez: ${r.ok}/${r.n} acertos. Pode refazer para treinar.</p>` : ''}
+    ${p.quiz.map((q, i) => `<div class="tq" data-q="${i}"><p>${i + 1}. ${esc(q.q)}</p><div class="opts col">${q.o.map((o, j) => `<button data-a="${j}">${esc(o)}</button>`).join('')}</div></div>`).join('')}
+    <button class="pri big" id="pkCheck">Conferir respostas</button><div id="pkRes"></div></div>`;
+  $('#bk').onclick = () => go('extras');
+  $('#pkPlay').onclick = () => readFrom(paras, 0);
+  $('#pkStop').onclick = stopRead;
+  $$('.tpara').forEach((el) => (el.ondblclick = () => readFrom(paras, +el.dataset.i)));
+  $('#pkCards').onclick = () => {
+    fr.forEach((_, j) => { if (!S.cards[ck(j)]) S.cards[ck(j)] = newCard(); });
+    save(); checkBadges(); toast(`🃏 ${fr.length} frases de "${p.t}" nas cartas de revisão`);
+    $('#pkCards').disabled = true; $('#pkCards').textContent = '✓ Frases nas cartas de revisão';
+  };
+  const ans = {};
+  $$('.tq').forEach((qe) => $$('button', qe).forEach((b) => (b.onclick = () => { $$('button', qe).forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); ans[qe.dataset.q] = +b.dataset.a; })));
+  $('#pkCheck').onclick = () => {
+    if (Object.keys(ans).length < p.quiz.length) return toast('Responda todas as perguntas antes de conferir.');
+    let ok = 0;
+    p.quiz.forEach((q, i) => {
+      const qe = document.querySelector(`.tq[data-q="${i}"]`);
+      $$('button', qe).forEach((b) => { b.disabled = true; if (+b.dataset.a === q.a) b.classList.add('ok'); else if (+b.dataset.a === ans[i]) b.classList.add('no'); });
+      if (ans[i] === q.a) ok++;
+    });
+    const n = p.quiz.length, first = !S.pockets[id], xp = first ? ok * 10 + (ok === n ? 20 : 0) : 0;
+    S.pockets[id] = { ok, n, d: today() };
+    if (xp) addXP(xp); markActive(); checkBadges(); save();
+    $('#pkRes').innerHTML = `<div class="fb ${ok >= n - 1 ? 'ok' : 'no'}"><b>${ok}/${n} acertos${xp ? ' · +' + xp + ' XP' : ''}</b><p>${ok === n ? 'Perfeito! Você está pronta para essa situação.' : 'Volte às ilustrações e às frases das respostas em vermelho e ouça de novo.'}</p></div>`;
+    $('#pkCheck').disabled = true;
+  };
+}
