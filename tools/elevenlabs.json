@@ -1,14 +1,18 @@
 {
-  "modelo": "eleven_multilingual_v2",
+  "modelo": "eleven_v4",
   "formato": "mp3_44100_64",
   "velocidade": 0.95,
   "estabilidade": 0.5,
   "similaridade": 0.75,
   "paralelo": 2,
   "vozes": {
-    "a": "",
-    "b": "",
+    "a": "Utm9RYMyBhvkjOgvnWNB",
+    "b": "jdKpAe6rxAe99tFGbsAc",
     "c": "",
     "d": ""
+  },
+  "nomes": {
+    "a": "Livia",
+    "b": "Daniel (Corporate Narration)"
   }
 }

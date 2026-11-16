@@ -111,7 +111,9 @@ function loadCfg() {
   c.vozes = { ...DEFAULT_CFG.vozes, ...c.vozes };
   return c;
 }
-const creditRate = (model) => (/flash|turbo/i.test(model) ? 0.5 : 1);
+// Créditos por caractere medidos no plano Creator em 16/11/2026 (cabeçalho character-cost da API):
+// Multilingual v2, v3 e v4 ≈ 0,44 · Flash v2.5 e v4 Turbo ≈ 0,21. O gerador também soma o custo real de cada áudio.
+const creditRate = (model) => (/flash|turbo/i.test(model) ? 0.22 : 0.45);
 const voiceFor = (cfg, slot) => cfg.vozes[slot] || (slot === 'c' ? cfg.vozes.a : slot === 'd' ? cfg.vozes.b : '') || cfg.vozes.a;
 const KEY = () => {
   const k = process.env.ELEVENLABS_API_KEY;
@@ -134,6 +136,7 @@ async function credits() {
     return { used: s.character_count, limit: s.character_limit, tier: s.tier };
   } catch (e) { return null; }
 }
+let realCost = 0; // créditos realmente cobrados (cabeçalho character-cost da resposta)
 async function tts(cfg, item) {
   const voice = voiceFor(cfg, item.slot);
   const body = {
@@ -146,6 +149,7 @@ async function tts(cfg, item) {
       const res = await api(`/text-to-speech/${voice}?output_format=${cfg.formato}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'audio/mpeg' }, body: JSON.stringify(body),
       });
+      realCost += Number(res.headers.get('character-cost')) || 0;
       return Buffer.from(await res.arrayBuffer());
     } catch (e) {
       if (/quota_exceeded|insufficient/i.test(e.detail || '')) throw Object.assign(new Error('Créditos da ElevenLabs esgotados.'), { fatal: true });
@@ -184,7 +188,7 @@ async function simulate(items, cfg) {
   console.log(`Faltam:        ${fmt(todo.length)} (${fmt(chars(todo))} caracteres)\n`);
   Object.entries(byCat).sort((a, b) => b[1].ch - a[1].ch).forEach(([k, v]) => console.log(`  ${k.padEnd(18)} ${fmt(v.n).padStart(6)} itens ${fmt(v.ch).padStart(8)} caracteres`));
   console.log(`\nCréditos estimados com o modelo atual (${cfg.modelo}): ${fmt(chars(todo) * creditRate(cfg.modelo))}`);
-  console.log(`  Multilingual v2 / v3: ~${fmt(chars(todo))}   ·   Flash / Turbo v2.5: ~${fmt(chars(todo) / 2)}`);
+  console.log(`  Multilingual v2 / v3 / v4: ~${fmt(chars(todo) * 0.45)}   ·   Flash v2.5 / v4 Turbo: ~${fmt(chars(todo) * 0.22)}`);
   console.log('  Some uns 20% de folga para refazer áudios que saírem ruins.');
   const missing = ['a', 'b'].filter((s) => !cfg.vozes[s]);
   if (missing.length) console.log(`\n⚠️  Falta escolher as vozes ${missing.join(' e ')} em tools/elevenlabs.json (rode: node tools/audio-elevenlabs.mjs vozes).`);
@@ -233,7 +237,7 @@ async function generate(items, cfg, limitArg) {
   };
   await Promise.all(Array.from({ length: Math.max(1, cfg.paralelo) }, worker));
   const n = writeIndex();
-  console.log(`\nPronto: ${fmt(ok)} gerados, ${fmt(fail)} com erro. Índice com ${fmt(n)} áudios em audio/index.json.`);
+  console.log(`\nPronto: ${fmt(ok)} gerados, ${fmt(fail)} com erro, ${fmt(realCost)} créditos gastos. Índice com ${fmt(n)} áudios em audio/index.json.`);
   if (queue.length < todo.length) console.log(`Ainda faltam ${fmt(todo.length - ok)} áudios. Rode de novo com outro --limite para continuar.`);
 }
 
