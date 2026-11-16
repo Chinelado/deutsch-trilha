@@ -483,3 +483,42 @@ button.sel.ok { border-color: var(--ok); background: var(--okbg); box-shadow: no
 /* Pocket: imagens didáticas com legenda do que observar (sem cortar detalhes) */
 .pk-look .pk-img { margin: 6px 0 0; } .pk-look .pk-img img { max-height: none; object-fit: contain; }
 .pk-look figcaption { margin-top: 10px; line-height: 1.5; }
+
+/* ---------- facilitações interativas: relógio e gata no caixote ---------- */
+.ivis .ihint { margin: 10px 0 0; font-size: .9rem; }
+.uhr { display: grid; grid-template-columns: minmax(180px, 260px) 1fr; gap: 18px; align-items: center; }
+.uhr-face { width: 100%; height: auto; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.uhr-face:active { cursor: grabbing; }
+.uhr .uf { fill: var(--bg2); stroke: var(--line); stroke-width: 3; }
+.uhr .ut { stroke: var(--mut); stroke-width: 1; opacity: .5; } .uhr .ut5 { stroke: var(--ink); stroke-width: 2.5; }
+.uhr .un text { fill: var(--ink); font-size: 15px; font-weight: 700; text-anchor: middle; }
+.uhr .uh { stroke: var(--ink); stroke-width: 7; stroke-linecap: round; }
+.uhr .um { stroke: var(--acc); stroke-width: 5; stroke-linecap: round; }
+.uhr .uh, .uhr .um { transform-box: view-box; transform-origin: 100px 100px; transition: transform .25s ease; }
+.ivis [hidden] { display: none !important; }
+.uhr .uc { fill: var(--acc); }
+.uhr-dig { font-size: 2.2rem; font-weight: 700; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+.uhr-de { font-size: 1.15rem; margin: 6px 0; display: flex; align-items: center; gap: 8px; }
+.uhr-f { margin: 4px 0; } .uhr-tip { min-height: 1.3em; margin: 6px 0; font-size: .9rem; }
+.uhr-q p { margin: 6px 0; } .uhr-q .de { font-size: 1.15rem; }
+.uhr-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.uhr-btns button { flex: 1 1 auto; justify-content: center; }
+.okmsg { color: var(--ok); font-weight: 600; } .nomsg { color: var(--no); font-weight: 600; }
+.katz .kz-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.katz .kz-modes button { flex-direction: column; gap: 0; justify-content: center; text-align: center; } .katz .kz-modes button small { color: var(--mut); font-size: .8rem; }
+.katz .kz-modes button.on { border-color: var(--acc); box-shadow: inset 0 0 0 1px var(--acc); font-weight: 600; }
+.kz-scene { width: 100%; max-width: 520px; display: block; margin: 0 auto; }
+.kz-floor { stroke: var(--line); stroke-width: 3; }
+.kz-box { fill: #c99a5e; stroke: #8a6234; stroke-width: 2; } .kz-top { fill: #ddb27a; stroke: #8a6234; stroke-width: 2; }
+.kz-side { fill: #a87a45; stroke: #8a6234; stroke-width: 2; } .kz-leg { fill: #8a6234; }
+.kz-hole { fill: #5c3d1c; display: none; } .katz.open .kz-hole { display: inline; }
+.kz-body { fill: var(--acc); } .kz-tail { fill: none; stroke: var(--acc); stroke-width: 4; stroke-linecap: round; } .kz-eye { fill: #0e1525; }
+.kz-sent { font-size: 1.12rem; display: flex; gap: 8px; align-items: center; justify-content: center; text-align: center; margin: 10px 0 4px; min-height: 2em; }
+.kz-h { font-style: normal; font-weight: 700; padding: 1px 5px; border-radius: 5px; }
+.kz-h.wo { color: var(--vc2); background: rgba(63, 193, 224, .14); } .kz-h.wohin { color: var(--acc); background: rgba(255, 138, 61, .14); }
+.kz-fb { text-align: center; } .kz-fb p { margin: 6px 0; }
+.kz-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; margin-top: 10px; }
+.kz-btns button { flex-direction: column; gap: 0; justify-content: center; padding: 8px 6px; }
+.kz-btns button small { color: var(--mut); font-size: .78rem; }
+.kz-btns button.on { border-color: var(--acc); background: rgba(255, 138, 61, .12); }
+@media (max-width: 560px) { .uhr { grid-template-columns: 1fr; } .uhr-face { max-width: 260px; margin: 0 auto; display: block; } }

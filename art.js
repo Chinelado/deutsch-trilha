@@ -208,6 +208,8 @@ const VOPS = new Set(['+', '=', '→', ',', '−']);
 const kv = (p) => { const e = p.indexOf('='); return e < 0 ? [p, ''] : [p.slice(0, e), p.slice(e + 1)]; };
 function visHTML(spec) {
   const seg = spec.split(';'), k = seg[0][0], title = seg[0].slice(2), rest = seg.slice(1);
+  if (k === 'U') return typeof uhrHTML === 'function' ? uhrHTML(title) : ''; // relógio interativo (interativo.js)
+  if (k === 'K') return typeof katzHTML === 'function' ? katzHTML(title, rest[0]) : ''; // a gata e o caixote
   let body = '';
   if (k === 'F') {
     const hs = rest[0].split('|').map((h) => h.split('^'));
