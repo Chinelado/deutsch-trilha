@@ -50,6 +50,37 @@ function pathSVG(days, cur, step = 100) {
   return { svg: `<svg viewBox="0 0 ${PATH_W} ${H}" width="${PATH_W}" height="${H}" class="path">${marks}${lines}${nodes}</svg>`, P };
 }
 
+/* ---------- aulas em texto marcado (guia e A1) ---------- */
+const inl = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+function deepHTML(md) {
+  const L = md.split('\n').map((x) => x.trim()).filter(Boolean);
+  let h = '', i = 0;
+  const take = (pre) => { const out = []; while (i < L.length && L[i].startsWith(pre)) out.push(L[i++].slice(pre.length)); return out; };
+  while (i < L.length) {
+    const l = L[i];
+    if (l.startsWith('|')) {
+      let head = true; if (l === '|-') { head = false; i++; }
+      const rows = []; while (i < L.length && L[i].startsWith('|') && L[i] !== '|-') rows.push(L[i++].replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+      h += `<div class="tw"><table class="dt">${rows.map((r, k) => `<tr>${r.map((c) => (k === 0 && head ? `<th>${inl(c)}</th>` : `<td>${inl(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`;
+    } else if (l.startsWith('- ')) h += `<ul class="pts">${take('- ').map((x) => `<li>${inl(x)}</li>`).join('')}</ul>`;
+    else if (l.startsWith('~ ')) {
+      h += `<div class="exs">${take('~ ').map((x) => { const k = x.indexOf(' = '), de = k > 0 ? x.slice(0, k) : x, pt = k > 0 ? x.slice(k + 3) : '';
+        return `<p>${spk(de.replace(/\*\*/g, ''))}<span class="de">${inl(de)}</span>${pt ? `<br><small>${inl(pt)}</small>` : ''}</p>`; }).join('')}</div>`;
+    } else if (l.startsWith('? ')) {
+      h += `<div class="quiz"><h4>✍️ Teste rápido</h4><p class="mut">Responda de cabeça, ou em voz alta, antes de tocar para ver a resposta.</p>${take('? ').map((x) => { const [a, b] = x.split(' || ');
+        return `<details><summary>${inl(a)}</summary><p>${inl(b || '')}</p></details>`; }).join('')}</div>`;
+    } else {
+      if (l.startsWith('# ')) h += `<h3 class="step">${inl(l.slice(2))}</h3>`;
+      else if (l.startsWith('> ')) h += `<div class="box tip"><span class="bl">💡 Dica</span>${inl(l.slice(2))}</div>`;
+      else if (l.startsWith('! ')) h += `<div class="box warn"><span class="bl">⚠️ Atenção</span>${inl(l.slice(2))}</div>`;
+      else if (l.startsWith('BR ')) h += `<div class="box br"><span class="bl">🇧🇷 Comparando com o português</span>${inl(l.slice(3))}</div>`;
+      else h += `<p>${inl(l)}</p>`;
+      i++;
+    }
+  }
+  return h;
+}
+
 /* ---------- frase desmontada ---------- */
 const RGROUP = { s: 'Sujeito', v: 'Verbo conjugado', v2: 'Fim do verbo', o: 'Objetos', p: 'Atributos', c: 'Complementos', n: 'Negação', w: 'Conectores' };
 const RHELP = {

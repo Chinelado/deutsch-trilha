@@ -22,7 +22,7 @@ const WEEKS = LESSONS.length / 6, TOTAL = WEEKS * 7;
 const fresh = () => ({
   name: '', goal: 60, audio: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
   done: {}, cards: {}, stats: Object.fromEntries(IK.map((k) => [k, { n: 0, ok: 0, rn: 0, rok: 0, t: 0 }])),
-  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {},
+  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {},
 });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) { console.error('Falha ao ler o progresso salvo:', e); }
@@ -112,6 +112,7 @@ const levelDone = (a, b) => { for (let d = a * 7 + 1; d <= b * 7; d++) if (!S.do
 const nDone = () => Object.keys(S.done).length;
 const nWords = () => Object.keys(S.cards).length;
 const BADGES = [
+  ['guide', '🧭', 'Bereit!', 'Concluiu o módulo Comece aqui', () => GUIDE.every((g) => S.guide[g.id])],
   ['first', '🌱', 'Erster Schritt', 'Primeira lição concluída', () => nDone() >= 1],
   ['s3', '🔥', '3 dias', 'Sequência de 3 dias', () => S.best >= 3],
   ['s7', '🔥', '1 semana', 'Sequência de 7 dias', () => S.best >= 7],
@@ -158,7 +159,7 @@ const clockText = () => Math.floor(secsToday() / 60) + ' / ' + S.goal + ' min';
 let view = 'home';
 function go(v, arg) {
   view = v; sess = null; if (hasTTS) speechSynthesis.cancel();
-  const tabs = [['home', '🏠', 'Hoje'], ['trilha', '🗺️', 'Trilha'], ['cards', '🃏', 'Cartas'], ['extras', '🎬', 'Extras'], ['perfil', '🧠', 'Perfil']];
+  const tabs = [['home', '🏠', 'Hoje'], ['trilha', '🗺️', 'Trilha'], ['cards', '🃏', 'Cartas'], ['guide', '📘', 'Guia'], ['extras', '🎬', 'Extras'], ['perfil', '🧠', 'Perfil']];
   const due = dueKeys().length;
   nav.hidden = !S.start;
   document.body.classList.toggle('has-nav', !!S.start);
@@ -166,7 +167,7 @@ function go(v, arg) {
     tabs.map(([id, e, n]) => `<button data-v="${id}" class="${id === v || (v === 'intro' && id === 'trilha') ? 'on' : ''}"><b>${e}</b><span>${n}</span>${id === 'cards' && due ? `<em>${due}</em>` : ''}</button>`).join('') +
     `<div class="nav-foot">🔥 ${shownStreak()} · ⭐ ${S.xp} XP</div>`;
   $$('button', nav).forEach((b) => (b.onclick = () => go(b.dataset.v)));
-  ({ home, trilha, cards, perfil, intro, onboard, extras })[v](arg);
+  ({ home, trilha, cards, perfil, intro, onboard, extras, guide })[v](arg);
   if (v !== 'trilha') scrollTo(0, 0);
 }
 
@@ -174,7 +175,7 @@ function go(v, arg) {
 function onboard() {
   app.innerHTML = `<section class="hero"><div class="hero-bg">${heroArt('A1')}</div><div class="hero-card"><div class="hero-txt">
   <span class="eyebrow">A1 → C2 · Goethe-Institut</span><h1>Willkommen! 🇩🇪</h1>
-  <p>Uma trilha de 30 semanas: do A1 ao B1 em 13 semanas, o B2 completo em mais 12 e o início do C1 e do C2. A plataforma mede quais tipos de exercício fazem você acertar e lembrar mais, e ajusta as lições a isso.</p></div></div></section>
+  <p>Uma trilha do zero à fluência: do A1 ao B1 em 13 semanas, o B2 completo em mais 12 e o início do C1 e do C2. Não precisa saber nada de alemão nem de gramática: antes do dia 1 há seis aulas curtas que ensinam como estudar e explicam o básico em português. A plataforma também mede quais tipos de exercício fazem você acertar e lembrar mais, e ajusta as lições a isso.</p></div></div></section>
   <div class="card"><h3>Como posso te chamar?</h3><input id="nm" placeholder="Seu nome" maxlength="30">
   <h3>Quanto tempo por dia?</h3>
   <select id="goal"><option value="30">30 min — ritmo leve</option><option value="60" selected>60 min — firme</option><option value="90">90 min — intenso</option><option value="120">120 min — ritmo de B1 em 3 meses</option><option value="180">180 min — imersão</option></select>
@@ -225,16 +226,25 @@ function home() {
   const L = d && !d.review ? LESSONS[d.li] : null, streak = shownStreak(), lvId = d ? d.level : 'C2';
   const left = Math.max(0, S.goal - Math.floor(secsToday() / 60));
   const hasData = IK.some((k) => S.stats[k].n >= 5);
-  const thumb = L && L.bd
+  let thumb = L && L.bd
     ? `<div class="thumb" style="--lc:${LVCOL[lvId]}"><span class="eyebrow">Frase-chave da lição</span>${breakdownHTML(L.bd, true)}<div class="row"><small class="grow">${esc(L.bd.pt)}</small>${spk(L.bd.t.map((x) => x.w).join(' '))}</div></div>`
     : `<div class="thumb center" style="--lc:${LVCOL[lvId]}">${levelBadge(lvId, 130)}</div>`;
-  const heroTxt = d
+  let heroTxt = d
     ? `<span class="eyebrow">${d.level} · Semana ${d.w + 1} · Dia ${cur} de ${TOTAL}</span>
       <h1>${d.review ? '🏁 Checkpoint da semana ' + (d.w + 1) : esc(L.de)}</h1>
       <p class="meta">⏱ ${d.review ? '25–35' : '30–45'} min</p>
       <p class="lead">${d.review ? 'Revisão misturada das 6 lições da semana, em 18 exercícios.' : esc(L.pt) + ' · ' + esc(L.gt)}</p>
       <button class="pri" id="goL">${m.lesson ? 'Adiantar o dia' : 'Começar o dia'} ${cur} →</button>`
     : `<span class="eyebrow">Trilha concluída</span><h1>🏆 Todas as lições feitas!</h1><p class="lead">Mantenha as cartas em dia, faça treinos extras e mergulhe nos conteúdos de apoio.</p>`;
+  // Antes do dia 1, o início conduz pelo módulo "Comece aqui".
+  const gNext = !nDone() && GUIDE.find((g) => !S.guide[g.id]);
+  if (gNext) {
+    const k = GUIDE.indexOf(gNext);
+    heroTxt = `<span class="eyebrow">Comece aqui · Aula ${k + 1} de ${GUIDE.length}</span><h1>${gNext.e} ${gNext.t}</h1>
+      <p class="meta">⏱ 10–15 min · antes do dia 1</p><p class="lead">${gNext.s}</p>
+      <div class="row"><button class="pri" id="goG">${k ? 'Continuar' : 'Começar'} a aula →</button><button class="ghost" id="skipG">Pular para o dia 1</button></div>`;
+    thumb = `<div class="thumb" style="--lc:${LVCOL.A1}"><span class="eyebrow">Antes do dia 1</span>${GUIDE.map((g, j) => `<div class="gmini ${S.guide[g.id] ? 'ok' : j === k ? 'cur' : ''}"><span>${S.guide[g.id] ? '✓' : j + 1}</span>${g.t}</div>`).join('')}</div>`;
+  }
   app.innerHTML = `<section class="hero"><div class="hero-bg">${heroArt(lvId)}</div>
   <div class="hero-card"><div class="hero-txt"><p class="hi">Hallo${S.name ? ', ' + esc(S.name) : ''}! 👋</p>${heroTxt}</div>${thumb}</div></section>
   <div class="strip">
@@ -257,6 +267,8 @@ function home() {
   <div class="row"><h2 class="grow">🎬 Para estudar fora daqui</h2><button class="ghost" id="goE">Ver todos →</button></div>
   <div class="xgrid">${pickExtras(curLevel(), 3).map(extraCard).join('')}</div>`;
   if ($('#goL')) $('#goL').onclick = () => go('intro', cur);
+  if ($('#goG')) $('#goG').onclick = () => go('guide', gNext.id);
+  if ($('#skipG')) $('#skipG').onclick = () => go('intro', 1);
   if ($('#goC')) $('#goC').onclick = () => go('cards');
   if ($('#goX')) $('#goX').onclick = () => startSession('extra');
   if ($('#goT')) $('#goT').onclick = () => go('trilha');
@@ -288,6 +300,7 @@ function trilha(lvId) {
       <span class="eyebrow">${p.when} · ${p.ue}</span><h2>${p.n}</h2><p class="mut">${p.can}</p>
       <p>🧩 ${nw * 6} lições · 🏁 ${nw} checkpoints</p>
       <div class="row"><div class="bar"><i style="width:${Math.round((doneN / days.length) * 100)}%"></i></div><small>${doneN}/${days.length}</small></div>
+      ${p.id === 'A1' ? `<div class="prep"><b>🧭 Antes do dia 1: Comece aqui</b>${GUIDE.map((g, j) => `<button class="gmini ${S.guide[g.id] ? 'ok' : ''}" data-g="${g.id}"><span>${S.guide[g.id] ? '✓' : j + 1}</span>${g.t}</button>`).join('')}</div>` : ''}
       <details><summary>Gramática por semana</summary><ul class="wklist">${weeks}</ul></details>
       ${p.mods ? `<details><summary>Roteiro completo do nível</summary><ul>${p.mods.map((m) => `<li>${m}</li>`).join('')}</ul>
         <small class="mut">${p.part ? 'As semanas da trilha cobrem o início do nível. Para o restante do roteiro, use os conteúdos de apoio da aba Extras.' : 'Todos esses temas são cobertos pelas semanas da trilha.'}</small></details>` : ''}
@@ -296,6 +309,7 @@ function trilha(lvId) {
     <div class="pathwrap" id="pw">${svg}<div class="pop" id="pop" hidden></div></div>
   </div>`;
   $$('[data-lv]').forEach((b) => (b.onclick = () => { trilha(b.dataset.lv); scrollTo(0, 0); }));
+  $$('[data-g]').forEach((b) => (b.onclick = () => go('guide', b.dataset.g)));
   const pop = $('#pop');
   const open = (d) => {
     const info = dayInfo(d), pp = P.find((x) => x.d === d), L = info.review ? null : LESSONS[info.li], locked = d > cur;
@@ -315,6 +329,47 @@ function trilha(lvId) {
   });
   const c = $('.node.n-cur');
   if (c) c.scrollIntoView({ block: 'center' }); else scrollTo(0, 0);
+}
+
+/* ---------- guia de estudo ---------- */
+function studyTips(lv) {
+  const T = {
+    A: ['Leia a aula passo a passo devagar. Se um termo for estranho, procure no Dicionário de termos da aba Guia.', 'Toque em 🔊 em cada exemplo e repita em voz alta duas vezes, imitando o som.', 'Faça o teste rápido de cabeça, sem olhar, antes de abrir as respostas.', 'Pratique os 14 exercícios. Quando errar, leia a explicação inteira: é ali que a regra fixa.', 'Revise as cartas do dia na aba Cartas, dizendo a resposta em voz alta antes de virar.', 'Feche o dia escrevendo uma frase sobre você com uma palavra nova, e ouça um conteúdo da aba Extras.'],
+    B: ['Leia a regra e a frase desmontada, e diga em uma frase, com suas palavras, o que a regra faz.', 'Crie três frases suas com a estrutura nova, sobre a sua vida.', 'Pratique os exercícios e revise as explicações de erro antes de seguir.', 'Revise as cartas em voz alta.', 'Passe 15 minutos num conteúdo da aba Extras com legenda em alemão e anote três palavras novas.'],
+    C: ['Leia a explicação e procure a estrutura num texto real: jornal, podcast ou livro da aba Extras.', 'Reescreva um parágrafo trocando o registro (do coloquial para o formal, ou o contrário).', 'Pratique os exercícios e as cartas.', 'Escreva um parágrafo de opinião usando dois recursos da lição e leia em voz alta.'],
+  }[lv[0]];
+  return `<ol class="pts">${T.map((t) => `<li>${t}</li>`).join('')}</ol>`;
+}
+const glossList = (f) => {
+  const n = norm(f || '');
+  const rows = GLOSS.filter(([t, d, e]) => !n || norm(t + ' ' + d + ' ' + e).includes(n));
+  return rows.length ? `<dl class="gloss">${rows.map(([t, d, e]) => `<dt>${t}</dt><dd>${d}<br><span class="de">${esc(e)}</span></dd>`).join('')}</dl>` : '<p class="mut">Nenhum termo encontrado.</p>';
+};
+function guide(id) {
+  if (id) {
+    const k = GUIDE.findIndex((g) => g.id === id), g = GUIDE[k], nx = GUIDE[k + 1];
+    app.innerHTML = `<button class="ghost back" id="bk">← Guia</button>
+    <div class="lhead"><div class="gbig">${g.e}</div><div><span class="eyebrow">Comece aqui · Aula ${k + 1} de ${GUIDE.length}</span><h1>${g.t}</h1><p class="mut">${g.s}</p></div></div>
+    <div class="card deep">${deepHTML(g.body)}</div>
+    <button class="pri big" id="gdone">${S.guide[id] ? (nx ? 'Próxima aula →' : 'Ir para o dia 1 →') : 'Concluir aula · +20 XP'}</button>`;
+    $('#bk').onclick = () => go('guide');
+    $('#gdone').onclick = () => {
+      if (!S.guide[id]) { S.guide[id] = today(); addXP(20); toast('📘 Aula concluída! +20 XP'); markActive(); checkBadges(); save(); }
+      if (nx) go('guide', nx.id); else go('intro', 1);
+    };
+    return;
+  }
+  const n = GUIDE.filter((g) => S.guide[g.id]).length;
+  app.innerHTML = `<h1>📘 Guia de estudo</h1>
+  <p class="mut">Se você nunca estudou outra língua, comece por aqui: são seis aulas curtas antes do dia 1. Você pode voltar a elas sempre que quiser.</p>
+  <div class="card"><div class="row"><h3 class="grow">🧭 Comece aqui</h3><small>${n}/${GUIDE.length} concluídas</small></div>
+  <div class="bar" style="margin:6px 0 12px"><i style="width:${Math.round((n / GUIDE.length) * 100)}%"></i></div>
+  <div class="glist">${GUIDE.map((g, k) => `<button class="gitem ${S.guide[g.id] ? 'ok' : ''}" data-g="${g.id}"><span class="gnum">${S.guide[g.id] ? '✓' : k + 1}</span><span class="grow"><b>${g.e} ${g.t}</b><small>${g.s}</small></span><span>→</span></button>`).join('')}</div></div>
+  <div class="card"><h3>🗓️ Rotina de cada lição</h3><p class="mut">O roteiro muda um pouco conforme o nível. No começo (A1 e A2):</p>${studyTips('A1')}</div>
+  <div class="card"><h3>📖 Dicionário de termos</h3><p class="mut">Os nomes de gramática que aparecem nas lições, explicados de forma simples.</p>
+  <input id="gq" placeholder="Buscar termo (ex.: dativo, sujeito)…" autocomplete="off"><div id="gl">${glossList('')}</div></div>`;
+  $$('[data-g]').forEach((b) => (b.onclick = () => go('guide', b.dataset.g)));
+  $('#gq').oninput = (e) => { $('#gl').innerHTML = glossList(e.target.value); };
 }
 
 /* ---------- extras ---------- */
@@ -353,7 +408,9 @@ function intro(day) {
   const l = LESSONS[d.li];
   app.innerHTML = `<button class="ghost back" id="bk">← Trilha</button>
   <div class="lhead" style="--lc:${LVCOL[d.level]}">${levelBadge(d.level, 60)}<div><span class="eyebrow">${d.level} · Semana ${d.w + 1} · Dia ${day}</span><h1>${esc(l.de)}</h1><p class="mut">${esc(l.pt)}</p></div></div>
-  <div class="card"><h3>🧩 Gramática: ${esc(l.gt)}</h3><p>${esc(l.gx)}</p>
+  <details class="card how" ${d.level === 'A1' ? 'open' : ''}><summary>🗓️ Como estudar esta lição</summary>${studyTips(d.level)}</details>
+  ${l.deep ? `<div class="card deep"><h2 class="dh">📖 Aula passo a passo</h2>${deepHTML(l.deep)}</div>` : ''}
+  <div class="card"><h3>🧩 ${l.deep ? 'Resumo da regra' : 'Gramática'}: ${esc(l.gt)}</h3><p>${esc(l.gx)}</p>
   ${l.pts.length ? `<h3 style="margin-top:14px">Como funciona</h3><ul class="pts">${l.pts.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
   <h3 style="margin-top:14px">Exemplos</h3>
   ${l.ge.map((e) => `<p>${spk(e.de)}<span class="de">${esc(e.de)}</span><br><small>${esc(e.pt)}</small></p>`).join('')}
