@@ -227,6 +227,20 @@ mark { background: color-mix(in srgb, var(--acc) 30%, transparent); color: var(-
 .wch { margin: 16px 0 8px; }
 .xnote { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
 
+.cloudf input { max-width: 340px; } .cloudf .pri { margin-bottom: 6px; }
+
+/* ---------- textos longos ---------- */
+.txlist { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-bottom: 18px; }
+.txi { text-align: left; gap: 10px; padding: 12px; } .txi b, .txi small { display: block; } .txi.lock { opacity: .5; }
+.tplayer select { width: auto; margin: 0; padding: 6px 8px; } .tspeed { margin: 0 0 0 auto; gap: 6px; font-size: .9rem; }
+.ttext.hid .tpara { filter: blur(6px); user-select: none; pointer-events: none; }
+.tpara { padding: 8px 10px; border-radius: 8px; line-height: 1.7; transition: background .2s; }
+.tpara.on { background: rgba(0, 121, 242, .14); }
+.twho { color: var(--acc); }
+.ttr { font-size: .78rem; margin-left: 6px; opacity: .7; }
+.tq { padding: 10px 0; border-top: 1px solid var(--line); } .tq p { margin: 0 0 4px; }
+.txc { border-left: 4px solid var(--blue2); }
+
 /* ---------- extras ---------- */
 .xgrid { display: grid; gap: 12px; } @media (min-width: 640px) { .xgrid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
 .xcard { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 6px; }

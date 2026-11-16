@@ -5,7 +5,7 @@ const SUP = {}; // palavras de apoio por lição: título → [{de, pt}]
 function S_(title, list) { SUP[title] = list.split('|').map((s) => { const [de, pt] = s.split('='); return { de, pt }; }); }
 
 // Nomes próprios dos exemplos (pessoas e lugares): não contam como vocabulário.
-const NAMES = new Set(('anna ana paulo lena souza meier eva tim mia lissabon rio são berlin münchen hamburg köln wien bonn tom jonas clara petra lea sara maria tirol stuttgart ' +
+const NAMES = new Set(('trilha lenz goethe wandrers nachtlied anna ana paulo lena souza meier eva tim mia lissabon rio são berlin münchen hamburg köln wien bonn tom jonas clara petra lea sara maria tirol stuttgart ' +
   'brasilien deutschland österreich schweiz italien afrika rom europa weber koch lang berger lehmann müller schmidt frankfurt delmenhorst').split(' '));
 const stemOf = (w) => w.normalize('NFD').replace(/[̈]/g, '').replace(/ß/g, 'ss').replace(/(en|em|er|es|st|et|e|n|s|t)$/, '');
 function knownIndex() {

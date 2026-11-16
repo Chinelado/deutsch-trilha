@@ -134,7 +134,7 @@ function deepHTML(md) {
 
 /* ---------- facilitação gráfica: esquemas por lição ---------- */
 const VICON = { F: '🧱', T: '⏳', S: '📏', P: '🔀', V: '⚖️', M: '📊', E: '🧮' };
-const VOPS = new Set(['+', '=', '→', ',']);
+const VOPS = new Set(['+', '=', '→', ',', '−']);
 const kv = (p) => { const e = p.indexOf('='); return e < 0 ? [p, ''] : [p.slice(0, e), p.slice(e + 1)]; };
 function visHTML(spec) {
   const seg = spec.split(';'), k = seg[0][0], title = seg[0].slice(2), rest = seg.slice(1);

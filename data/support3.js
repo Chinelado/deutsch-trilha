@@ -1,0 +1,27 @@
+// Palavras de apoio das lições novas de C1 (semanas 29 a 31) e C2 (semanas 34 e 35).
+S_('So schwer es auch ist', 'tun (du tust, tu es!)=fazer (você faz, faça!)');
+S_('Das bekomme ich erklärt', 'bekam=recebeu (Präteritum de bekommen)|zurückbekommen=receber de volta');
+S_('Bericht, Kommentar, Reportage', 'die Fakten=os fatos|bewerten (bewertet)=avaliar|das Ereignis (die Ereignisse)=o acontecimento|bedenklich=preocupante|erwachen (erwacht)=despertar|erkennen (man erkennt)=reconhecer|zusammenstoßen (stieß … zusammen)=colidir|der Lkw=o caminhão|überfällig=que já devia ter acontecido');
+S_('Den Angaben zufolge', 'kopieren=copiar|umformulieren (ich umformuliere)=reformular|die Paraphrase=a paráfrase|die Anführungszeichen=as aspas');
+S_('Der Leserbrief', 'der Bus (die Busse)=o ônibus');
+S_('Wert legen auf', 'die Kommunikation=a comunicação|ergriffen=tomado (medidas; de ergreifen)');
+S_('Haustür und Hausschlüssel', 'das Geschlecht=o gênero (gramatical)');
+S_('Umsatz und Gewinn', 'stieg=subiu (de steigen)|verzeichnete=registrou|gesenkt=reduzido (de senken)|gesunken=caído (de sinken)|die Energiekosten=os custos de energia|das Vorjahr=o ano anterior');
+S_('Derjenige, der …', 'zuletzt=por último|all=todos (all denjenigen: a todos aqueles)|die Verwechslung (die Verwechslungen)=a confusão, a troca');
+S_('Wie bitte? Nachfragen und Paraphrasieren', 'verstanden=entendido (de verstehen)|verkleinert=reduzido (de verkleinern)');
+S_('Small Talk mit Tiefgang', 'ein paar=alguns|der Tipp (die Tipps)=a dica|der Gastgeber=o anfitrião');
+S_('Mit Zahlen argumentieren', 'der Einzelfall=o caso individual');
+S_('Sprache und Identität', 'das Werkzeug=a ferramenta|direkt (direkter)=direto (mais direto)');
+S_('Medien kritisch lesen', 'verraten (verrät)=revelar|gehandelt=agido (de handeln)|die Darstellung=a apresentação, a representação|der Steuerhammer=a "martelada" de impostos (exagero)|zumindest=pelo menos|übertrieben=exagerado|das Medium=o meio de comunicação');
+S_('Prüfungssimulation C1', 'sich vorbereiten (du bereitest dich vor)=preparar-se');
+S_('Veni, vidi, vici', 'beieinander=juntos, próximos|der Satzanfang=o início da frase|das Element (die Elemente)=o elemento|nacheinander=um após o outro');
+S_('Der Essay', 'neulich=outro dia|beobachten (beobachtete)=observar (observei)|lebendig=vivo');
+S_('Grüß Gott und Moin', 'sogar=até, inclusive|der Norden=o norte|Bayern=Baviera|das Standarddeutsch=o alemão padrão');
+S_('Handy und Beamer', 'lateinisch (aus dem Lateinischen)=latino (do latim)|Public Viewing=exibição pública de jogos em telão|mobile phone / cell phone=celular (em inglês)|plus=mais');
+S_('Wortspiele', 'der Werbespruch=o slogan|das Plakat=o cartaz|der Bäcker=o padeiro, a padaria|kleckern, nicht klotzen=economizar × fazer em grande estilo|gekleckert / geklotzt=economizado / feito em grande estilo|der Wortwitz / Wortspielwitz=a piada com palavras');
+S_('Gesetzestexte lesen', 'die Schriftform=a forma escrita');
+S_('Über allen Gipfeln ist Ruh', 'der Kreuzreim=a rima cruzada|der Rhythmus=o ritmo|die Stille=o silêncio|spürbar=perceptível|der Klang=o som|das Versende=o fim do verso|spürest=sentes (forma poética de spürst)|das Vögelein=o passarinho (forma poética)');
+S_('Scheinbar oder anscheinend?', 'innerlich=por dentro, interiormente|die Unterscheidung=a distinção|das Verfahren=o método, o procedimento');
+S_('Talkshow', 'die Ministerin=a ministra|das Frühjahr=a primavera');
+S_('Wissenschaftlich schreiben', 'zusammengefasst=resumido|diskutiert=discutido|relevant=relevante|unpersönlich=impessoal|die KI=a IA (künstliche Intelligenz)');
+S_('Feinschliff', 'gegenlesen=revisar (o texto de outra pessoa)|inhaltlich=no conteúdo|stilistisch=no estilo|der Inhalt=o conteúdo|der Schliff=o acabamento|aßen=comemos (Präteritum de essen)');

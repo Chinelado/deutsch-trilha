@@ -22,11 +22,11 @@ const WEEKS = LESSONS.length / 6, TOTAL = WEEKS * 7;
 const fresh = () => ({
   name: '', goal: 60, audio: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
   done: {}, cards: {}, stats: Object.fromEntries(IK.map((k) => [k, { n: 0, ok: 0, rn: 0, rok: 0, t: 0 }])),
-  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {},
+  prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {}, reads: {},
 });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) { console.error('Falha ao ler o progresso salvo:', e); }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { console.error('Falha ao salvar o progresso:', e); toast('⚠️ Não consegui salvar o progresso neste navegador'); } }
+function save() { S.updatedAt = Date.now(); if (typeof cloudQueue === 'function') cloudQueue(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { console.error('Falha ao salvar o progresso:', e); toast('⚠️ Não consegui salvar o progresso neste navegador'); } }
 const daily = () => (S.daily[today()] = S.daily[today()] || { lesson: false, cards: 0, perfect: false });
 
 /* ---------- áudio ---------- */
@@ -60,8 +60,14 @@ const phaseOf = (w) => PHASES.find((p) => w >= p.weeks[0] && w < p.weeks[1]) || 
 const phaseDays = (p) => Array.from({ length: (p.weeks[1] - p.weeks[0]) * 7 }, (_, i) => p.weeks[0] * 7 + i + 1);
 function currentDay() { for (let d = 1; d <= TOTAL; d++) if (!S.done[d]) return d; return null; }
 const doneLessons = () => Object.keys(S.done).map(Number).map(dayInfo).filter((i) => !i.review).map((i) => LESSONS[i.li]);
-const vocab = (k) => { const [i, j] = k.split(':'); return LESSONS[i].v[j]; };
-const dueKeys = () => { const now = Date.now(); return Object.keys(S.cards).filter((k) => S.cards[k].due <= now); };
+const vocab = (k) => {
+  if (k.startsWith('s:')) { const [, i, j] = k.split(':'), sp = (SUP[LESSONS[i].de] || [])[j] || { de: '?', pt: '?' }; return { k, de: sp.de, pt: sp.pt, em: '' }; }
+  const [i, j] = k.split(':'); return LESSONS[i].v[j];
+};
+const supOn = () => S.supCards !== false;
+// Palavras de apoio da lição entram nas cartas (se a opção estiver ligada).
+function addSupCards(i) { if (supOn()) (SUP[LESSONS[i].de] || []).forEach((_, j) => { const k = 's:' + i + ':' + j; if (!S.cards[k]) S.cards[k] = newCard(); }); }
+const dueKeys = () => { const now = Date.now(); return Object.keys(S.cards).filter((k) => S.cards[k].due <= now && (supOn() || !k.startsWith('s:'))); };
 
 /* ---------- perfil de inteligências ---------- */
 // Nota = 40% acerto nos exercícios + 60% retenção (lembrar a palavra dias depois nas cartas).
@@ -139,12 +145,14 @@ const BADGES = [
   ['a2', '🥈', 'A2', 'Nível A2 concluído', () => levelDone(3, 7)],
   ['b1', '🥇', 'B1', 'Nível B1 concluído', () => levelDone(7, 13)],
   ['b2', '🏆', 'B2', 'Nível B2 concluído', () => levelDone(13, 25)],
-  ['c1', '💎', 'C1', 'Semanas de C1 concluídas', () => levelDone(25, 28)],
-  ['c2', '👑', 'C2', 'Semanas de C2 concluídas', () => levelDone(28, 30)],
+  ['c1', '💎', 'C1', 'Nível C1 concluído', () => levelDone(25, 31)],
+  ['c2', '👑', 'C2', 'Nível C2 concluído: trilha completa', () => levelDone(31, 35)],
   ['hw10', '🏠', 'Mão na massa', '10 tarefas de casa feitas', () => hwTotal() >= 10],
   ['hw50', '🏡', 'Rotina alemã', '50 tarefas de casa feitas', () => hwTotal() >= 50],
   ['wq1', '🎯', 'Semana completa', 'Cumpriu uma missão da semana', () => Object.keys(S.wq).length >= 1],
   ['wq4', '🏆', 'Mês de imersão', 'Cumpriu quatro missões da semana', () => Object.keys(S.wq).length >= 4],
+  ['rd5', '📖', 'Leser', '5 textos longos lidos', () => Object.keys(S.reads).length >= 5],
+  ['rd15', '📚', 'Bücherwurm', 'Todos os 15 textos longos', () => Object.keys(S.reads).length >= TEXTS.length],
   ['x5', '🎬', 'Explorador', '5 conteúdos extras vistos', () => Object.keys(S.seen).length >= 5],
   ['x20', '🌍', 'Imersão', '20 conteúdos extras vistos', () => Object.keys(S.seen).length >= 20],
 ];
@@ -175,7 +183,8 @@ function go(v, arg) {
     tabs.map(([id, e, n]) => `<button data-v="${id}" class="${id === v || (v === 'intro' && id === 'trilha') ? 'on' : ''}"><b>${e}</b><span>${n}</span>${id === 'cards' && due ? `<em>${due}</em>` : ''}</button>`).join('') +
     `<div class="nav-foot">🔥 ${shownStreak()} · ⭐ ${S.xp} XP</div>`;
   $$('button', nav).forEach((b) => (b.onclick = () => go(b.dataset.v)));
-  ({ home, trilha, cards, perfil, intro, onboard, extras, guide })[v](arg);
+  stopRead();
+  ({ home, trilha, cards, perfil, intro, onboard, extras, guide, nivel, texto })[v](arg);
   if (v !== 'trilha') scrollTo(0, 0);
   updateBadge();
 }
@@ -184,19 +193,27 @@ function go(v, arg) {
 function onboard() {
   app.innerHTML = `<section class="hero"><div class="hero-bg">${heroArt('A1')}</div><div class="hero-card"><div class="hero-txt">
   <span class="eyebrow">A1 → C2 · Goethe-Institut</span><h1>Willkommen! 🇩🇪</h1>
-  <p>Uma trilha do zero à fluência: do A1 ao B1 em 13 semanas, o B2 completo em mais 12 e o início do C1 e do C2. Não precisa saber nada de alemão nem de gramática: antes do dia 1 há seis aulas curtas que ensinam como estudar e explicam o básico em português. A plataforma também mede quais tipos de exercício fazem você acertar e lembrar mais, e ajusta as lições a isso.</p></div></div></section>
+  <p>Uma trilha do zero à fluência: do A1 ao B1 em 13 semanas, o B2 em mais 12, o C1 em 6 e o C2 em 4: 35 semanas no total. Não precisa saber nada de alemão nem de gramática: antes do dia 1 há seis aulas curtas que ensinam como estudar e explicam o básico em português. A plataforma também mede quais tipos de exercício fazem você acertar e lembrar mais, e ajusta as lições a isso.</p></div></div></section>
   <div class="card"><h3>Como posso te chamar?</h3><input id="nm" placeholder="Seu nome" maxlength="30">
   <h3>Quanto tempo por dia?</h3>
   <select id="goal"><option value="30">30 min — ritmo leve</option><option value="60" selected>60 min — firme</option><option value="90">90 min — intenso</option><option value="120">120 min — ritmo de B1 em 3 meses</option><option value="180">180 min — imersão</option></select>
   <p class="mut">Sendo franca: o Goethe-Institut estima de 350 a 650 aulas de 45 min para chegar ao B1. Em 13 semanas isso pede cerca de 2 a 3 horas por dia, somando lição, cartas e alemão fora daqui (música, séries, conversa).</p></div>
   <div class="card"><h3>Ponto de partida do seu perfil</h3><p class="mut">De 1 (nada a ver) a 5 (muito eu). Serve só de palpite inicial: seus resultados reais passam a valer mais.</p>
   ${IK.map((k) => `<label>${INT[k].e} ${PRIOR_Q[k]}<input type="range" min="1" max="5" value="3" data-k="${k}"></label>`).join('')}</div>
-  <button class="pri big" id="start">Começar a trilha</button>`;
+  <button class="pri big" id="start">Começar a trilha</button>
+  <button class="big" id="startP" style="margin-top:8px">🎯 Já sei um pouco de alemão: fazer o teste de nível</button>
+  ${cloudOnboard()}`;
   $('#start').onclick = () => {
     S.name = $('#nm').value.trim(); S.goal = +$('#goal').value; S.start = today();
     $$('input[type=range]').forEach((r) => { S.prior[r.dataset.k] = +r.value; });
     save(); go('home');
   };
+  $('#startP').onclick = () => {
+    S.name = $('#nm').value.trim(); S.goal = +$('#goal').value; S.start = today();
+    $$('input[type=range]').forEach((r) => { S.prior[r.dataset.k] = +r.value; });
+    save(); go('nivel');
+  };
+  wireCloud();
 }
 
 /* ---------- conteúdos externos ---------- */
@@ -374,7 +391,7 @@ function trilha(lvId) {
   const doneN = days.filter((d) => S.done[d]).length;
   const { svg, P } = pathSVG(days, cur);
   const weeks = Array.from({ length: nw }, (_, k) => { const w = p.weeks[0] + k; return `<li><b>Semana ${w + 1}:</b> ${LESSONS.slice(w * 6, w * 6 + 6).map((l) => esc(l.gt)).join(' · ')}</li>`; }).join('');
-  app.innerHTML = `<h1>Sua jornada A1 → C2</h1><p class="mut">Níveis do Quadro Europeu, na estrutura do Goethe-Institut. Toque num bloco para abrir a lição.</p>
+  app.innerHTML = `<h1>Sua jornada A1 → C2</h1><p class="mut">Níveis do Quadro Europeu, na estrutura do Goethe-Institut. Toque num bloco para abrir a lição. Já sabe alemão? <button class="link" id="toP">Faça o teste de nível</button>.</p>
   ${lvTabs(trLevel, 'data-lv')}
   <div class="course">
     <aside class="ccard" style="--lc:${LVCOL[p.id]}">${levelBadge(p.id, 76)}
@@ -391,6 +408,7 @@ function trilha(lvId) {
   </div>`;
   $$('[data-lv]').forEach((b) => (b.onclick = () => { trilha(b.dataset.lv); scrollTo(0, 0); }));
   $$('[data-g]').forEach((b) => (b.onclick = () => go('guide', b.dataset.g)));
+  $('#toP').onclick = () => go('nivel');
   const pop = $('#pop');
   const open = (d) => {
     const info = dayInfo(d), pp = P.find((x) => x.d === d), L = info.review ? null : LESSONS[info.li], locked = d > cur;
@@ -463,6 +481,7 @@ function extras(lv) {
   const mine = list.filter(fitsProfile), rest = list.filter((x) => !fitsProfile(x));
   app.innerHTML = `<h1>🎬 Conteúdos de apoio</h1>
   <p class="mut">Músicas, filmes, séries, vídeos, podcasts, livros e leituras para usar o alemão fora da plataforma. Cada item marcado como visto vale 10 XP e conta para as conquistas.</p>
+  ${textsList()}
   ${lvTabs(xLevel, 'data-xl')}
   <div class="chips">${['all', ...Object.keys(XT)].map((t) => `<button class="chipb ${t === xType ? 'on' : ''}" data-xt="${t}">${t === 'all' ? 'Tudo' : XT[t][0] + ' ' + XT[t][1]}</button>`).join('')}</div>
   ${mine.length ? `<h2>Para o seu perfil <small class="mut">${top.map((k) => INT[k].e + ' ' + INT[k].n).join(' · ')}</small></h2><div class="xgrid">${mine.map(extraCard).join('')}</div>` : ''}
@@ -470,6 +489,7 @@ function extras(lv) {
   ${list.length ? '' : '<p class="mut">Nada desse tipo para este nível. Experimente outro filtro.</p>'}
   <div class="card tip"><h3>💡 Como tirar mais proveito</h3><ul class="pts"><li>Use legenda em alemão, não em português. Se travar, volte 10 segundos e ouça de novo.</li><li>Anote três palavras novas de cada conteúdo e use cada uma numa frase no exercício de diário.</li><li>Repita em voz alta uma fala curta, imitando ritmo e entonação (shadowing).</li><li>Os links sem site oficial abrem uma busca, para você escolher a fonte que preferir.</li></ul></div>`;
   $$('[data-xl]').forEach((b) => (b.onclick = () => extras(b.dataset.xl)));
+  $$('[data-tx]').forEach((b) => (b.onclick = () => go('texto', b.dataset.tx)));
   $$('[data-xt]').forEach((b) => (b.onclick = () => { xType = b.dataset.xt; extras(); }));
   wireSeen(app, () => extras());
 }
@@ -481,8 +501,10 @@ function intro(day) {
     const ls = LESSONS.slice(d.w * 6, d.w * 6 + 6);
     app.innerHTML = `<button class="ghost back" id="bk">← Trilha</button><div class="lhead" style="--lc:${LVCOL[d.level]}">${levelBadge(d.level, 60)}<div><span class="eyebrow">${d.level} · Dia ${day}</span><h1>🏁 Checkpoint da semana ${d.w + 1}</h1></div></div>
     <p>18 exercícios misturando tudo o que você viu nesta semana:</p><ul>${ls.map((l) => `<li><b>${esc(l.de)}</b> — ${esc(l.gt)}</li>`).join('')}</ul>
-    <button class="pri big" id="st">Começar o checkpoint</button>`;
+    <button class="pri big" id="st">Começar o checkpoint</button>
+    ${(() => { const tx = TEXTS.find((t) => t.w === d.w + 1); return tx ? `<div class="card txc"><h3>${tx.kind === 'escuta' ? '🎧' : '📖'} Texto da semana: ${esc(tx.t)}</h3><p class="mut">${esc(tx.intro)}</p><button id="tx">Abrir o texto · até +70 XP</button></div>` : ''; })()}`;
     $('#st').onclick = () => startSession('review', day);
+    if ($('#tx')) $('#tx').onclick = () => go('texto', TEXTS.find((t) => t.w === d.w + 1).id);
     $('#bk').onclick = () => go('trilha');
     return;
   }
@@ -532,7 +554,7 @@ function startSession(kind, day) {
   if (kind === 'lesson') ctxs = [LESSONS[dayInfo(day).li]];
   else if (kind === 'review') { const w = dayInfo(day).w; ctxs = LESSONS.slice(w * 6, w * 6 + 6); }
   else ctxs = sample(doneLessons(), 6);
-  if (kind === 'lesson') ctxs[0].v.forEach((v) => { if (!S.cards[v.k]) S.cards[v.k] = newCard(); });
+  if (kind === 'lesson') { ctxs[0].v.forEach((v) => { if (!S.cards[v.k]) S.cards[v.k] = newCard(); }); addSupCards(ctxs[0].i); }
   const n = kind === 'lesson' ? 14 : kind === 'review' ? 18 : 10;
   sess = { kind, day, ctxs, queue: planInt(n), doneN: 0, first: 0, firstOk: 0, combo: 0, maxCombo: 0, xp: 0, re: 0, by: {}, onEnter: null };
   view = 'run'; nav.hidden = true; nextEx();
@@ -831,10 +853,10 @@ function cards() {
         : `<div class="word">${v.em} ${esc(v.pt)}</div><p class="mut">Como se diz em alemão?</p>`;
     app.innerHTML = `<div class="row"><h1 class="grow">🃏 Cartas</h1><small>${queue.length} restantes</small></div>
     <div class="card" style="text-align:center;min-height:220px">${front}<div id="back"></div></div><button class="pri big" id="flip">Mostrar resposta</button>`;
-    if (audioFirst) setTimeout(() => say(v.de), 300);
+    if (audioFirst) setTimeout(() => say(sayText(v.de)), 300);
     $('#flip').onclick = () => {
       $('#back').innerHTML = `<hr><div class="word ${gcls(v.de)}">${esc(v.de)} ${spk(v.de)}</div><p>${v.em} ${esc(v.pt)}</p>`;
-      say(v.de);
+      say(sayText(v.de));
       $('#flip').outerHTML = `<div class="opts"><button data-q="0" class="no">Errei</button><button data-q="1">Difícil</button><button data-q="2" class="ok">Lembrei</button><button data-q="3">Fácil</button></div>`;
       $$('[data-q]').forEach((b) => (b.onclick = () => { rate(k, c, +b.dataset.q); queue.shift(); if (+b.dataset.q === 0) queue.push(k); else n++; save(); show(); }));
     };
@@ -878,18 +900,23 @@ function perfil() {
   <div class="badges">${BADGES.map(([id, e, n, d]) => `<div class="badge ${S.badges[id] ? '' : 'off'}" title="${d}"><b>${e}</b>${n}<br><small>${d}</small></div>`).join('')}</div>
   <h2>📔 Diário</h2>
   <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(x.x ? '🎬 ' + x.x : LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
+  ${cloudCard()}
   ${appCard(false)}
+  <div class="card"><h3>🎯 Teste de nivelamento</h3><p class="mut">Já sabia alemão antes da trilha? O teste indica o seu nível e pula os dias que você já domina.</p><button id="toP">Fazer o teste</button></div>
   <h2>Ajustes</h2>
   <div class="card"><label>Meta diária (min)<select id="goal">${[30, 60, 90, 120, 180].map((g) => `<option ${g === S.goal ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
   <label class="row"><input type="checkbox" id="aud" ${S.audio ? 'checked' : ''}> Áudio em alemão (voz do navegador)</label>
+  <label class="row"><input type="checkbox" id="supc" ${supOn() ? 'checked' : ''}> Incluir as palavras de apoio (🆕) nas cartas de revisão</label>
   ${hasTTS && deVoice ? `<p class="mut">Voz em uso: ${esc(deVoice.name)} ${spk('Guten Tag! Ich bin deine deutsche Stimme.')}</p>` : ''}
   ${hasTTS && !deVoice ? '<p class="mut">⚠️ Não encontrei uma voz alemã neste navegador; a pronúncia sai errada. Abra a plataforma no Chrome ou no Edge, que trazem voz alemã própria, ou instale a voz em Configurações do Windows → Hora e idioma → Fala → Adicionar vozes → Alemão.</p>' : ''}
   <div class="row" style="margin-top:10px"><button id="exp">⬇️ Exportar backup</button><button id="imp">⬆️ Importar backup</button><input type="file" id="file" accept=".json" hidden></div>
   <p class="mut">O progresso fica só neste navegador. Use o backup para levar a outro dispositivo.</p>
   <button class="link" id="reset">Apagar todo o progresso</button></div>`;
-  wireAppCard();
+  wireAppCard(); wireCloud();
+  $('#toP').onclick = () => go('nivel');
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
+  $('#supc').onchange = (e) => { S.supCards = e.target.checked; if (S.supCards) backfillSup(); save(); toast(S.supCards ? '🃏 Palavras de apoio incluídas nas cartas' : 'Palavras de apoio fora das cartas'); };
   $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = 'deutsch-trilha-' + today() + '.json'; a.click(); };
   $('#imp').onclick = () => $('#file').click();
   $('#file').onchange = async (e) => {
@@ -897,6 +924,135 @@ function perfil() {
     catch (err) { console.error('Erro ao importar backup:', err); toast('⚠️ Não consegui importar: ' + err.message); }
   };
   $('#reset').onclick = () => { if (confirm('Apagar todo o progresso deste dispositivo? Isso não pode ser desfeito.')) { localStorage.removeItem(KEY); S = fresh(); go('onboard'); } };
+}
+
+/* ---------- textos longos: leitura e escuta ---------- */
+const textOpen = (t) => { const c = currentDay() || TOTAL + 1; return (t.w - 1) * 7 + 1 <= c || !!S.reads[t.id]; };
+function textsList() {
+  return `<h2>📖 Leitura e escuta</h2><p class="mut">Textos longos e cenas de áudio no formato das provas. Um novo a cada checkpoint.</p>
+  <div class="txlist">${TEXTS.map((t) => { const o = textOpen(t), r = S.reads[t.id];
+    return `<button class="txi ${o ? '' : 'lock'}" ${o ? `data-tx="${t.id}"` : 'disabled'}><span class="tag">${t.lv}</span><span class="grow"><b>${t.kind === 'escuta' ? '🎧' : '📖'} ${esc(t.t)}</b><small>${o ? (r ? `✓ ${r.ok}/${r.n} acertos` : 'Semana ' + t.w) : '🔒 libera na semana ' + t.w}</small></span></button>`; }).join('')}</div>`;
+}
+let readTok = 0, RATE = 0.9;
+function stopRead() { readTok++; if (hasTTS) speechSynthesis.cancel(); $$('.tpara.on').forEach((x) => x.classList.remove('on')); }
+const splitWho = (p) => { const m = /^([^:.!?]{2,32}):\s(.+)$/s.exec(p); return m ? { who: m[1], txt: m[2] } : { who: '', txt: p }; };
+function readFrom(paras, from) {
+  if (!hasTTS) return toast('Este navegador não tem voz para leitura.');
+  stopRead(); const tok = ++readTok;
+  const voices = speechSynthesis.getVoices().filter((v) => /^de/i.test(v.lang)), who = {};
+  const voiceFor = (w) => { if (!w || voices.length < 2) return deVoice; if (!(w in who)) who[w] = voices[Object.keys(who).length % voices.length]; return who[w]; };
+  let i = from;
+  const next = () => {
+    if (tok !== readTok) return;
+    $$('.tpara.on').forEach((x) => x.classList.remove('on'));
+    if (i >= paras.length) return;
+    const el = document.querySelector(`.tpara[data-i="${i}"]`); if (el) { el.classList.add('on'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    const { who: w, txt } = splitWho(paras[i]), u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'de-DE'; const v = voiceFor(w); if (v) u.voice = v; u.rate = RATE;
+    u.onend = () => { i++; next(); }; u.onerror = () => { if (tok === readTok) { i++; next(); } };
+    speechSynthesis.speak(u);
+  };
+  next();
+}
+function texto(id) {
+  const t = TEXTS.find((x) => x.id === id), r = S.reads[id], hide = t.kind === 'escuta' && !r;
+  const gl = t.gl.split('|').map((x) => x.split('='));
+  app.innerHTML = `<button class="ghost back" id="bk">← Voltar</button>
+  <div class="lhead" style="--lc:${LVCOL[t.lv]}">${levelBadge(t.lv, 56)}<div><span class="eyebrow">${t.lv} · ${t.kind === 'escuta' ? 'Escuta' : 'Leitura'} · Semana ${t.w}</span><h1>${esc(t.t)}</h1><p class="mut">${esc(t.intro)}</p></div></div>
+  <div class="card tplayer"><div class="row"><button class="pri" id="tPlay">▶ Ouvir tudo</button><button id="tStop">⏹ Parar</button>
+  <label class="row tspeed">Velocidade <select id="tRate">${[[0.7, 'devagar'], [0.85, 'calma'], [1, 'normal']].map(([v, n]) => `<option value="${v}" ${v === RATE ? 'selected' : ''}>${n}</option>`).join('')}</select></label></div>
+  ${t.kind === 'escuta' ? `<p class="mut">${hide ? '🎧 Primeiro só ouça, como na prova. O texto aparece depois que você responder, ou se tocar em "Mostrar o texto".' : 'Ouça de novo acompanhando o texto.'}</p>` : '<p class="mut">Leia uma vez inteira sem parar. Depois ouça acompanhando e responda.</p>'}</div>
+  <div class="card ttext ${hide ? 'hid' : ''}" id="tText">${hide ? '<button class="big" id="tShow">👀 Mostrar o texto</button>' : ''}
+  ${t.paras.map((p, i) => { const { who, txt } = splitWho(p); return `<div class="tpara" data-i="${i}">${spk(txt)}${who ? `<b class="twho">${esc(who)}:</b> ` : ''}<span class="de">${esc(txt).replace(/\n/g, '<br>')}</span>
+    <a class="ttr" href="https://translate.google.com/?sl=de&tl=pt&text=${encodeURIComponent(txt)}&op=translate" target="_blank" rel="noopener noreferrer">traduzir ↗</a></div>`; }).join('')}</div>
+  <div class="card"><h3>📎 Glossário</h3><table>${gl.map(([d, p]) => `<tr><td>${spk(d)}</td><td class="de ${gcls(d)}">${esc(d)}</td><td>${esc(p)}</td></tr>`).join('')}</table></div>
+  <div class="card"><h3>✍️ Compreensão</h3>${r ? `<p class="mut">Você já fez: ${r.ok}/${r.n} acertos. Pode refazer para treinar.</p>` : ''}
+  ${t.qs.map((q, i) => `<div class="tq" data-q="${i}"><p>${i + 1}. ${esc(q.q)}</p><div class="opts ${q.o ? 'col' : ''}">${(q.o || ['richtig', 'falsch']).map((o, j) => `<button data-a="${j}">${esc(o)}</button>`).join('')}</div></div>`).join('')}
+  <button class="pri big" id="tCheck">Conferir respostas</button><div id="tRes"></div></div>`;
+  const ans = {};
+  $('#bk').onclick = () => history.length > 1 && view === 'texto' ? go('extras') : go('home');
+  $('#tPlay').onclick = () => readFrom(t.paras, 0);
+  $('#tStop').onclick = stopRead;
+  $('#tRate').onchange = (e) => { RATE = +e.target.value; };
+  if ($('#tShow')) $('#tShow').onclick = () => { $('#tText').classList.remove('hid'); $('#tShow').remove(); };
+  $$('.tpara').forEach((el) => (el.ondblclick = () => readFrom(t.paras, +el.dataset.i)));
+  $$('.tq').forEach((qe) => $$('button', qe).forEach((b) => (b.onclick = () => { $$('button', qe).forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); ans[qe.dataset.q] = +b.dataset.a; })));
+  $('#tCheck').onclick = () => {
+    if (Object.keys(ans).length < t.qs.length) return toast('Responda todas as perguntas antes de conferir.');
+    let ok = 0;
+    t.qs.forEach((q, i) => {
+      const right = q.o ? q.a : q.a ? 0 : 1, qe = document.querySelector(`.tq[data-q="${i}"]`);
+      $$('button', qe).forEach((b) => { b.disabled = true; if (+b.dataset.a === right) b.classList.add('ok'); else if (+b.dataset.a === ans[i]) b.classList.add('no'); });
+      if (ans[i] === right) ok++;
+    });
+    const first = !S.reads[id], xp = first ? ok * 10 + (ok === t.qs.length ? 20 : 0) : 0;
+    S.reads[id] = { ok, n: t.qs.length, d: today() };
+    if (xp) addXP(xp); markActive(); checkBadges(); save();
+    $('#tText').classList.remove('hid'); if ($('#tShow')) $('#tShow').remove();
+    $('#tRes').innerHTML = `<div class="fb ${ok >= t.qs.length - 1 ? 'ok' : 'no'}"><b>${ok}/${t.qs.length} acertos${xp ? ' · +' + xp + ' XP' : ''}</b><p>${ok === t.qs.length ? 'Perfeito! Entendeu tudo.' : 'Releia os trechos das respostas marcadas em vermelho, agora com o texto aberto, e ouça de novo.'}</p></div>`;
+    $('#tCheck').disabled = true;
+  };
+}
+
+/* ---------- teste de nivelamento ---------- */
+// Adaptativo: 6 perguntas por nível, do A1 ao C2. Passa no nível com 5 acertos; para no primeiro nível em que não passar.
+const PQ = 6, PASS = 5;
+let PT = null;
+function levelQuestions(lv) {
+  const p = PHASES.find((x) => x.id === lv), ls = LESSONS.slice(p.weeks[0] * 6, p.weeks[1] * 6);
+  const cz = sample(ls.flatMap((l) => l.cz.map((c) => ({ q: c.q, a: c.a, w: c.w, why: c.why, l }))), PQ - 2);
+  const vs = sample(ls.flatMap((l) => l.v.filter((v) => !/\(/.test(v.de)).map((v) => ({ v, l }))), 2).map(({ v, l }) => {
+    const others = sample(ls.flatMap((x) => x.v).filter((x) => x.pt !== v.pt), 2).map((x) => x.pt);
+    return { q: v.de, a: v.pt, w: others, vocab: true, l };
+  });
+  return shuffle([...cz, ...vs]);
+}
+function nivel() {
+  if (!PT) {
+    app.innerHTML = `<button class="ghost back" id="bk">← Voltar</button><h1>🎯 Teste de nivelamento</h1>
+    <p>Para quem já sabe um pouco de alemão. São ${PQ} perguntas por nível, começando no A1. Quando você acertar menos de ${PASS} num nível, o teste para e indica onde começar.</p>
+    <div class="card"><ul class="pts"><li>Responda sem consultar nada: o objetivo é achar o seu ponto de partida, não acertar tudo.</li><li>Se não souber, escolha "Não sei": chutar só atrasa o seu aprendizado.</li><li>Leva de 3 a 15 minutos, conforme o seu nível.</li></ul></div>
+    <button class="pri big" id="pgo">Começar o teste</button>`;
+    $('#bk').onclick = () => go(S.start ? 'perfil' : 'onboard');
+    $('#pgo').onclick = () => { PT = { lv: 0, qs: levelQuestions(PHASES[0].id), i: 0, ok: 0, res: [] }; nivel(); };
+    return;
+  }
+  if (PT.done) return nivelResult();
+  const L = PHASES[PT.lv], it = PT.qs[PT.i], opts = shuffle([it.a, ...it.w]).concat('Não sei');
+  app.innerHTML = `<div class="runtop"><button class="x" id="quit" aria-label="Sair">✕</button><div class="bar"><i style="width:${Math.round((PT.i / PQ) * 100)}%"></i></div><span class="combo">${L.id}</span></div>
+  <div class="chip">Nível ${L.id} · pergunta ${PT.i + 1} de ${PQ}</div><div id="ex"></div>`;
+  $('#quit').onclick = () => { PT = null; go(S.start ? 'perfil' : 'onboard'); };
+  mcq($('#ex'), it.vocab ? `<p class="q">O que significa?<b>${esc(it.q)}</b></p>` : `<p class="q">Complete:<b>${esc(it.q)}</b></p>`, opts, it.a, (ok) => {
+    if (ok) PT.ok++;
+    setTimeout(() => {
+      PT.i++;
+      if (PT.i < PQ) return nivel();
+      PT.res.push({ lv: L.id, ok: PT.ok });
+      if (PT.ok >= PASS && PT.lv < PHASES.length - 1) { PT.lv++; PT.qs = levelQuestions(PHASES[PT.lv].id); PT.i = 0; PT.ok = 0; toast('✅ ' + L.id + ' comprovado! Agora o ' + PHASES[PT.lv].id); }
+      else PT.done = true;
+      nivel();
+    }, ok ? 450 : 900);
+  }, 'col');
+}
+function nivelResult() {
+  const passed = PT.res.filter((r) => r.ok >= PASS).map((r) => r.lv), top = passed[passed.length - 1];
+  const next = PHASES.find((p) => !passed.includes(p.id)), startDay = next ? next.weeks[0] * 7 + 1 : TOTAL;
+  app.innerHTML = `<h1>🎯 Resultado</h1>
+  <div class="card">${PT.res.map((r) => `<div class="prow"><span>${r.lv} ${r.ok >= PASS ? '✅' : '—'}</span><div class="bar"><i style="width:${Math.round((r.ok / PQ) * 100)}%"></i></div><small>${r.ok}/${PQ}</small></div>`).join('')}</div>
+  <div class="card"><h2 style="margin-top:0">${top ? 'Você domina o ' + top : 'Comece do início'}</h2>
+  <p>${next ? `Recomendação: começar no <b>${next.id}</b>, dia ${startDay}.` : 'Você passou em todos os níveis. Use a trilha para revisar e manter o alemão.'}</p>
+  ${top ? `<p class="mut">Os dias anteriores serão marcados como concluídos, sem estrelas extras. Você continua podendo abrir qualquer lição antiga para revisar.</p>
+  <label class="row"><input type="checkbox" id="pvoc"> Colocar nas cartas também o vocabulário dos níveis que pulei (recomendado se quiser revisar)</label>` : ''}</div>
+  ${top ? `<button class="pri big" id="papply">Começar no dia ${startDay}</button>` : ''}
+  <button class="big" id="pstart" style="margin-top:8px">${top ? 'Prefiro começar do dia 1' : 'Começar do dia 1'}</button>`;
+  if ($('#papply')) $('#papply').onclick = () => {
+    if (!S.start) S.start = today();
+    for (let d = 1; d < startDay; d++) if (!S.done[d]) S.done[d] = { s: 0, d: today(), skip: 1 };
+    if ($('#pvoc').checked) for (let d = 1; d < startDay; d++) { const di = dayInfo(d); if (!di.review) { LESSONS[di.li].v.forEach((v) => { if (!S.cards[v.k]) S.cards[v.k] = newCard(); }); addSupCards(di.li); } }
+    GUIDE.forEach((g) => { if (!S.guide[g.id]) S.guide[g.id] = today(); });
+    S.placed = { lv: top, d: today() }; PT = null; checkBadges(); save(); toast('🎯 Trilha ajustada: você começa no dia ' + startDay); go('home');
+  };
+  $('#pstart').onclick = () => { if (!S.start) S.start = today(); PT = null; save(); go('home'); };
 }
 
 /* ---------- app instalável, offline e lembrete ---------- */
@@ -953,6 +1109,10 @@ function wireAppCard() {
   };
 }
 
+function backfillSup() { Object.keys(S.done).map(Number).map(dayInfo).filter((d) => !d.review).forEach((d) => addSupCards(d.li)); }
+if (S.start && !S.supInit) { backfillSup(); S.supInit = 1; save(); }
+
 // Atalhos do ícone do app (?abrir=cards) e primeira tela.
 const abrir = new URLSearchParams(location.search).get('abrir');
 go(!S.start ? 'onboard' : ['home', 'cards', 'trilha', 'extras', 'guide', 'perfil'].includes(abrir) ? abrir : 'home');
+cloudBoot();

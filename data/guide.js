@@ -13,8 +13,8 @@ O mundo inteiro mede o conhecimento de uma língua com a mesma régua, o **Quadr
 | A2 | Contar o que fez, resolver situações de rotina | 4 a 7 |
 | B1 | Conversar sobre quase tudo do cotidiano, dar opinião, viajar sem medo | 8 a 13 |
 | B2 | Discutir temas complexos, trabalhar em alemão | 14 a 25 |
-| C1 | Usar o alemão com flexibilidade no estudo e no trabalho | 26 a 28 |
-| C2 | Entender praticamente tudo, com nuance e ironia | 29 a 30 |
+| C1 | Usar o alemão com flexibilidade no estudo e no trabalho | 26 a 31 |
+| C2 | Entender praticamente tudo, com nuance e ironia | 32 a 35 |
 > A e B são os níveis em que a maioria das pessoas vive e trabalha bem. B1 já é considerado o nível de independência.
 # O ritmo: semanas de 7 dias
 Cada semana tem **6 lições e 1 checkpoint**. O checkpoint é um dia de revisão que mistura tudo o que você viu na semana. Ele não é prova: é o momento em que o conteúdo se fixa.

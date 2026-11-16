@@ -27,6 +27,9 @@ let di = 0, wi = 0;
 function D(points, ex) { const l = LESSONS[di++]; l.pts = points.split('|'); l.ex = pairs(ex); }
 function W(whys) { const l = LESSONS[wi++]; whys.split('|').forEach((w, j) => { if (l.cz[j]) l.cz[j].why = w; }); }
 
+// AK(título, aula): aula passo a passo escrita para uma lição específica, pelo título.
+function AK(title, md) { const l = LESSONS.find((x) => x.de === title); if (l) l.deep = md; }
+
 // B(frase desmontada, tradução): cada pedaço é "palavra=FUNÇÃO^nota". Use _ para manter palavras no mesmo pedaço.
 const ROLES = {
   S: ['sujeito', 's'], V: ['verbo conjugado', 'v'], AUX: ['verbo auxiliar', 'v'], MOD: ['verbo modal', 'v'],
@@ -76,10 +79,10 @@ const PHASES = [
   { id: 'B2', n: 'B2 · Goethe-Zertifikat B2', when: 'Semanas 14–25', ue: '600–800 UE', weeks: [13, 25],
     can: 'Discutir temas abstratos com fluência e defender um ponto de vista com detalhes.',
     mods: ['Konjunktiv I e discurso indireto', 'Alternativas ao passivo (sich lassen, sein + zu, -bar)', 'Nominalização e Nomen-Verb-Verbindungen', 'Atributos com particípio', 'Conectores avançados (indem, sofern, falls)', 'Modais subjetivos (dürfte, müsste, soll, will)', 'Escrita: Forumsbeitrag e e-mail formal', 'Fala: Vortrag + discussão'] },
-  { id: 'C1', n: 'C1 · Goethe-Zertifikat C1', when: 'Semanas 26–28', ue: '800–1000 UE', weeks: [25, 28], part: true,
+  { id: 'C1', n: 'C1 · Goethe-Zertifikat C1', when: 'Semanas 26–31', ue: '800–1000 UE', weeks: [25, 31],
     can: 'Usar o alemão com flexibilidade em contextos acadêmicos e profissionais.',
     mods: ['Nominalstil × Verbalstil', 'Funktionsverbgefüge', 'Modalpartikeln (doch, ja, eben, halt, wohl)', 'Textos jornalísticos e acadêmicos', 'Registros formal e informal', 'Escrita: Erörterung', 'Debate e apresentação longa', 'Expressões idiomáticas'] },
-  { id: 'C2', n: 'C2 · Großes Deutsches Sprachdiplom', when: 'Semanas 29–30', ue: '1000+ UE', weeks: [28, 30], part: true,
+  { id: 'C2', n: 'C2 · Großes Deutsches Sprachdiplom', when: 'Semanas 32–35', ue: '1000+ UE', weeks: [31, 35],
     can: 'Entender praticamente tudo e se expressar com precisão e nuance.',
     mods: ['Nuances de estilo e ironia', 'Literatura e ensaio', 'Variantes regionais (Alemanha, Áustria, Suíça)', 'Redação argumentativa complexa', 'Mediação entre línguas', 'Vocabulário técnico da sua área', 'Fala espontânea e precisa'] },
 ];
