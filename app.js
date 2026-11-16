@@ -84,7 +84,7 @@ const spk = (t, slot) => ((hasTTS || AUD) && S.audio ? `<button class="spk" data
 document.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) say(b.dataset.say, b.dataset.say.split(' ').length < 3 ? 0.8 : 0.9, b.dataset.v); });
 // Toda vez que algo novo aparece na tela, as palavras alemãs ganham áudio.
 let enhRaf = 0;
-new MutationObserver(() => { cancelAnimationFrame(enhRaf); enhRaf = requestAnimationFrame(() => enhanceAudio(app)); }).observe(app, { childList: true, subtree: true });
+new MutationObserver(() => { cancelAnimationFrame(enhRaf); enhRaf = requestAnimationFrame(() => { enhanceAudio(app); guideImgs(app); }); }).observe(app, { childList: true, subtree: true });
 
 /* ---------- trilha ---------- */
 function dayInfo(d) {
@@ -594,7 +594,7 @@ function intro(day) {
   app.innerHTML = `<button class="ghost back" id="bk">← Trilha</button>
   <div class="lhead" style="--lc:${LVCOL[d.level]}">${levelBadge(d.level, 60)}<div><span class="eyebrow">${d.level} · Semana ${d.w + 1} · Dia ${day}</span><h1>${esc(l.de)}</h1><p class="mut">${esc(l.pt)}</p></div></div>
   <details class="card how" ${d.level === 'A1' ? 'open' : ''}><summary>🗓️ Como estudar esta lição</summary>${studyTips(d.level)}</details>
-  <div class="card deep"><h2 class="dh">📖 Aula passo a passo</h2>${l.deep ? (visFor(l) ? `<h3 class="step">🗺️ Veja no esquema</h3>${visFor(l)}` : '') + deepHTML(l.deep) : autoDeep(l)}</div>
+  <div class="card deep"><h2 class="dh">📖 Aula passo a passo</h2>${lessonImgs(l)}${l.deep ? (visFor(l) ? `<h3 class="step">🗺️ Veja no esquema</h3>${visFor(l)}` : '') + deepHTML(l.deep) : autoDeep(l)}</div>
   ${l.deep ? `<div class="card"><h3>🧩 Resumo da regra: ${esc(l.gt)}</h3><p>${esc(l.gx)}</p>
   ${l.pts.length ? `<h3 style="margin-top:14px">Como funciona</h3><ul class="pts">${l.pts.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
   <h3 style="margin-top:14px">Exemplos</h3>

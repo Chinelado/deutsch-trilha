@@ -76,6 +76,8 @@ function deSet() {
     l.cz.forEach((c) => { add(c.q.replace('___', ' ')); add(c.a); c.w.forEach(add); });
     if (l.bd) l.bd.t.forEach((x) => add(x.w));
   });
+  // exemplos do guia (das Mädchen, Wien, Quark…) também contam como alemão
+  if (typeof GUIDE !== 'undefined') GUIDE.forEach((g) => g.body.split('\n').forEach((x) => { x = x.trim(); if (x.startsWith('~ ')) add(x.slice(2).split(' = ')[0]); }));
   PT_STOP.forEach((w) => s.delete(w));
   return (DE_SET = s);
 }
@@ -183,19 +185,21 @@ const quizScore = (root) => {
   const all = [...root.querySelectorAll('.gq, .gpairs')];
   return { n: all.length, ok: all.filter((x) => x.dataset.done === 'ok').length, done: all.filter((x) => x.dataset.done).length };
 };
-// Imagens opcionais das aulas do guia: aparecem só as que existem em images/guia/index.json.
-let GIMG = null;
+// Imagens opcionais (guia: images/guia, lições: images/aulas): aparecem só as que estão no index.json da pasta.
+const GIMG = {};
 function guideImgs(root) {
-  if (!root.querySelector('[data-gimg]')) return;
-  (GIMG = GIMG || fetch('images/guia/index.json').then((r) => (r.ok ? r.json() : [])).catch(() => [])).then((list) => {
-    const have = new Set(list);
-    root.querySelectorAll('[data-gimg]').forEach((f) => {
+  root.querySelectorAll('[data-gimg]:not([data-seen])').forEach((f) => {
+    f.dataset.seen = '1';
+    const dir = f.dataset.dir || 'guia';
+    (GIMG[dir] = GIMG[dir] || fetch(`images/${dir}/index.json`).then((r) => (r.ok ? r.json() : [])).then((l) => new Set(l)).catch(() => new Set())).then((have) => {
       if (!have.has(f.dataset.gimg)) return;
       const im = f.querySelector('img'); im.onload = () => { f.hidden = false; }; im.onerror = () => f.remove();
-      im.src = `images/guia/${f.dataset.gimg}.webp`;
+      im.src = `images/${dir}/${f.dataset.gimg}.webp`;
     });
   });
 }
+// Ilustrações de uma lição: images/aulas/licao-001.webp (principal) e licao-001-b.webp (detalhe), se existirem.
+const lessonImgs = (l) => { const n = 'licao-' + String(l.i + 1).padStart(3, '0'); return `<div class="limgs">${[n, n + '-b'].map((x) => `<figure class="gimg" data-gimg="${x}" data-dir="aulas" hidden><img alt="${esc(l.pt)}" decoding="async"></figure>`).join('')}</div>`; };
 
 /* ---------- facilitação gráfica: esquemas por lição ---------- */
 const VICON = { F: '🧱', T: '⏳', S: '📏', P: '🔀', V: '⚖️', M: '📊', E: '🧮' };
@@ -216,7 +220,9 @@ function visHTML(spec) {
   } else if (k === 'P') {
     body = `<div class="flow">${rest.map(kv).map(([a, b], i) => `${i ? '<span class="farr" aria-hidden="true">→</span>' : ''}<div class="fstep"><span class="fn">${i + 1}</span><b>${inl(a)}</b>${b ? `<span class="de">${inl(b)}</span>` : ''}</div>`).join('')}</div>`;
   } else if (k === 'V') {
-    body = `<div class="vs">${rest.map((c) => { const [t, ...ls] = c.split('|'); return `<div class="vcol"><b>${inl(t)}</b>${ls.map((x) => `<span>${inl(x)}</span>`).join('')}</div>`; }).join('')}</div>`;
+    // coluna de um gênero ("der · azul", "die Bank") usa a cor do gênero; as outras usam cores neutras, sem azul/vermelho/verde
+    const gk = (t) => { const m = /^(der|die|das)( ·|\s+[A-ZÄÖÜ])/.exec(t.trim()); return m ? ' vg g-' + { der: 'm', die: 'f', das: 'n' }[m[1]] : ''; };
+    body = `<div class="vs">${rest.map((c) => { const [t, ...ls] = c.split('|'); return `<div class="vcol${gk(t)}"><b>${inl(t)}</b>${ls.map((x) => `<span>${inl(x)}</span>`).join('')}</div>`; }).join('')}</div>`;
   } else if (k === 'M') {
     const rows = rest.map((r) => r.split('|'));
     body = `<div class="tw"><table class="dt vm">${rows.map((r, i) => `<tr>${r.map((c, j) => (i === 0 ? `<th>${inl(c)}</th>` : `<td class="${j === 0 ? 'm0' : ''}">${inl(c)}</td>`)).join('')}</tr>`).join('')}</table></div>`;
