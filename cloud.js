@@ -1,7 +1,9 @@
-/* Login por e-mail (código de 6 dígitos ou link) e sincronização do progresso via Supabase.
-   Sem senha: o Supabase envia um código para o e-mail da pessoa. */
+/* Login (e-mail e senha, ou link mágico no e-mail) e sincronização do progresso via Supabase.
+   A senha funciona em qualquer aparelho, inclusive no app instalado, sem depender de modelos de e-mail. */
 const cloudOn = () => !!(CLOUD.url && CLOUD.anonKey);
 let sb = null, cloudUser = null, cloudTimer = 0, cloudLast = null, cloudBusy = false;
+// Chegou pelo link de "esqueci a senha"? Então, depois de entrar, o Perfil pede a nova senha.
+let cloudRecovery = /type=recovery/.test(location.hash);
 
 function loadSupabase() {
   if (window.supabase) return Promise.resolve();
@@ -63,6 +65,7 @@ async function cloudAfterLogin(first) {
     }
     await cloudPush();
   } catch (e) { console.error('Falha ao ler o progresso da nuvem:', e); toast('⚠️ Não consegui ler o progresso da nuvem: ' + e.message); }
+  if (cloudRecovery) { go('perfil'); toast('🔑 Crie sua nova senha no Perfil'); return; }
   go(S.start ? (view === 'onboard' ? 'home' : view) : 'onboard');
 }
 
@@ -71,58 +74,107 @@ async function cloudBoot() {
   try {
     await loadSupabase();
     sb = window.supabase.createClient(CLOUD.url, CLOUD.anonKey, { auth: { persistSession: true, detectSessionInUrl: true } });
-    const { data } = await sb.auth.getSession();
+    let booted = false;
     sb.auth.onAuthStateChange((ev, session) => {
       const was = cloudUser; cloudUser = session ? session.user : null;
-      if (ev === 'SIGNED_IN' && !was) cloudAfterLogin(true);
+      if (ev === 'PASSWORD_RECOVERY') { cloudRecovery = true; if (booted && view === 'perfil') go('perfil'); }
+      if (booted && ev === 'SIGNED_IN' && !was) cloudAfterLogin(true);
       if (ev === 'SIGNED_OUT') refreshCloudUI();
     });
-    if (data.session) { cloudUser = data.session.user; cloudAfterLogin(false); }
+    const { data } = await sb.auth.getSession();
+    booted = true;
+    if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname); // limpa o token do endereço
+    if (data.session) { cloudUser = data.session.user; cloudAfterLogin(!!cloudRecovery); }
   } catch (e) { console.error('Login indisponível:', e); }
+}
+
+// Traduz os erros mais comuns do Supabase para mensagens claras.
+function cloudErr(e) {
+  const m = String((e && e.message) || e);
+  if (/invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos. Se você só entrou pelo link até hoje, toque em "Esqueci a senha" para criar uma.';
+  if (/email not confirmed/i.test(m)) return 'Falta confirmar o e-mail: toque no link que enviamos e depois em Entrar.';
+  if (/rate limit|security purposes|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
+  if (/should be different/i.test(m)) return 'A nova senha precisa ser diferente da atual.';
+  if (/weak|at least/i.test(m)) return 'Senha fraca demais: use pelo menos 6 caracteres, misturando letras e números.';
+  if (/fetch|network/i.test(m)) return 'Sem conexão com o servidor. Confira a internet e tente de novo.';
+  return 'Não deu certo: ' + m;
 }
 
 /* ---------- interface ---------- */
 function cloudForm() {
   return `<div class="cloudf"><input type="email" id="cEmail" placeholder="seu@email.com" autocomplete="email">
-  <button class="pri" id="cSend">Enviar código</button>
-  <div id="cStep2" hidden><p class="mut">Enviamos um e-mail. Digite o código de 6 dígitos ou toque no link do e-mail.</p>
-  <input id="cCode" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code"><button class="pri" id="cVerify">Entrar</button></div><p id="cMsg" class="mut"></p></div>`;
+  <input type="password" id="cPass" placeholder="senha (mínimo 6 caracteres)" autocomplete="current-password" minlength="6">
+  <div class="row"><button class="pri" id="cIn">Entrar</button><button id="cUp">Criar conta</button></div>
+  <div class="row"><button class="ghost" id="cForgot">Esqueci a senha</button><button class="ghost" id="cLink">Entrar com link no e-mail</button></div>
+  <p id="cMsg" class="mut"></p></div>`;
+}
+function cloudPassForm() {
+  return `<div class="cloudf"><input type="password" id="cNew" placeholder="nova senha (mínimo 6 caracteres)" autocomplete="new-password" minlength="6">
+  <button class="pri" id="cSetPass">Salvar senha</button><p id="cMsg" class="mut"></p></div>`;
 }
 function cloudCard() {
   if (!cloudOn()) return `<div class="card"><h3>☁️ Conta e sincronização</h3><p class="mut">A sincronização entre aparelhos ainda não foi ativada neste site. Enquanto isso, use Exportar e Importar backup, logo abaixo.</p></div>`;
   return `<div class="card" id="cloudCard"><h3>☁️ Conta e sincronização</h3>${cloudUser
     ? `<p>Conectada como <b>${esc(cloudUser.email)}</b>.</p><p class="mut" id="cLast">${cloudLast ? 'Última sincronização: ' + cloudLast.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Sincronizando…'}</p>
-      <div class="row"><button id="cNow">🔄 Sincronizar agora</button><button class="ghost" id="cOut">Sair</button></div>`
-    : `<p class="mut">Entre com seu e-mail para salvar o progresso na nuvem e continuar em qualquer aparelho. Não há senha: você recebe um código por e-mail.</p>${cloudForm()}`}</div>`;
+      <div class="row"><button id="cNow">🔄 Sincronizar agora</button><button class="ghost" id="cOut">Sair</button></div>
+      ${cloudRecovery
+        ? `<h4>🔑 Crie sua nova senha</h4><p class="mut">Com ela você entra com e-mail e senha em qualquer aparelho, inclusive no app instalado.</p>${cloudPassForm()}`
+        : `<details class="cpass"><summary>🔑 Definir ou trocar a senha</summary><p class="mut">Útil se você entrou pelo link do e-mail: com a senha, entra direto nos outros aparelhos.</p>${cloudPassForm()}</details>`}`
+    : `<p class="mut">Entre com e-mail e senha para salvar o progresso na nuvem e continuar em qualquer aparelho. Primeira vez? Digite seu e-mail, escolha uma senha e toque em Criar conta.</p>${cloudForm()}`}</div>`;
 }
 function cloudOnboard() {
   if (!cloudOn()) return '';
-  return `<div class="card" style="margin-top:16px"><h3>☁️ Já usa a trilha em outro aparelho?</h3><p class="mut">Entre com seu e-mail para trazer o seu progresso.</p>${cloudForm()}</div>`;
+  return `<div class="card" style="margin-top:16px"><h3>☁️ Já usa a trilha em outro aparelho?</h3><p class="mut">Entre com seu e-mail e senha para trazer o seu progresso.</p>${cloudForm()}</div>`;
 }
 function refreshCloudUI() { if (view === 'perfil') go('perfil'); else { const l = document.getElementById('cLast'); if (l && cloudLast) l.textContent = 'Última sincronização: ' + cloudLast.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } }
 function wireCloud() {
   if (!cloudOn()) return;
   const msg = (t) => { const m = document.getElementById('cMsg'); if (m) m.textContent = t; };
-  const send = document.getElementById('cSend');
-  if (send) send.onclick = async () => {
-    const email = document.getElementById('cEmail').value.trim();
-    if (!/^\S+@\S+\.\S+$/.test(email)) return msg('Digite um e-mail válido.');
-    send.disabled = true; msg('Enviando…');
-    try {
-      if (!sb) await cloudBoot();
-      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
-      if (error) throw error;
-      document.getElementById('cStep2').hidden = false; msg(''); document.getElementById('cCode').focus();
-    } catch (e) { console.error('Erro ao enviar o código:', e); msg('Não consegui enviar: ' + e.message); send.disabled = false; }
-  };
-  const ver = document.getElementById('cVerify');
-  if (ver) ver.onclick = async () => {
-    const email = document.getElementById('cEmail').value.trim(), token = document.getElementById('cCode').value.trim();
-    if (!/^\d{6}$/.test(token)) return msg('O código tem 6 dígitos.');
-    ver.disabled = true; msg('Entrando…');
-    try { const { error } = await sb.auth.verifyOtp({ email, token, type: 'email' }); if (error) throw error; }
-    catch (e) { console.error('Erro no código:', e); msg('Código inválido ou vencido: ' + e.message); ver.disabled = false; }
-  };
+  const back = location.origin + location.pathname;
+  const val = (id) => (document.getElementById(id) || {}).value?.trim() || '';
+  const okEmail = () => { const e = val('cEmail'); if (!/^\S+@\S+\.\S+$/.test(e)) { msg('Digite um e-mail válido.'); return null; } return e; };
+  const okPass = (id) => { const p = val(id); if (p.length < 6) { msg('A senha precisa ter pelo menos 6 caracteres.'); return null; } return p; };
+  // Executa uma ação do Supabase com o botão travado e mensagem de erro em português.
+  const act = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = async () => {
+    b.disabled = true;
+    try { if (!sb) await cloudBoot(); await fn(); } catch (e) { console.error(`Erro em ${id}:`, e); msg(cloudErr(e)); } finally { b.disabled = false; }
+  }; };
+  act('cIn', async () => {
+    const email = okEmail(), password = email && okPass('cPass'); if (!password) return;
+    msg('Entrando…');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  });
+  act('cUp', async () => {
+    const email = okEmail(), password = email && okPass('cPass'); if (!password) return;
+    msg('Criando a conta…');
+    const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: back } });
+    if (error) throw error;
+    if (data.session) return; // conta criada e já conectada
+    if (data.user && data.user.identities && !data.user.identities.length) return msg('Esse e-mail já tem conta. Toque em Entrar; se ainda não criou senha, use "Esqueci a senha".');
+    msg('📧 Enviamos um link de confirmação. Toque nele (pode ser em qualquer aparelho) e depois volte aqui e toque em Entrar.');
+  });
+  act('cForgot', async () => {
+    const email = okEmail(); if (!email) return;
+    msg('Enviando…');
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: back });
+    if (error) throw error;
+    msg('📧 Enviamos um link. Abra-o: o site vai abrir no Perfil pedindo a nova senha.');
+  });
+  act('cLink', async () => {
+    const email = okEmail(); if (!email) return;
+    msg('Enviando…');
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: back } });
+    if (error) throw error;
+    msg('📧 Enviamos um link. Abra-o neste mesmo navegador para entrar. No app instalado, prefira e-mail e senha.');
+  });
+  act('cSetPass', async () => {
+    const password = okPass('cNew'); if (!password) return;
+    msg('Salvando…');
+    const { error } = await sb.auth.updateUser({ password });
+    if (error) throw error;
+    cloudRecovery = false; toast('🔑 Senha salva. Agora você entra com e-mail e senha em qualquer aparelho.'); go('perfil');
+  });
   const now = document.getElementById('cNow'); if (now) now.onclick = () => cloudPush();
   const out = document.getElementById('cOut');
   if (out) out.onclick = async () => { await cloudPush(); await sb.auth.signOut(); cloudUser = null; toast('Você saiu. O progresso continua salvo neste aparelho.'); go('perfil'); };

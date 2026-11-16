@@ -227,7 +227,8 @@ mark { background: color-mix(in srgb, var(--acc) 30%, transparent); color: var(-
 .wch { margin: 16px 0 8px; }
 .xnote { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
 
-.cloudf input { max-width: 340px; } .cloudf .pri { margin-bottom: 6px; }
+.cloudf input { max-width: 340px; display: block; margin-bottom: 8px; } .cloudf .row { margin-bottom: 6px; }
+.cloudf .ghost { font-size: 13px; } .cpass { margin-top: 12px; } .cpass summary { cursor: pointer; font-weight: 600; }
 
 /* ---------- textos longos ---------- */
 .txlist { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-bottom: 18px; }

@@ -28,12 +28,14 @@ create policy "atualizar o próprio progresso" on public.progress
 
 As regras (RLS) garantem que cada pessoa só lê e grava o próprio progresso.
 
-## 3. Login por e-mail com código
+## 3. Login por e-mail e senha
 1. **Authentication → Sign In / Providers**: deixe **Email** ativado.
 2. **Authentication → URL Configuration**: em *Site URL* coloque `https://german.montowski.com.br` e adicione o mesmo endereço em *Redirect URLs*.
-3. **Authentication → Email Templates → Magic Link**: acrescente o código ao texto do e-mail, por exemplo:
-   `Seu código: {{ .Token }}`
-   (o código de 6 dígitos funciona também no app instalado no iPhone, onde o link do e-mail abre no Safari.)
+3. Não é preciso mexer nos modelos de e-mail (o plano grátis só permite editá-los com SMTP próprio). O app usa:
+   - **e-mail e senha** para entrar em qualquer aparelho, inclusive no app instalado;
+   - o e-mail padrão de **confirmação de conta** (link) na primeira vez;
+   - o e-mail padrão de **redefinição de senha**, que abre o site no Perfil pedindo a nova senha;
+   - opcionalmente, o **link mágico** para entrar sem senha no mesmo navegador.
 
 ## 4. Ligar o app
 Em **Project Settings → API**, copie *Project URL* e a chave *anon public* e preencha `config.js`:
