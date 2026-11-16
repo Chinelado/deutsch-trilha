@@ -255,6 +255,32 @@ async function sample(items, cfg) {
   chosen.forEach((x) => console.log(`  [voz ${x.slot}] ${x.text.slice(0, 90)}`));
 }
 
+// Procura áudios suspeitos: duração muito diferente do esperado para o tamanho do texto (fala cortada, repetida ou com ruído).
+// MP3 a 64 kbps: duração ≈ bytes × 8 / 64000. Grava a lista em tools/audio-suspeitos.txt.
+function check(items, cfg) {
+  const kbps = Number((/_(\d+)$/.exec(cfg.formato) || [])[1]) || 64;
+  const rows = items.filter((x) => fs.existsSync(fileOf(x.hash))).map((x) => {
+    const sec = (fs.statSync(fileOf(x.hash)).size * 8) / (kbps * 1000);
+    return { ...x, sec, cps: x.text.length / sec };
+  });
+  const sorted = rows.filter((x) => x.text.length >= 15).map((x) => x.cps).sort((a, b) => a - b);
+  const med = sorted[Math.floor(sorted.length / 2)] || 14;
+  const bad = rows.filter((x) => {
+    const expect = Math.max(0.6, x.text.length / med);
+    return x.sec > expect * 2.5 + 1.5 || (x.text.length >= 15 && x.sec < expect * 0.45);
+  }).sort((a, b) => b.sec / (b.text.length / med) - a.sec / (a.text.length / med));
+  const lines = bad.map((x) => `${x.sec.toFixed(1)} s (esperado ~${(x.text.length / med).toFixed(1)} s)\t[voz ${x.slot}]\t${x.text}`);
+  fs.writeFileSync(path.join(ROOT, 'tools', 'audio-suspeitos.txt'), lines.join('\n') + '\n');
+  console.log(`\n${fmt(rows.length)} áudios conferidos · ritmo mediano ${med.toFixed(1)} caracteres/s · ${bad.length} suspeitos (lista em tools/audio-suspeitos.txt)\n`);
+  lines.slice(0, 40).forEach((l) => console.log('  ' + l));
+  // os extremos, mesmo dentro do normal, para ouvir por amostragem
+  const ratio = (x) => x.sec / Math.max(0.6, x.text.length / med);
+  const ext = [...rows].sort((a, b) => ratio(b) - ratio(a));
+  console.log('Mais longos que o esperado:'); ext.slice(0, 6).forEach((x) => console.log(`  ${x.sec.toFixed(1)} s · ${x.text.slice(0, 70)}`));
+  console.log('Mais curtos que o esperado (frases):'); ext.filter((x) => x.text.length >= 15).slice(-6).forEach((x) => console.log(`  ${x.sec.toFixed(1)} s · ${x.text.slice(0, 70)}`));
+  return bad;
+}
+
 async function redo(items, cfg, text) {
   const t = sayText(text), hits = items.filter((x) => x.text === t);
   if (!hits.length) { console.error(`Não encontrei "${t}" entre os áudios do app.`); process.exit(1); }
@@ -274,6 +300,7 @@ try {
   else if (cmd === 'amostra') await sample(items, cfg);
   else if (cmd === 'gerar') await generate(items, cfg, opt('limite'));
   else if (cmd === 'refazer') await redo(items, cfg, rest.filter((x) => !x.startsWith('--')).join(' '));
+  else if (cmd === 'conferir') check(items, cfg);
   else if (cmd === 'indice') console.log(`Índice com ${writeIndex()} áudios.`);
   else { console.error(`Comando desconhecido: ${cmd}. Use simular, vozes, amostra, gerar, refazer ou indice.`); process.exit(1); }
 } catch (e) {
