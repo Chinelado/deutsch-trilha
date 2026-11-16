@@ -210,17 +210,81 @@ Counter of a German post office: a female customer hands a cardboard parcel to a
 Bright modern gym in Germany with large windows: rows of treadmills and weight machines, a male trainer in a plain t-shirt explains a machine to a woman in sportswear holding a towel. On the wall, a class schedule board with the heading "Kursplan" (other lines illegible). No brand logos. Landscape 3:2.
 ```
 
+## Terceira leva
+
+Use o mesmo bloco de estilo do início (numa conversa nova do ChatGPT, cole o bloco de novo antes).
+
+### 37. 🏦 Abrir conta no banco — `bank.png`
+```
+Modern, bright bank branch in Germany: at a round consultation desk, a male bank advisor in a light shirt shows a tablet to a female customer holding her passport. Glass walls, plants, a small self-service area with ATMs in the background (no brand names, no logos). Calm, trustworthy mood. No readable text. Landscape 3:2.
+```
+
+### 38. 🦷 No dentista — `zahnarzt.png`
+```
+Clean, friendly dental practice in Germany: a female patient reclines in a modern dental chair while a male dentist with a face mask and loupes shows her something on a screen; soft daylight, white and mint tones, a plant by the window. Reassuring, not scary, no visible instruments in the mouth. No readable text. Landscape 3:2.
+```
+
+### 39. 🚲 Alugar bicicleta — `fahrrad.png`
+```
+Sunny riverside bike path in a German city: a woman on a rented city bike with a basket and a helmet rides along the river, old town towers and a bridge in the background. On the path, a round blue traffic sign with a white bicycle symbol (no text). Joyful summer mood. No readable text. Landscape 3:2.
+```
+
+### 40. 🚗 Alugar carro — `auto.png`
+```
+A small compact rental car drives along a winding road through the Black Forest: dark green fir trees, rolling hills, a traditional farmhouse with a large roof in the distance, morning mist. No license plate text, no logos. Landscape 3:2.
+```
+
+### 41. 🚗 Alugar carro, detalhe — `auto-detalhe.png`
+```
+Roadside in Germany with a group of real German traffic signs, clean and well lit: a red octagonal stop sign that reads exactly "STOP", an inverted red-and-white triangle yield sign (no text), a round red-and-white no-entry sign (no text), and a blue Autobahn sign with the white motorway pictogram (no text). Only the word "STOP". Landscape 3:2.
+```
+
+### 42. 🥾 Trilha na montanha — `wandern.png`
+```
+Alpine hiking trail on a sunny summer morning: a woman with a backpack and hiking poles greets an older male hiker coming the other way on a narrow path through green meadows with wildflowers; a wooden mountain hut with a flower-decorated balcony sits on the slope, rocky peaks behind. No readable text. Landscape 3:2.
+```
+
+### 43. 🥾 Trilha, detalhe — `wandern-detalhe.png`
+```
+Close-up of a yellow Alpine hiking signpost on a wooden pole with three arrow-shaped signs pointing in different directions. The signs read exactly "Sonnalm 1 Std. 30 Min.", "Gipfel 3 Std." and "Rundweg". Blurred mountain landscape and blue sky behind. Only these exact texts. Landscape 3:2.
+```
+
+### 44. 🎬 No cinema — `kino.png`
+```
+Lobby of a cozy German cinema in the evening: a box office counter with a friendly male cashier, a popcorn machine glowing, a woman holding two tickets and a cup of popcorn. On the wall, a lit sign above the screens' entrance reads exactly "Saal 3". Warm red and gold tones. Only the text "Saal 3". Landscape 3:2.
+```
+
+### 45. ♻️ Separar o lixo — `muell.png`
+```
+Inner courtyard of a German apartment building: a row of large wheelie bins in clear colors (yellow lid, blue lid, brown lid, grey lid) next to bicycles and a small tree. A young woman holds a yogurt cup and looks at the bins thoughtfully while an older neighbor points to the yellow one. No readable text on the bins. Landscape 3:2.
+```
+
+### 46. 🧸 Creche — `kita.png`
+```
+Bright, colorful room of a German daycare (Kita): small children building with wooden blocks and painting at low tables, a female educator kneeling with them, rubber boots lined up by the door, children's drawings on the wall (no readable text). A mother at the door waves to her little daughter. Warm, joyful mood. Landscape 3:2.
+```
+
+### 47. 🔧 Problema no apartamento — `reparatur.png`
+```
+Kitchen in an old German apartment: a male handyman in work clothes repairs a dripping faucet with a wrench, toolbox open on the counter; the female tenant watches holding a cup of coffee; a radiator under the window. Friendly, everyday mood. No readable text. Landscape 3:2.
+```
+
+### 48. 🍝 Convite para jantar — `einladung.png`
+```
+Cozy dinner among friends in a German apartment kitchen-dining room: a man serves beef roulades with red cabbage and potatoes from a pot, a woman guest smiles and holds a wrapped bag of coffee as a gift, candles and a bottle of wine on the table, warm evening light. No readable text, no brand names. Landscape 3:2.
+```
+
 ## Ideias para a próxima leva
 
 | Tema | Ilustrações sugeridas |
 |---|---|
-| 🏦 Abrir conta no banco (Konto eröffnen) | formulário, cartão de débito, tela de app bancário |
-| 🦷 No dentista (beim Zahnarzt) | ficha de anamnese, placa do consultório |
-| 🚲 Alugar bicicleta (Fahrrad mieten) | tabela de preços, mapa de ciclovias |
-| 🚗 Alugar carro (Autovermietung) | contrato, placas de trânsito alemãs |
-| 🏕️ Camping e trilha (Wandern) | placa de trilha, mapa com altitudes |
-| 🎬 No cinema (im Kino) | ingresso, programação com OmU (legendado) |
-| ♻️ Separar o lixo (Mülltrennung) | lixeiras coloridas com o que vai em cada uma |
-| 🏫 Escola e creche (Kita und Schule) | bilhete de aviso aos pais, calendário escolar |
-| 🔧 Problema no apartamento (Hausverwaltung) | aviso no mural, formulário de reparo |
-| 🍝 Convite para jantar (Einladung zum Essen) | mesa posta, cartão de agradecimento |
+| 🏥 No hospital (im Krankenhaus) | pulseira de identificação, placa das alas |
+| 💼 Primeiro dia de trabalho (erster Arbeitstag) | crachá, organograma, máquina de café |
+| 🧾 Imposto de renda (Steuererklärung) | formulário, lista de despesas dedutíveis |
+| 🐶 Veterinário e animais (beim Tierarzt) | carteira de vacinação do pet |
+| 🛋️ Comprar móveis e montar (Möbelhaus) | etiqueta com número do corredor, manual de montagem |
+| 🎓 Matrícula na universidade (Immatrikulation) | carteirinha de estudante, calendário do semestre |
+| 💒 Casamento alemão (Hochzeit) | convite, lista de presentes |
+| 🏊 Piscina e lago (Freibad) | tabela de preços, regras da piscina |
+| ✂️ Costureira e sapateiro (Schneiderei) | recibo de serviço |
+| 🧳 Achados e perdidos (Fundbüro) | formulário de objeto perdido |

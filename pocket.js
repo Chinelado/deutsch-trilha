@@ -6,7 +6,7 @@ let PKIMG = new Set();
 fetch('images/pocket/index.json').then((r) => (r.ok ? r.json() : [])).then((j) => { PKIMG = new Set(j); }).catch(() => {});
 
 // Grupos da lista em Extras: o que não estiver em "viagem" aparece em "Morar na Alemanha".
-const PK_VIAGEM = new Set(['flughafen', 'weg', 'restaurant', 'kneipe', 'einkaufen', 'sehenswuerdigkeiten', 'hotel', 'bahnhof', 'baeckerei', 'taxi', 'weihnachtsmarkt', 'biergarten', 'stadion']);
+const PK_VIAGEM = new Set(['flughafen', 'weg', 'restaurant', 'kneipe', 'einkaufen', 'sehenswuerdigkeiten', 'hotel', 'bahnhof', 'baeckerei', 'taxi', 'weihnachtsmarkt', 'biergarten', 'stadion', 'fahrrad', 'auto', 'wandern', 'kino']);
 function pocketList() {
   const done = S.pockets || {}, n = Object.keys(done).filter((id) => POCKETS.some((p) => p.id === id)).length;
   const card = (p) => { const r = done[p.id];
@@ -25,8 +25,8 @@ const pkLeg = (s) => (s ? `<div class="pk-leg">${pkPairs(s).map((x) => pkWord(x.
 function pkIll(il) {
   switch (il.k) {
     case 'board': {
-      const st = (s) => (/fällt aus|annulliert|geschlossen/.test(s) ? 'bad' : /verspätet|\+|wechsel/i.test(s) ? 'warn' : s ? 'ok' : '');
-      return `<div class="pk-board ${il.estilo || ''}"><div class="pkb-h">${{ trem: '🚆', placar: '⚽' }[il.estilo] || '✈️'} ${esc(il.t)}</div><div class="tw"><table>
+      const st = (s) => (/^fast |verspätet|\+|wechsel/i.test(s) ? 'warn' : /fällt aus|annulliert|geschlossen|ausverkauft/.test(s) ? 'bad' : s ? 'ok' : '');
+      return `<div class="pk-board ${il.estilo || ''}"><div class="pkb-h">${{ trem: '🚆', placar: '⚽', kino: '🎬' }[il.estilo] || '✈️'} ${esc(il.t)}</div><div class="tw"><table>
         <tr>${pkPairs(il.cols).map((c) => `<th${pkSay(c.de)}>${esc(c.de)}<small>${esc(c.pt)}</small></th>`).join('')}</tr>
         ${il.rows.map((r) => `<tr>${r.map((v, i) => (i === r.length - 1 ? `<td class="st ${st(v)}"${pkSay(v)}>${esc(v)}</td>` : `<td>${esc(v)}</td>`)).join('')}</tr>`).join('')}
       </table></div>${pkLeg(il.leg)}</div>`;

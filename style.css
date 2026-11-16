@@ -310,6 +310,7 @@ button.ok { background: var(--okbg); border-color: var(--ok); } button.no { back
 .pk-board th small { display: block; color: #8b93a6; }
 .pk-board td { padding: 7px 8px; border-bottom: 1px dashed #222834; white-space: nowrap; }
 .pk-board.placar { background: #0d1f12; border-color: #1f4d2a; } .pk-board.placar table, .pk-board.placar .pkb-h { color: #e8ffe9; }
+.pk-board.kino { background: #1a1024; border-color: #4a2a63; } .pk-board.kino table, .pk-board.kino .pkb-h { color: #fff; }
 .pk-board.trem { background: #0b1b3a; border-color: #1d3b73; } .pk-board.trem table, .pk-board.trem .pkb-h { color: #fff; }
 .pk-board td.st.ok { color: #4fd18b; } .pk-board td.st.warn { color: #ffb020; } .pk-board td.st.bad { color: #ff5f6d; font-weight: 700; }
 .pk-board .pk-leg .pkw { font-family: 'IBM Plex Sans', sans-serif; }
