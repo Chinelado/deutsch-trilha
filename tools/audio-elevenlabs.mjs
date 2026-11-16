@@ -65,6 +65,9 @@ function inventory(A) {
     md.split('\n').map((x) => x.trim()).forEach((x) => {
       if (x.startsWith('~ ')) add(x.slice(2).split(' = ')[0], 'a', cat);
       else if (x.startsWith('|')) x.split('|').forEach((c) => { c = c.trim(); if (c && A.isGerman(c)) add(c, 'a', cat); });
+      else if (x.startsWith('?? ')) { const q = x.slice(3).split(' || ')[0]; if (q.startsWith('🔊 ')) add(q.slice(2).trim(), 'a', cat); } // ouvir e escolher
+      else if (x.startsWith('&& ')) x.slice(3).split(' | ').forEach((p) => { const d = p.split(' = ')[0].trim(); if (A.isGerman(d)) add(d, 'a', cat); }); // pares
+      else if (x.startsWith('@ ')) visSpec(x.slice(2)); // esquemas dentro da aula
       else if (x.startsWith('? ')) { const r = x.slice(2).split(' || ')[1]; if (r && A.isGerman(r)) add(r, 'a', cat); }
     });
     (md.match(/\*\*(.+?)\*\*/g) || []).forEach((b) => { if (A.isGerman(b)) add(b, 'a', cat); });
@@ -144,10 +147,12 @@ async function credits() {
   } catch (e) { return null; }
 }
 let realCost = 0; // créditos realmente cobrados (cabeçalho character-cost da resposta)
+// o que a voz lê: a barra de alternativas ("bin / heiße") vira pausa, para não ser pronunciada
+const spoken = (t) => t.replace(/([.!?…])\s*\/\s*/g, '$1 ').replace(/\s*\/\s*/g, ', ').replace(/,\s*,/g, ',');
 async function tts(cfg, item) {
   const voice = voiceFor(cfg, item.slot);
   const body = {
-    text: item.text, model_id: cfg.modelo,
+    text: spoken(item.text), model_id: cfg.modelo,
     voice_settings: { stability: cfg.estabilidade, similarity_boost: cfg.similaridade, speed: cfg.velocidade },
   };
   if (/flash|turbo/i.test(cfg.modelo)) body.language_code = 'de';
@@ -326,6 +331,8 @@ try {
     }
     console.log(`${n} áudios sem uso apagados. Índice com ${writeIndex(items)} áudios.`);
   }
+  else if (cmd === 'barras') { const hit = items.filter((x) => x.text.includes('/')); hit.forEach((x) => { const f = fileOf(x.hash); if (fs.existsSync(f)) fs.unlinkSync(f); }); console.log(hit.length + ' áudios com barra serão regravados'); await generate(hit, cfg, 'tudo'); }
+  else if (cmd === 'listar') { const re = new RegExp(rest.filter((x) => !x.startsWith('--')).join(' ') || '/'); const hit = items.filter((x) => re.test(x.text)); hit.forEach((x) => console.log('[' + x.slot + '] ' + x.text)); console.log(hit.length + ' textos'); }
   else if (cmd === 'indice') console.log(`Índice com ${writeIndex(items)} áudios.`);
   else { console.error(`Comando desconhecido: ${cmd}. Use simular, vozes, amostra, gerar, refazer, conferir, limpar ou indice.`); process.exit(1); }
 } catch (e) {

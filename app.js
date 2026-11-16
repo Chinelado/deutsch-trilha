@@ -26,6 +26,7 @@ const fresh = () => ({
 });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) { console.error('Falha ao ler o progresso salvo:', e); }
+migrateGuide(S);
 function save() { S.updatedAt = Date.now(); if (typeof cloudQueue === 'function') cloudQueue(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { console.error('Falha ao salvar o progresso:', e); toast('⚠️ Não consegui salvar o progresso neste navegador'); } }
 const daily = () => (S.daily[today()] = S.daily[today()] || { lesson: false, cards: 0, perfect: false });
 
@@ -69,7 +70,8 @@ function playClip(t, slot = 'a', rate = 1, onend, onfail) {
 function ttsSay(t, rate) {
   if (!hasTTS) return;
   stopClip(); speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(t.replace(/___/g, ' '));
+  // a barra de alternativas ("bin / heiße") vira pausa, como nos áudios gravados
+  const u = new SpeechSynthesisUtterance(t.replace(/___/g, ' ').replace(/([.!?…])\s*\/\s*/g, '$1 ').replace(/\s*\/\s*/g, ', '));
   u.lang = 'de-DE'; if (deVoice) u.voice = deVoice; u.rate = rate; speechSynthesis.speak(u);
 }
 function say(t, rate = 0.9, slot) {
@@ -371,9 +373,9 @@ function home() {
   if (gNext) {
     const k = GUIDE.indexOf(gNext);
     heroTxt = `<span class="eyebrow">Comece aqui · Aula ${k + 1} de ${GUIDE.length}</span><h1>${gNext.e} ${gNext.t}</h1>
-      <p class="meta">⏱ 10–15 min · antes do dia 1</p><p class="lead">${gNext.s}</p>
+      <p class="meta">⏱ 3–5 min · ${guideCat(gNext).e} ${guideCat(gNext).t}</p><p class="lead">${gNext.s}</p>
       <div class="row"><button class="pri" id="goG">${k ? 'Continuar' : 'Começar'} a aula →</button><button class="ghost" id="skipG">Pular para o dia 1</button></div>`;
-    thumb = `<div class="thumb" style="--lc:${LVCOL.A1}"><span class="eyebrow">Antes do dia 1</span>${GUIDE.map((g, j) => `<div class="gmini ${S.guide[g.id] ? 'ok' : j === k ? 'cur' : ''}"><span>${S.guide[g.id] ? '✓' : j + 1}</span>${g.t}</div>`).join('')}</div>`;
+    thumb = `<div class="thumb" style="--lc:${LVCOL.A1}"><span class="eyebrow">Antes do dia 1</span>${GUIDE_CATS.map((c) => { const gs = GUIDE.filter((g) => g.cat === c.id), n = gs.filter((g) => S.guide[g.id]).length; return `<div class="gmini ${n === gs.length ? 'ok' : c.id === gNext.cat ? 'cur' : ''}"><span>${n === gs.length ? '✓' : c.e}</span>${c.t} <small class="mut">${n}/${gs.length}</small></div>`; }).join('')}</div>`;
   }
   app.innerHTML = `<section class="hero"><div class="hero-bg">${heroArt(lvId)}</div>
   <div class="hero-card"><div class="hero-txt"><p class="hi">Hallo${S.name ? ', ' + esc(S.name) : ''}! 👋</p>${heroTxt}</div>${thumb}</div></section>
@@ -434,7 +436,7 @@ function trilha(lvId) {
       <span class="eyebrow">${p.when} · ${p.ue}</span><h2>${p.n}</h2><p class="mut">${p.can}</p>
       <p>🧩 ${nw * 6} lições · 🏁 ${nw} checkpoints</p>
       <div class="row"><div class="bar"><i style="width:${Math.round((doneN / days.length) * 100)}%"></i></div><small>${doneN}/${days.length}</small></div>
-      ${p.id === 'A1' ? `<div class="prep"><b>🧭 Antes do dia 1: Comece aqui</b>${GUIDE.map((g, j) => `<button class="gmini ${S.guide[g.id] ? 'ok' : ''}" data-g="${g.id}"><span>${S.guide[g.id] ? '✓' : j + 1}</span>${g.t}</button>`).join('')}</div>` : ''}
+      ${p.id === 'A1' ? `<div class="prep"><b>🧭 Antes do dia 1: Comece aqui</b>${GUIDE_CATS.map((c) => { const gs = GUIDE.filter((g) => g.cat === c.id), nx = gs.find((g) => !S.guide[g.id]) || gs[0], n = gs.filter((g) => S.guide[g.id]).length; return `<button class="gmini ${n === gs.length ? 'ok' : ''}" data-g="${nx.id}"><span>${n === gs.length ? '✓' : c.e}</span>${c.t} <small class="mut">${n}/${gs.length}</small></button>`; }).join('')}</div>` : ''}
       <details><summary>Gramática por semana</summary><ul class="wklist">${weeks}</ul></details>
       ${p.mods ? `<details><summary>Roteiro completo do nível</summary><ul>${p.mods.map((m) => `<li>${m}</li>`).join('')}</ul>
         <small class="mut">${p.part ? 'As semanas da trilha cobrem o início do nível. Para o restante do roteiro, use os conteúdos de apoio da aba Extras.' : 'Todos esses temas são cobertos pelas semanas da trilha.'}</small></details>` : ''}
@@ -467,6 +469,7 @@ function trilha(lvId) {
 }
 
 /* ---------- guia de estudo ---------- */
+const guideCat = (g) => GUIDE_CATS.find((c) => c.id === g.cat) || GUIDE_CATS[0];
 function studyTips(lv) {
   const T = {
     A: ['Leia a aula passo a passo devagar. Se um termo for estranho, procure no Dicionário de termos da aba Guia.', 'Toque em 🔊 em cada exemplo e repita em voz alta duas vezes, imitando o som.', 'Faça o teste rápido de cabeça, sem olhar, antes de abrir as respostas.', 'Pratique os 14 exercícios. Quando errar, leia a explicação inteira: é ali que a regra fixa.', 'Revise as cartas do dia na aba Cartas, dizendo a resposta em voz alta antes de virar.', 'Feche o dia escrevendo uma frase sobre você com uma palavra nova, e ouça um conteúdo da aba Extras.'],
@@ -482,24 +485,35 @@ const glossList = (f) => {
 };
 function guide(id) {
   if (id) {
-    const k = GUIDE.findIndex((g) => g.id === id), g = GUIDE[k], nx = GUIDE[k + 1];
+    const k = GUIDE.findIndex((g) => g.id === id), g = GUIDE[k] || GUIDE[0], nx = GUIDE[k + 1], c = guideCat(g), gs = GUIDE.filter((x) => x.cat === g.cat);
     app.innerHTML = `<button class="ghost back" id="bk">← Guia</button>
-    <div class="lhead"><div class="gbig">${g.e}</div><div><span class="eyebrow">Comece aqui · Aula ${k + 1} de ${GUIDE.length}</span><h1>${g.t}</h1><p class="mut">${g.s}</p></div></div>
+    <div class="lhead"><div class="gbig">${g.e}</div><div><span class="eyebrow">Comece aqui · ${c.e} ${c.t} · ${gs.indexOf(g) + 1} de ${gs.length}</span><h1>${g.t}</h1><p class="mut">${g.s}</p></div></div>
+    <div class="gdots" aria-label="Aulas do Comece aqui">${GUIDE.map((x) => `<button class="gdot ${x.id === g.id ? 'cur' : S.guide[x.id] ? 'ok' : ''}" data-g="${x.id}" title="${esc(x.t)}" aria-label="${esc(x.t)}"></button>`).join('')}</div>
     <div class="card deep">${deepHTML(g.body)}</div>
-    <button class="pri big" id="gdone">${S.guide[id] ? (nx ? 'Próxima aula →' : 'Ir para o dia 1 →') : 'Concluir aula · +20 XP'}</button>`;
+    <p class="mut gscore" id="gsc"></p>
+    <button class="pri big" id="gdone">${S.guide[g.id] ? (nx ? 'Próxima aula →' : 'Ir para o dia 1 →') : 'Concluir aula · +20 XP'}</button>`;
+    guideImgs(app);
     $('#bk').onclick = () => go('guide');
+    $$('.gdot').forEach((b) => (b.onclick = () => go('guide', b.dataset.g)));
     $('#gdone').onclick = () => {
-      if (!S.guide[id]) { S.guide[id] = today(); addXP(20); toast('📘 Aula concluída! +20 XP'); markActive(); checkBadges(); save(); }
+      if (!S.guide[g.id]) {
+        const sc = quizScore(app), bonus = sc.ok * 2;
+        S.guide[g.id] = today(); addXP(20 + bonus);
+        toast(`📘 Aula concluída! +${20 + bonus} XP${sc.n ? ` · desafios: ${sc.ok} de ${sc.n} de primeira` : ''}`); markActive(); checkBadges(); save();
+      }
       if (nx) go('guide', nx.id); else go('intro', 1);
     };
+    // cada desafio certo de primeira vale +2 XP ao concluir a aula
+    $('.card.deep', app).addEventListener('click', () => setTimeout(() => { const sc = quizScore(app), el = $('#gsc'); if (el && sc.done) el.textContent = `🎯 ${sc.ok} de ${sc.n} desafios de primeira${S.guide[g.id] || !sc.ok ? '' : ` · +${sc.ok * 2} XP de bônus ao concluir`}`; }, 0));
+    scrollTo(0, 0);
     return;
   }
   const n = GUIDE.filter((g) => S.guide[g.id]).length;
   app.innerHTML = `<h1>📘 Guia de estudo</h1>
-  <p class="mut">Se você nunca estudou outra língua, comece por aqui: são seis aulas curtas antes do dia 1. Você pode voltar a elas sempre que quiser.</p>
+  <p class="mut">Se você nunca estudou outra língua, comece por aqui: são ${GUIDE.length} aulas de 3 a 5 minutos, em quatro blocos, com desafios para fixar. Você pode voltar a elas sempre que quiser.</p>
   <div class="card"><div class="row"><h3 class="grow">🧭 Comece aqui</h3><small>${n}/${GUIDE.length} concluídas</small></div>
   <div class="bar" style="margin:6px 0 12px"><i style="width:${Math.round((n / GUIDE.length) * 100)}%"></i></div>
-  <div class="glist">${GUIDE.map((g, k) => `<button class="gitem ${S.guide[g.id] ? 'ok' : ''}" data-g="${g.id}"><span class="gnum">${S.guide[g.id] ? '✓' : k + 1}</span><span class="grow"><b>${g.e} ${g.t}</b><small>${g.s}</small></span><span>→</span></button>`).join('')}</div></div>
+  ${GUIDE_CATS.map((c) => { const gs = GUIDE.filter((g) => g.cat === c.id); return `<h4 class="gcat">${c.e} ${c.t} <small class="mut">${gs.filter((g) => S.guide[g.id]).length}/${gs.length}</small></h4><div class="glist">${gs.map((g) => `<button class="gitem ${S.guide[g.id] ? 'ok' : ''}" data-g="${g.id}"><span class="gnum">${S.guide[g.id] ? '✓' : GUIDE.indexOf(g) + 1}</span><span class="grow"><b>${g.e} ${g.t}</b><small>${g.s}</small></span><span>→</span></button>`).join('')}</div>`; }).join('')}</div>
   <div class="card"><h3>🗓️ Rotina de cada lição</h3><p class="mut">O roteiro muda um pouco conforme o nível. No começo (A1 e A2):</p>${studyTips('A1')}</div>
   <div class="card"><h3>📖 Dicionário de termos</h3><p class="mut">Os nomes de gramática que aparecem nas lições, explicados de forma simples.</p>
   <input id="gq" placeholder="Buscar termo (ex.: dativo, sujeito)…" autocomplete="off"><div id="gl">${glossList('')}</div></div>`;
@@ -706,8 +720,9 @@ function mcq(el, html, opts, correct, cb, cls = '') {
   el.innerHTML = html + `<div class="opts ${cls}">${opts.map((o, i) => `<button data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
   const bs = $$('.opts button', el);
   bs.forEach((b) => (b.onclick = () => {
-    const ok = opts[b.dataset.i] === correct;
-    bs.forEach((x) => { x.disabled = true; if (opts[x.dataset.i] === correct) x.classList.add('ok'); });
+    const right = (o) => (typeof correct === 'function' ? correct(o) : o === correct);
+    const ok = right(opts[b.dataset.i]);
+    bs.forEach((x) => { x.disabled = true; if (right(opts[x.dataset.i])) x.classList.add('ok'); });
     if (!ok) b.classList.add('no');
     cb(ok, opts[b.dataset.i]);
   }));
@@ -717,11 +732,96 @@ function wireUml(el, inp) { $$('.uml button', el).forEach((b) => (b.onclick = ()
 function typed(el, html, answer, cb) {
   el.innerHTML = html + `<input id="inp" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Digite em alemão">${UML}<button class="pri" id="chk">Verificar</button>`;
   const inp = $('#inp', el); inp.focus(); wireUml(el, inp);
-  const goChk = () => { if (!inp.value.trim()) return; inp.disabled = true; $('#chk', el).disabled = true; cb(norm(inp.value) === norm(answer), inp.value.trim()); };
+  const goChk = () => { if (!inp.value.trim()) return; inp.disabled = true; $('#chk', el).disabled = true; cb(typeof answer === 'function' ? answer(inp.value) : norm(inp.value) === norm(answer), inp.value.trim()); };
   $('#chk', el).onclick = goChk;
   inp.onkeydown = (e) => { if (e.key === 'Enter') { e.stopPropagation(); goChk(); } };
 }
 const fill = (c) => c.q.replace('___', c.a);
+
+/* ---------- respostas alternativas ----------
+   Muitas lacunas têm mais de uma resposta certa ("Ich ___ Anna." aceita bin e heiße). czOk aceita a resposta da lição,
+   as alternativas de data/alts.js e duas trocas gerais diante de substantivo: possessivos entre si e ein → kein. */
+const POSS = /^(mein|dein|sein|ihr|unser|euer|eur)(e|en|em|er|es)?$/;
+function czOk(c, g) {
+  const n = norm(g), a = norm(c.a);
+  if (n === a) return true;
+  if (!n || c.w.some((w) => norm(w) === n)) return false; // um distrator nunca vale
+  const next = (c.q.split('___')[1] || '').trim().split(/\s+/)[0] || '';
+  if (/^[A-ZÄÖÜ]/.test(next)) { // lacuna antes de substantivo
+    const pa = POSS.exec(a), pg = POSS.exec(n);
+    if (pa && pg && (pa[2] || '') === (pg[2] || '')) return true;
+    if (/^ein(e|en|em|er|es)?$/.test(a) && n === 'k' + a) return true;
+  }
+  const low = g.trim().toLowerCase();
+  return ((typeof CZ_ALT !== 'undefined' && CZ_ALT[c.q]) || []).some((x) => (x[0] === '*' ? new RegExp('^[a-zäöüß]+' + x.slice(1) + '$').test(low) : norm(x) === n));
+}
+const czAlt = (c, g) => (norm(g) !== norm(c.a) ? ` · Sua resposta «${g}» também está certa.` : '');
+// Monte a frase: além da ordem do modelo, aceita levar um advérbio de tempo/lugar (ou um complemento com preposição)
+// para o início, com o verbo conjugado ainda em 2º lugar ("Ich lerne heute Deutsch." = "Heute lerne ich Deutsch.").
+const TOPIC = /^(heute|morgen|gestern|jetzt|hier|dort|da|dann|oft|immer|manchmal|leider|zuerst|später|bald|abends|morgens|mittags|nachmittags|danach|vielleicht|natürlich|am|im|um|in|nach|vor|seit|mit|zu|bei|ab|von|auf|aus|jeden|jede|jedes|letzte|letzten|letztes|nächste|nächsten|nächstes)$/i;
+const PREPW = /^(am|im|um|in|nach|vor|seit|mit|zu|bei|ab|von|auf|aus|jeden|jede|jedes|letzte|letzten|letztes|nächste|nächsten|nächstes)$/i;
+function v2Swap(base, cand) {
+  const clean = (t) => t.toLowerCase().replace(/[.,!?;:…"]/g, '');
+  const o = base.split(' '), b = o.map(clean), u = cand.split(' ').map(clean).join(' ');
+  for (let k = 1; k <= 3 && k < b.length - 1; k++) {
+    const V = o[k];
+    if (!/^[a-zäöüß]/.test(V) || TOPIC.test(clean(V)) || (k > 1 && !/^[A-ZÄÖÜ]/.test(o[k - 1]))) continue;
+    const A = b.slice(0, k), R = b.slice(k + 1);
+    for (let i = 0; i < R.length; i++) for (let m = 1; m <= 4 && i + m <= R.length; m++) {
+      const X = R.slice(i, i + m), last = o[k + 1 + i + m - 1];
+      if (!TOPIC.test(X[0])) continue;
+      if (PREPW.test(X[0]) ? m < 2 || !/^[A-ZÄÖÜ0-9]/.test(last) : m > 1) continue;
+      if ([...X, b[k], ...A, ...R.slice(0, i), ...R.slice(i + m)].join(' ') === u) return true;
+    }
+  }
+  return false;
+}
+function orderOk(de, g) {
+  if (g === de) return true;
+  if (!/\.$/.test(de.trim()) || de.includes(',')) return false; // só frases afirmativas simples
+  return v2Swap(de, g) || v2Swap(g, de);
+}
+/* ---------- frase livre (intrapessoal) ----------
+   wordIn: a palavra pedida aparece no texto, em qualquer forma (sprechen ~ spricht, das Buch ~ Bücher, aufstehen ~ stehe … auf).
+   checkOwn: palavra pedida, estrutura do dia (formas das lacunas da lição) e se o texto parece português. */
+const deUml = (s) => s.replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss');
+const skel = (s) => deUml(s).replace(/[aeiouy]/g, '');
+const SEP = /^(ab|an|auf|aus|ein|mit|nach|vor|zu|zurück|weg|fern|her|hin|los|weiter|kennen|fest)(.{3,})$/;
+// formas de verbos irregulares que o radical não alcança (er nimmt, ich war, sie hat)
+const IRR = { sein: 'bin|bist|ist|sind|seid|war|gewesen', haben: 'hab|hast|hat|hätt', werden: 'wird|wirst|wurd|würd|geword', wissen: 'weiß|wusst|gewusst',
+  nehmen: 'nimm|nahm|genomm', geben: 'gib|gab|gäb', essen: 'iss|aß|gegess', lesen: 'lies|las|gelesen', sehen: 'sieh|sah|geseh', helfen: 'hilf|half|geholf',
+  treffen: 'triff|traf|getroff', gehen: 'ging|gegang', kommen: 'kam|käm|gekomm', tun: 'tu|tat|getan', mögen: 'mag|moch|möcht', können: 'kann|konn|könnt',
+  müssen: 'muss|musst|müsst', dürfen: 'darf|durf|dürft', wollen: 'will|woll', sollen: 'soll', bringen: 'brach|gebrach', denken: 'dach|gedach',
+  finden: 'fand|gefund', schreiben: 'schrieb|geschrieb', trinken: 'trank|getrunk', schlafen: 'schläf|schlief', fahren: 'fähr|fuhr', laufen: 'läuf|lief',
+  sprechen: 'sprich|sprach|gesproch', stehen: 'stand|gestand', sitzen: 'saß|gesess', liegen: 'lag|geleg', heißen: 'hieß|geheiß', bleiben: 'blieb|geblieb' };
+const toksOf = (t) => t.toLowerCase().split(/[^a-zäöüß]+/).filter(Boolean);
+function wordIn(text, de) {
+  const toks = toksOf(text);
+  const raw = toksOf(de.replace(/\(.*?\)/g, ' ').replace(/\/.*$/, ''));
+  const ws = raw.filter((w) => w.length >= 3 && !/^(der|die|das|den|dem|des|ein|eine|sich|etw|jdn|jdm)$/.test(w));
+  if (!ws.length) return raw.some((w) => toks.includes(w));
+  const w = ws.reduce((a, b) => (b.length > a.length ? b : a)); // a palavra mais longa decide
+  const hit = (x) => {
+    if (IRR[x] && toks.some((t) => new RegExp('^(' + IRR[x] + ')').test(t))) return true;
+    const stem = x.length > 4 ? x.replace(/(en|em|er|es|e|n|s)$/, '') : x;
+    const sk = skel(stem);
+    return toks.some((t) => t.startsWith(stem) || deUml(t).startsWith(deUml(stem)) || (stem.length >= 4 && t.includes(stem))
+      || (sk.length >= 3 && skel(t).startsWith(sk)) || (sk.length >= 3 && /^ge/.test(t) && skel(t.slice(2)).startsWith(sk)));
+  };
+  if (hit(w)) return true;
+  const sp = SEP.exec(w); // verbo separável: o prefixo vai para o fim da frase
+  return !!(sp && toks.includes(sp[1]) && hit(sp[2]));
+}
+const PTW = /^(eu|você|voce|não|nao|é|e|um|uma|meu|minha|que|com|para|muito|gosto|tenho|sou|estou|moro|de|do|da|no|na)$/;
+function checkOwn(text, v, les) {
+  const toks = toksOf(text);
+  const pt = toks.filter((t) => PTW.test(t)).length >= Math.max(2, toks.length * 0.4);
+  const forms = new Set(les.cz.flatMap((c) => [c.a, ...c.w]).flatMap(toksOf).filter((f) => f.length >= 2));
+  // lição de vocabulário puro (as lacunas pedem substantivos): não dá para reconhecer a estrutura pela forma
+  const nouny = les.cz.every((c) => /^[A-ZÄÖÜ]/.test(c.a) && !/^(Der|Die|Das|Ein|Eine|Mein|Meine|Dein|Deine)$/.test(c.a));
+  return { word: wordIn(text, v.de), struct: nouny || !forms.size ? null : toks.some((t) => forms.has(t)), pt };
+}
+
 function order(el, s, cb) {
   const toks = s.de.split(' ');
   let pool = shuffle(toks.map((t, i) => ({ t, i }))), ans = [];
@@ -731,7 +831,7 @@ function order(el, s, cb) {
     el.innerHTML = `<p class="q">Monte a frase na ordem certa:<b>${esc(s.pt)}</b></p><div class="line">${ans.map(btn).join('')}</div><div class="pool">${pool.map(btn).join('')}</div><button class="pri" id="chk" ${pool.length ? 'disabled' : ''}>Verificar</button>`;
     $$('.pool button', el).forEach((b) => (b.onclick = () => { ans.push(pool.splice(pool.findIndex((p) => p.i == b.dataset.i), 1)[0]); draw(); }));
     $$('.line button', el).forEach((b) => (b.onclick = () => { pool.push(ans.splice(ans.findIndex((p) => p.i == b.dataset.i), 1)[0]); draw(); }));
-    $('#chk', el).onclick = () => { $$('button', el).forEach((b) => (b.disabled = true)); const g = ans.map((p) => p.t).join(' '); cb(g === s.de, g); };
+    $('#chk', el).onclick = () => { $$('button', el).forEach((b) => (b.disabled = true)); const g = ans.map((p) => p.t).join(' '); cb(orderOk(s.de, g), g); };
   };
   draw();
 }
@@ -796,7 +896,7 @@ const GEN = {
       typed(el, `<p class="q">Como se diz em alemão?<b>${v.em} ${esc(v.pt)}</b></p>${gender(v.de) ? '<p class="hint">Substantivo: escreva com o artigo.</p>' : ''}`, v.de, (ok, g) => done(ok, [v.k], v.de + ' = ' + v.pt + (ok && gender(v.de) && g !== v.de && g.toLowerCase() === v.de.toLowerCase() ? ' · Lembre: substantivos levam inicial maiúscula.' : ''), v.de, whyVocab(g, v, les)));
     } else {
       const c = pick(les.cz);
-      typed(el, `<p class="q">Complete a lacuna:<b>${esc(c.q)}</b></p><p class="hint">${esc(les.gt)}</p>`, c.a, (ok, g) => done(ok, [], fill(c), fill(c), whyCloze(les, c, g)));
+      typed(el, `<p class="q">Complete a lacuna:<b>${esc(c.q)}</b></p><p class="hint">${esc(les.gt)}</p>`, (g) => czOk(c, g), (ok, g) => done(ok, [], fill(c) + (ok ? czAlt(c, g) : ''), fill(c), whyCloze(les, c, g)));
     }
   },
   // Lógico-matemática: aplicar a regra ou reconstruir a estrutura da frase.
@@ -812,8 +912,8 @@ const GEN = {
       mcq(el, `<p class="q">Qual é a função da palavra destacada?<b class="bdq">${sent}</b></p><p class="hint">${esc(les.bd.pt)}</p>`, shuffle([right, ...sample(pool, 2)]), right,
         (ok, g) => done(ok, [], `«${tk.w}» = ${right}`, t.map((x) => x.w).join(' '),
           `<p>Você marcou ${q(g)}, mas «${esc(tk.w)}» é <b>${esc(right)}</b>: ${esc(RHELP[tk.c] || '')}.${tk.n ? ' Nesta frase: ' + esc(tk.n) + '.' : ''}</p>${breakdownHTML(les.bd, true)}`), 'col');
-    } else if (sents.length && r < 0.67) { const s = pick(sents); order(el, s, (ok, g) => done(ok, [], s.de + ' = ' + s.pt, s.de, whyOrder(les, s, g))); }
-    else { const c = pick(les.cz); mcq(el, `<p class="q">Qual forma segue a regra?<b>${esc(c.q)}</b></p><p class="hint">${esc(les.gt)}</p>`, shuffle([c.a, ...c.w]), c.a, (ok, g) => done(ok, [], fill(c), fill(c), whyCloze(les, c, g))); }
+    } else if (sents.length && r < 0.67) { const s = pick(sents); order(el, s, (ok, g) => done(ok, [], s.de + ' = ' + s.pt + (ok && g !== s.de ? ` · A sua ordem («${g}») também está certa.` : ''), s.de, whyOrder(les, s, g))); }
+    else { const c = pick(les.cz); mcq(el, `<p class="q">Qual forma segue a regra?<b>${esc(c.q)}</b></p><p class="hint">${esc(les.gt)}</p>`, shuffle([c.a, ...c.w]), (o) => czOk(c, o), (ok, g) => done(ok, [], fill(c) + (ok ? czAlt(c, g) : ''), fill(c), whyCloze(les, c, g))); }
   },
   // Espacial: memória visual de pares, com as cores de gênero.
   esp(les, el, done) {
@@ -865,20 +965,38 @@ const GEN = {
       shuffle([b.de, ...ds.map((d) => d.de)]), b.de, (ok, g) => done(ok, [], b.de + ' = ' + b.pt, b.de, whyReply(a, b, ds, g)), 'col');
     setTimeout(() => { if (el.isConnected) say(a.de); }, 350);
   },
-  // Intrapessoal: ligar a língua à própria vida e se autoavaliar.
+  // Intrapessoal: ligar a língua à própria vida. Não existe uma resposta única: o app confere se a frase usa a palavra
+  // pedida e a estrutura do dia (formas que aparecem nas lacunas da lição) e mostra exemplos possíveis, não um gabarito.
   intra(les, el, done) {
-    const v = pick(les.v), m = pick([...les.ge, ...les.ex]);
-    el.innerHTML = `<p class="q">Escreva uma frase verdadeira sobre você usando:<b class="${gcls(v.de)}">${esc(v.de)}</b></p><p class="hint">${esc(v.pt)} · estrutura do dia: ${esc(les.gt)}</p><textarea id="ta" rows="3" spellcheck="false"></textarea>${UML}<button class="pri" id="chk">Pronto</button><div id="self"></div>`;
+    const v = pick(les.v);
+    el.innerHTML = `<p class="q">Escreva uma frase verdadeira sobre você usando:<b class="${gcls(v.de)}">${esc(v.de)}</b></p><p class="hint">${esc(v.pt)} · estrutura do dia: ${esc(les.gt)}. Qualquer frase verdadeira vale, não existe uma resposta única.</p><textarea id="ta" rows="3" spellcheck="false" placeholder="Uma frase sobre a sua vida"></textarea>${UML}<button class="pri" id="chk">Conferir</button><div id="self"></div>`;
     const ta = $('#ta', el); ta.focus(); wireUml(el, ta);
+    let tries = 0;
     $('#chk', el).onclick = () => {
-      const text = ta.value.trim(); if (text.split(/\s+/).length < 2) return;
+      const text = ta.value.trim(), box = $('#self', el);
+      if (text.split(/\s+/).length < 3) { box.innerHTML = '<p class="warn">Escreva uma frase completa, com pelo menos 3 palavras.</p>'; return; }
+      const r = checkOwn(text, v, les);
+      if ((!r.word || r.pt) && tries++ < 2) { // dá a chance de corrigir antes de mostrar os exemplos
+        box.innerHTML = `<p class="warn">${r.pt ? 'Parece que a frase está em português. Tente escrever em alemão.' : `Quase! Falta usar <b>${esc(v.de)}</b> (${esc(v.pt)}) na frase. Pode mudar a forma da palavra (plural, conjugação).`}</p>`;
+        ta.focus(); return;
+      }
       ta.disabled = true; $('#chk', el).disabled = true;
-      $('#self', el).innerHTML = `<p>Modelo do dia: ${spk(m.de)}<span class="de">${esc(m.de)}</span> <small>${esc(m.pt)}</small></p><p>Compare com a sua frase. Como foi?</p><div class="opts col"><button data-r="2">Saiu fácil</button><button data-r="1">Saiu com esforço</button><button data-r="0">Não consegui montar</button></div>`;
+      const ok = r.word && !r.pt;
+      const exs = [...les.ge, ...les.ex, ...les.dlg].filter((s) => wordIn(s.de, v.de));
+      const shown = (exs.length ? exs : les.ge).slice(0, 2);
+      const st = r.struct === null ? `<li class="mut">• estrutura do dia (${esc(les.gt)}): confira nos exemplos abaixo</li>`
+        : r.struct ? '<li class="ok">✓ usa a estrutura do dia</li>'
+        : `<li class="mut">• não reconheci a estrutura do dia (${esc(les.gt)}); se usou outra forma correta, tudo bem</li>`;
+      box.innerHTML = `<ul class="ownchk"><li class="${r.word ? 'ok' : 'no'}">${r.word ? '✓' : '✗'} usa <b>${esc(v.de)}</b></li>${st}</ul>
+      <p>${ok ? 'Boa! A sua frase segue o que foi pedido.' : 'Veja como a palavra pode entrar numa frase.'} Exemplos possíveis (há muitas respostas certas):</p>
+      ${shown.map((m) => `<p>${spk(m.de)}<span class="de">${esc(m.de)}</span> <small>${esc(m.pt)}</small></p>`).join('')}
+      <p>Como foi escrever a sua?</p><div class="opts col"><button data-r="2">Saiu fácil</button><button data-r="1">Saiu com esforço</button><button data-r="0">Não consegui montar</button></div>`;
       $$('#self button[data-r]', el).forEach((b) => (b.onclick = () => {
         $$('#self button', el).forEach((x) => (x.disabled = true)); b.classList.add('sel');
         S.diary.push({ d: today(), t: text, l: les.i });
-        done(+b.dataset.r > 0, [v.k], 'Sua frase foi para o diário.', text,
-          `<p>Sem problema: travar aqui mostra o que ainda falta fixar. Use o modelo como molde e troque só as palavras pelo seu caso: <b>${esc(m.de)}</b> (${esc(m.pt)}). A palavra pedida era <b>${esc(v.de)}</b> (${esc(v.pt)}).</p>${ruleOf(les)}`);
+        const m = shown[0];
+        done(ok && +b.dataset.r > 0, [v.k], 'Sua frase foi para o diário.', text,
+          `<p>${ok ? 'Sem problema: travar aqui mostra o que ainda falta fixar.' : `A palavra pedida era <b>${esc(v.de)}</b> (${esc(v.pt)}).`} Use um exemplo como molde e troque só as palavras pelo seu caso: <b>${esc(m.de)}</b> (${esc(m.pt)}).</p>${ruleOf(les)}`);
       }));
     };
   },
@@ -964,8 +1082,12 @@ function perfil() {
   <small>À direita: acerto nos exercícios · retenção nas cartas dias depois. A barra combina os dois (retenção pesa 60%) e define quantos exercícios de cada tipo entram nas próximas lições.</small></div>
   <div class="card"><h3>Como ler isto</h3><p class="mut">As oito inteligências de Gardner organizam aqui oito formatos de exercício. A pesquisa não confirma que ensinar só no "estilo" de alguém melhora o aprendizado, então a plataforma não confia no rótulo: ela mede o que de fato funciona com você e continua testando todos os formatos. Com poucos dados, o gráfico ainda reflete a sua autoavaliação inicial.</p></div>
   <div class="stats"><div class="stat"><b>${nDone()}/${TOTAL}</b><small>dias</small></div><div class="stat"><b>${nWords()}</b><small>palavras</small></div><div class="stat"><b>${Math.round(tot / 360) / 10} h</b><small>estudadas</small></div><div class="stat"><b>🔥 ${S.best}</b><small>recorde</small></div></div>
-  <h2>Conquistas (${Object.keys(S.badges).length}/${BADGES.length})</h2>
-  <div class="badges">${BADGES.map(([id, e, n, d]) => `<div class="badge ${S.badges[id] ? '' : 'off'}" title="${d}"><b>${e}</b>${n}<br><small>${d}</small></div>`).join('')}</div>
+  ${(() => { // conquistas recolhíveis: fechado mostra só a contagem e os ícones das conquistas já ganhas
+    const won = BADGES.filter(([id]) => S.badges[id]);
+    let open = false; try { open = localStorage.getItem('deutschTrilha.badgesOpen') === '1'; } catch (e) { /* fechado */ }
+    return `<details class="card bdbox" id="bdBox" ${open ? 'open' : ''}><summary><b>🏅 Conquistas</b> <span class="mut">${won.length} de ${BADGES.length}</span><span class="bdmini">${won.slice(-6).map(([, e]) => e).join(' ')}</span></summary>
+    <div class="badges">${[...won, ...BADGES.filter(([id]) => !S.badges[id])].map(([id, e, n, d]) => `<div class="badge ${S.badges[id] ? '' : 'off'}" title="${d}"><b>${e}</b>${n}<br><small>${d}</small></div>`).join('')}</div></details>`;
+  })()}
   <h2>📔 Diário</h2>
   <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(x.x ? '🎬 ' + x.x : LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
   ${lookCard()}
@@ -984,6 +1106,7 @@ function perfil() {
   <p class="mut">O progresso fica só neste navegador. Use o backup para levar a outro dispositivo.</p>
   <button class="link" id="reset">Apagar todo o progresso</button></div>`;
   wireAppCard(); wireCloud(); wireOffline(); wireLook();
+  $('#bdBox').addEventListener('toggle', (e) => { try { localStorage.setItem('deutschTrilha.badgesOpen', e.target.open ? '1' : '0'); } catch (err) { /* só lembra o estado */ } });
   $('#toP').onclick = () => go('nivel');
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
@@ -1006,6 +1129,8 @@ function applyTheme(pref = themePref()) {
   const t = pref === 'auto' ? (mqLight && mqLight.matches ? 'light' : 'dark') : pref;
   document.documentElement.dataset.theme = t;
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === 'light' ? '#f4f6fb' : '#0e1525';
+  // "only light" impede que navegadores com modo escuro forçado (ex.: Samsung Internet) invertam as cores do tema claro
+  const cs = document.querySelector('meta[name="color-scheme"]'); if (cs) cs.content = t === 'light' ? 'only light' : 'dark';
 }
 if (mqLight && mqLight.addEventListener) mqLight.addEventListener('change', () => { if (themePref() === 'auto') applyTheme(); });
 applyTheme();
@@ -1244,7 +1369,7 @@ function nivel() {
   app.innerHTML = `<div class="runtop"><button class="x" id="quit" aria-label="Sair">✕</button><div class="bar"><i style="width:${Math.round((PT.i / PQ) * 100)}%"></i></div><span class="combo">${L.id}</span></div>
   <div class="chip">Nível ${L.id} · pergunta ${PT.i + 1} de ${PQ}</div><div id="ex"></div>`;
   $('#quit').onclick = () => { PT = null; go(S.start ? 'perfil' : 'onboard'); };
-  mcq($('#ex'), it.vocab ? `<p class="q">O que significa?<b>${esc(it.q)}</b></p>` : `<p class="q">Complete:<b>${esc(it.q)}</b></p>`, opts, it.a, (ok) => {
+  mcq($('#ex'), it.vocab ? `<p class="q">O que significa?<b>${esc(it.q)}</b></p>` : `<p class="q">Complete:<b>${esc(it.q)}</b></p>`, opts, it.vocab ? it.a : (o) => czOk(it, o), (ok) => {
     if (ok) PT.ok++;
     setTimeout(() => {
       PT.i++;

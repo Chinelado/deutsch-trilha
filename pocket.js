@@ -72,7 +72,7 @@ function pocket(id) {
   const paras = dl.map((d) => d.who + ': ' + d.de);
   app.innerHTML = `<button class="ghost back" id="bk">← Extras</button>
   <div class="lhead"><div class="gbig">${p.e}</div><div><span class="eyebrow">Pocket · ${p.lv} · 5 a 10 min</span><h1>${esc(p.t)}</h1><p class="mut">${esc(p.pt)}</p></div></div>
-  ${(p.img || []).filter((im) => PKIMG.has(im.f)).map((im) => `<figure class="pk-img"><img src="images/pocket/${im.f}.png" alt="${esc(im.alt)}" onload="this.parentNode.classList.add('ok')" onerror="this.parentNode.remove()"></figure>`).join('')}
+  ${(p.img || []).filter((im) => PKIMG.has(im.f)).map((im) => `<figure class="pk-img"><img src="images/pocket/${im.f}.webp" decoding="async" alt="${esc(im.alt)}" onload="this.parentNode.classList.add('ok')" onerror="this.parentNode.remove()"></figure>`).join('')}
   <div class="card"><h3>🎬 A cena</h3><p>${inl(p.cena)}</p></div>
   <h2>🗺️ Toque e ouça</h2><p class="mut">Toque em qualquer palavra das ilustrações para ouvir a pronúncia.</p>
   ${p.ill.map((il) => `<div class="pk-ill">${pkIll(il)}</div>`).join('')}

@@ -117,6 +117,26 @@ function deepHTML(md) {
     else if (l.startsWith('~ ')) {
       h += `<div class="exs">${take('~ ').map((x) => { const k = x.indexOf(' = '), de = k > 0 ? x.slice(0, k) : x, pt = k > 0 ? x.slice(k + 3) : '';
         return `<p>${spk(de.replace(/\*\*/g, ''))}<span class="de">${inl(de)}</span>${pt ? `<br><small>${inl(pt)}</small>` : ''}</p>`; }).join('')}</div>`;
+    } else if (l.startsWith('?? ')) {
+      // desafio de múltipla escolha: "pergunta || certa || errada… >> explicação"; "🔊 alemão" no lugar da pergunta = ouvir e escolher
+      h += `<div class="quiz gquiz"><h4>🎯 Desafio</h4>${take('?? ').map((x) => {
+        const [body, why = ''] = x.split(' >> '), [qq, ...op] = body.split(' || '), au = qq.startsWith('🔊 ') ? qq.slice(2).trim() : '';
+        const opts = op.map((o, j) => ({ o, ok: j === 0 })).sort(() => Math.random() - 0.5);
+        return `<div class="gq"><p class="gqq">${au ? `${spk(au)}<b class="gqa">Ouça e escolha o que foi dito</b>` : inl(qq)}</p>
+          <div class="gqo">${opts.map((p) => `<button type="button" data-c="${p.ok ? 1 : 0}">${inl(p.o)}</button>`).join('')}</div><p class="gqw" hidden>${inl(why)}</p></div>`;
+      }).join('')}</div>`;
+    } else if (l.startsWith('&& ')) {
+      // ligar os pares: "a = b | c = d"
+      const pairs = take('&& ').flatMap((x) => x.split(' | ')).map((p) => { const k = p.indexOf(' = '); return [p.slice(0, k).trim(), p.slice(k + 3).trim()]; });
+      const mix = (a) => a.map((v, j) => ({ v, j })).sort(() => Math.random() - 0.5);
+      h += `<div class="quiz gpairs" data-n="${pairs.length}"><h4>🧩 Ligue os pares</h4><p class="mut gpm">Toque num item da esquerda e depois no par dele.</p>
+        <div class="gpg"><div class="gpc">${mix(pairs.map((p) => p[0])).map((x) => `<button type="button" data-s="L" data-k="${x.j}"${isGerman(x.v) ? ` data-de="${esc(x.v)}"` : ''}>${inl(x.v)}</button>`).join('')}</div>
+        <div class="gpc">${mix(pairs.map((p) => p[1])).map((x) => `<button type="button" data-s="R" data-k="${x.j}">${inl(x.v)}</button>`).join('')}</div></div></div>`;
+    } else if (l.startsWith('@ ')) { h += visHTML(l.slice(2)); i++; }
+    else if (l.startsWith('IMG ')) {
+      // imagem opcional de images/guia/: só aparece se estiver listada em images/guia/index.json (ver guideImgs)
+      const [nm, cap = ''] = l.slice(4).split(' | ').map((x) => x.trim());
+      h += `<figure class="gimg" data-gimg="${esc(nm)}" hidden><img alt="${esc(cap)}" decoding="async"><figcaption>${inl(cap)}</figcaption></figure>`; i++;
     } else if (l.startsWith('? ')) {
       h += `<div class="quiz"><h4>✍️ Teste rápido</h4><p class="mut">Responda de cabeça, ou em voz alta, antes de tocar para ver a resposta.</p>${take('? ').map((x) => { const [a, b] = x.split(' || ');
         return `<details><summary>${inl(a)}</summary><p>${inl(b || '')}</p></details>`; }).join('')}</div>`;
@@ -125,11 +145,56 @@ function deepHTML(md) {
       else if (l.startsWith('> ')) h += `<div class="box tip"><span class="bl">💡 Dica</span>${inl(l.slice(2))}</div>`;
       else if (l.startsWith('! ')) h += `<div class="box warn"><span class="bl">⚠️ Atenção</span>${inl(l.slice(2))}</div>`;
       else if (l.startsWith('BR ')) h += `<div class="box br"><span class="bl">🇧🇷 Comparando com o português</span>${inl(l.slice(3))}</div>`;
+      else if (l.startsWith('GO ')) h += `<div class="box mission"><span class="bl">🎯 Missão</span>${inl(l.slice(3))}</div>`;
       else h += `<p>${inl(l)}</p>`;
       i++;
     }
   }
   return h;
+}
+
+/* ---------- desafios interativos das aulas (?? e &&) ---------- */
+if (typeof document !== 'undefined') document.addEventListener('click', (e) => { // (o gerador de áudio carrega este arquivo sem DOM)
+  const b = e.target.closest('.gq .gqo button');
+  if (b) {
+    const q = b.closest('.gq'); if (q.dataset.done) return;
+    const ok = b.dataset.c === '1'; q.dataset.done = ok ? 'ok' : 'no';
+    q.querySelectorAll('.gqo button').forEach((x) => { x.disabled = true; if (x.dataset.c === '1') x.classList.add('ok'); });
+    if (!ok) b.classList.add('no');
+    const w = q.querySelector('.gqw'); w.innerHTML = `<b>${ok ? '✅ Isso!' : '❌ Quase!'}</b> ${w.innerHTML}`; w.hidden = false;
+    return;
+  }
+  const p = e.target.closest('.gpairs .gpc button');
+  if (!p || p.disabled) return;
+  const box = p.closest('.gpairs'), cur = box.querySelector('.gpc button.sel');
+  if (p.dataset.de) say(p.dataset.de);
+  if (!cur || cur.dataset.s === p.dataset.s) { if (cur) cur.classList.remove('sel'); p.classList.add('sel'); return; }
+  cur.classList.remove('sel');
+  if (cur.dataset.k === p.dataset.k) {
+    [cur, p].forEach((x) => { x.classList.add('ok'); x.disabled = true; });
+    if (box.querySelectorAll('.gpc button.ok').length === 2 * box.dataset.n) { box.dataset.done = box.dataset.miss ? 'no' : 'ok'; box.querySelector('.gpm').textContent = box.dataset.miss ? '🎉 Todos os pares ligados!' : '🎉 Todos os pares de primeira!'; }
+  } else {
+    box.dataset.miss = '1';
+    [cur, p].forEach((x) => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 650); });
+  }
+});
+// Placar dos desafios de uma tela (usado ao concluir uma aula do guia).
+const quizScore = (root) => {
+  const all = [...root.querySelectorAll('.gq, .gpairs')];
+  return { n: all.length, ok: all.filter((x) => x.dataset.done === 'ok').length, done: all.filter((x) => x.dataset.done).length };
+};
+// Imagens opcionais das aulas do guia: aparecem só as que existem em images/guia/index.json.
+let GIMG = null;
+function guideImgs(root) {
+  if (!root.querySelector('[data-gimg]')) return;
+  (GIMG = GIMG || fetch('images/guia/index.json').then((r) => (r.ok ? r.json() : [])).catch(() => [])).then((list) => {
+    const have = new Set(list);
+    root.querySelectorAll('[data-gimg]').forEach((f) => {
+      if (!have.has(f.dataset.gimg)) return;
+      const im = f.querySelector('img'); im.onload = () => { f.hidden = false; }; im.onerror = () => f.remove();
+      im.src = `images/guia/${f.dataset.gimg}.webp`;
+    });
+  });
 }
 
 /* ---------- facilitação gráfica: esquemas por lição ---------- */

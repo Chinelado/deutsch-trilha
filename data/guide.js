@@ -1,230 +1,506 @@
-// Módulo "Comece aqui" (antes do dia 1) e glossário de termos de gramática.
+// Módulo "Comece aqui" (antes do dia 1): aulas curtas em quatro categorias, com desafios interativos.
 // Marcação das aulas (uma instrução por linha):
-//   # título     > dica     ! erro comum     BR comparação com o português
-//   ~ alemão = tradução (com áudio)     ? pergunta || resposta (teste rápido)
-//   | a | b |  linhas de tabela (a primeira é o cabeçalho)     - item de lista     **negrito**
+//   # título     > dica     ! erro comum     BR comparação com o português     GO missão
+//   ~ alemão = tradução (com áudio)     | a | b |  tabela (a primeira linha é o cabeçalho)     - item de lista     **negrito**
+//   @ esquema visual (mesma sintaxe de data/visuals.js)     IMG nome | legenda  (imagem de images/guia/, se existir)
+//   ?? pergunta || certa || errada || errada >> explicação   desafio de múltipla escolha (as opções são embaralhadas)
+//   ?? 🔊 alemão || certa || errada >> explicação             desafio de ouvir e escolher
+//   && alemão = tradução | alemão = tradução                  jogo de ligar os pares
+//   ? pergunta || resposta                                    teste rápido de revelar
+const GUIDE_CATS = [
+  { id: 'start', e: '🚀', t: 'Primeiros passos' },
+  { id: 'sons', e: '🔊', t: 'Os sons do alemão' },
+  { id: 'frases', e: '💬', t: 'Primeiras frases' },
+  { id: 'base', e: '🧩', t: 'Como o alemão funciona' },
+];
 const GUIDE = [
-{ id: 'g1', e: '🧭', t: 'Como funciona esta trilha', s: 'O caminho do zero à fluência e o que fazer em cada dia', body: `
-Bem-vinda ou bem-vindo! Esta trilha foi feita para quem **nunca estudou outra língua**. Você não precisa saber nada de alemão nem de gramática: tudo é explicado do começo, em português, com calma.
-# O mapa: seis níveis
-O mundo inteiro mede o conhecimento de uma língua com a mesma régua, o **Quadro Europeu Comum de Referência**. O Goethe-Institut, a instituição oficial que ensina alemão no mundo, usa essa régua nas provas. São seis degraus:
-| Nível | O que você consegue fazer | Semanas aqui |
-| A1 | Apresentar-se, pedir coisas simples, entender frases do dia a dia | 1 a 3 |
-| A2 | Contar o que fez, resolver situações de rotina | 4 a 7 |
-| B1 | Conversar sobre quase tudo do cotidiano, dar opinião, viajar sem medo | 8 a 13 |
-| B2 | Discutir temas complexos, trabalhar em alemão | 14 a 25 |
-| C1 | Usar o alemão com flexibilidade no estudo e no trabalho | 26 a 31 |
-| C2 | Entender praticamente tudo, com nuance e ironia | 32 a 35 |
-> A e B são os níveis em que a maioria das pessoas vive e trabalha bem. B1 já é considerado o nível de independência.
-# O ritmo: semanas de 7 dias
-Cada semana tem **6 lições e 1 checkpoint**. O checkpoint é um dia de revisão que mistura tudo o que você viu na semana. Ele não é prova: é o momento em que o conteúdo se fixa.
-# O que fazer em cada dia: 4 etapas
-- **1. Aprender:** leia a aula do dia com calma e ouça cada exemplo (botão 🔊).
-- **2. Praticar:** faça os 14 exercícios. Se errar, a plataforma explica por que e repete o exercício no fim.
-- **3. Revisar:** abra a aba Cartas e revise as palavras do dia. Essa etapa é a que mais faz você lembrar a longo prazo.
-- **4. Usar:** escute uma música, assista a um vídeo ou escreva uma frase sobre você. Use o alemão fora daqui.
-# Errar é parte do método
-Ninguém aprende uma língua sem errar milhares de vezes. Quando você erra e logo vê a explicação, o cérebro guarda a regra **melhor** do que se tivesse acertado por sorte. Por isso cada erro aqui vem com o motivo, e o exercício volta no fim da sessão.
-# Os oito formatos de exercício
-A trilha usa oito tipos de exercício, inspirados na teoria das inteligências múltiplas de Howard Gardner: escrever, montar frases, memória visual, ouvir, responder rápido, conversar, falar de você e classificar. A plataforma mede em quais você acerta mais e **lembra mais dias depois**, e passa a usar mais esses. Os outros continuam aparecendo, porque variar também ajuda a aprender.
-# Quanto tempo leva
-O Goethe-Institut estima de 350 a 650 aulas de 45 minutos para chegar ao B1. Somando tudo (lições, cartas e alemão fora daqui), fica assim:
-| Tempo por dia | Chegar ao B1 em cerca de |
-| 30 minutos | 1 ano e meio a quase 3 anos |
+// ---------- 🚀 Primeiros passos ----------
+{ id: 'n01', cat: 'start', e: '🗺️', t: 'Boas-vindas à trilha', s: 'O mapa do A1 ao C2 em três minutos', body: `
+Que bom ter você aqui! 🎉 Esta trilha foi feita para quem **nunca estudou outra língua**. Você não precisa saber nada de alemão nem de gramática: tudo é explicado do zero, em português, em aulas curtinhas como esta.
+IMG guia-mapa | A trilha é uma subida com seis acampamentos, do A1 ao C2.
+# Seis degraus, uma régua mundial
+O mundo inteiro mede o conhecimento de uma língua com a mesma régua, o **Quadro Europeu Comum de Referência**. É a régua das provas do Goethe-Institut, a instituição oficial do alemão.
+| Nível | Você consegue… | Semanas aqui |
+| A1 | se apresentar e pedir coisas simples | 1 a 3 |
+| A2 | contar o que fez e resolver a rotina | 4 a 7 |
+| B1 | conversar sobre quase tudo e viajar sem medo | 8 a 13 |
+| B2 | discutir temas complexos e trabalhar em alemão | 14 a 25 |
+| C1 | usar o alemão com folga no estudo e no trabalho | 26 a 31 |
+| C2 | entender praticamente tudo, até ironia | 32 a 35 |
+> O **B1** já é considerado o nível de independência: com ele você se vira sozinha ou sozinho na Alemanha.
+# Semanas de sete dias
+Cada semana tem **6 lições e 1 checkpoint**. O checkpoint mistura tudo o que você viu na semana. Não é prova: é o dia em que o conteúdo gruda.
+@ P:Uma semana na trilha;Dias 1 a 6=uma lição nova por dia;Dia 7=checkpoint de revisão;Semana seguinte=o próximo degrau
+# Um jogo de verdade
+Cada exercício certo vale **XP**. Estudar dias seguidos acende a sua **sequência** 🔥, e as conquistas 🏅 aparecem no Perfil. Não é enfeite: pequenas recompensas ajudam o cérebro a criar o hábito.
+# Quanto tempo leva?
+Depende do seu ritmo. Para chegar ao B1, somando lições, cartas e alemão fora daqui:
+| Por dia | B1 em cerca de |
+| 30 minutos | 1 ano e meio a 3 anos |
 | 1 hora | 9 meses a 1 ano e meio |
 | 2 a 3 horas | 3 a 8 meses |
-> O que mais importa não é estudar muito num dia, e sim estudar **um pouco todo dia**. Quinze minutos diários rendem mais que duas horas no domingo.
-? Quantas lições e checkpoints tem cada semana? || 6 lições e 1 checkpoint de revisão.
-? Qual etapa do dia faz você lembrar a longo prazo? || A revisão das cartas.
-? O que acontece quando você erra um exercício? || Aparece a explicação do erro, e o exercício volta no fim da sessão.
+> O segredo é **um pouco todo dia**. Quinze minutos diários rendem mais que duas horas no domingo.
+?? Quantas lições novas tem cada semana? || 6 lições e 1 checkpoint || 7 lições seguidas || 5 lições e 2 provas >> Seis dias de lição nova e um dia de revisão.
+?? Qual nível já é considerado de independência? || B1 || A1 || C2 >> No B1 você conversa sobre quase tudo do cotidiano.
+?? O que rende mais? || 15 minutos todo dia || 2 horas só no domingo || estudar quando der vontade >> A memória gosta de repetição frequente.
 ` },
-{ id: 'g2', e: '🧠', t: 'Como estudar uma língua', s: 'As técnicas que a ciência da memória recomenda, e como usá-las aqui', body: `
-Estudar língua é diferente de estudar para uma prova de história: você não precisa só **saber** a regra, precisa **usar** sem pensar. Para isso existem técnicas comprovadas. Esta plataforma já aplica todas, mas entender cada uma faz você estudar melhor.
-# 1. Tente lembrar antes de olhar
-Reler um texto dá a sensação de que você aprendeu, mas engana. O que fixa de verdade é **puxar a informação da memória**: tentar lembrar a resposta antes de vê-la. Os cientistas chamam isso de prática de recuperação.
-> Nas cartas, diga a resposta **em voz alta** antes de tocar em "Mostrar resposta". Mesmo que erre, você aprende mais do que se só olhasse.
-# 2. Revise no momento certo
-A memória apaga o que não é usado: em um ou dois dias você esquece boa parte do que viu. Mas cada vez que você revisa **pouco antes de esquecer**, a lembrança dura mais. Por isso as cartas voltam em 1 dia, depois 3, depois 7, depois semanas. Isso se chama repetição espaçada.
-! Pular as cartas é o erro mais comum de quem desiste. Cinco minutos de cartas por dia valem mais que uma hora de lição nova.
-# 3. Ouça e leia muito do que você quase entende
-Você aprende uma língua principalmente recebendo mensagens que entende. O ideal é material em que você entende quase tudo e só algumas palavras são novas. A aba **Extras** separa músicas, vídeos, séries e livros por nível justamente para isso.
-# 4. Fale e escreva desde o primeiro dia
-Ouvir não basta: a boca precisa treinar os sons, e a cabeça precisa treinar montar frases. Leia os exemplos **em voz alta**. Uma técnica poderosa é o **shadowing**: toque o áudio e repita junto, imitando o ritmo e a melodia, como um eco.
-# 5. Aprenda em blocos, não palavras soltas
-Decore **der Tisch**, nunca só "Tisch". Decore **Wie geht's?**, uma frase inteira, e não três palavras separadas. Blocos prontos saem mais rápido na conversa.
-# 6. Pouco todo dia, e durma
-O cérebro organiza o que você aprendeu **enquanto você dorme**. Estudar 20 minutos por dia durante 7 dias rende muito mais que 140 minutos num dia só.
-# Uma rotina pronta
-| Tempo | Como dividir |
-| 30 min | Cartas 10 · lição 20 |
-| 60 min | Cartas 10 · lição 30 · extras 15 · diário 5 |
-| 2 h ou mais | Cartas 15 · lição 40 · treino extra 15 · extras 40 · falar ou escrever 10 |
-# Quando parecer que você não avança
-Toda pessoa que aprende uma língua passa por **platôs**, períodos em que parece que nada melhora. É normal: o cérebro está organizando o que já entrou. Continue a rotina. Volte a uma lição antiga e veja como ela ficou fácil: essa é a prova de que você avançou.
-? Qual o jeito certo de usar as cartas? || Tentar lembrar e dizer a resposta em voz alta antes de virar a carta.
-? Por que aprender "der Tisch" e não só "Tisch"? || Porque o artigo (der) faz parte da palavra e você vai precisar dele em todas as frases.
-? O que é shadowing? || Ouvir uma frase e repeti-la junto, imitando o som e o ritmo, como um eco.
+{ id: 'n02', cat: 'start', e: '📅', t: 'Seu dia de estudo', s: 'As quatro etapas de cada dia, e por que errar ajuda', body: `
+Todo dia na trilha segue o mesmo roteiro de quatro etapas. Com o caminho sempre igual, você gasta energia aprendendo alemão, e não descobrindo o que fazer. 😉
+IMG guia-rotina | As quatro etapas do dia formam um ciclo.
+@ P:As 4 etapas do dia;📖 Aprender=a aula do dia, com áudio;🎯 Praticar=14 exercícios curtos;🃏 Revisar=as cartas de memória;🌍 Usar=alemão fora do app
+# 1. Aprender
+Leia a aula com calma e toque em 🔊 em cada exemplo. Repita em voz alta: a boca também precisa aprender.
+# 2. Praticar
+São 14 exercícios em oito formatos: escrever, montar frases, ouvir, conversar, memória visual, responder rápido, falar de você e classificar. O app percebe em quais você vai melhor e usa mais esses, sem abandonar os outros.
+# 3. Revisar
+A aba **Cartas** traz as palavras de volta na hora certa, logo antes de você esquecer. É a etapa que mais faz o alemão ficar na memória por anos.
+# 4. Usar
+Uma música, um vídeo, uma frase no diário. A aba **Extras** separa tudo por nível.
+# Errar faz parte do método
+Quando você erra e logo vê o porquê, o cérebro guarda a regra **melhor** do que se tivesse acertado no chute. Por isso cada erro aqui vem com explicação, e o exercício volta no fim da sessão para você acertar.
+! Não pule as cartas: é o erro número 1 de quem desiste. Cinco minutos de cartas valem mais que uma hora de lição nova.
+&& 📖 Aprender = ler a aula e ouvir os exemplos | 🎯 Praticar = fazer os exercícios | 🃏 Revisar = virar as cartas de memória | 🌍 Usar = alemão fora do app
+?? Você errou um exercício. O que acontece? || Aparece a explicação e ele volta no fim || Você perde a lição || Nada, o app segue em frente >> O erro explicado é um dos jeitos mais fortes de aprender.
+?? Qual etapa faz você lembrar por mais tempo? || Revisar as cartas || Ler a aula duas vezes || Fazer só os exercícios >> As cartas voltam no momento certo, antes do esquecimento.
 ` },
-{ id: 'g3', e: '🧩', t: 'Gramática do zero', s: 'As peças de uma frase, explicadas com o português', body: `
-Gramática é só o **manual de montagem** de uma língua: quais peças existem e como elas se encaixam. Você já usa tudo isso em português sem perceber. Aqui vamos dar nome às peças, porque esses nomes aparecem nas lições.
-# Substantivo
-É o **nome** de qualquer coisa: pessoa, lugar, objeto, animal ou ideia. Exemplos: Ana, casa, Brasil, cachorro, amor.
-~ der Hund = o cachorro
-# Artigo
-É a palavrinha que vem antes do substantivo. Em português: **o, a, os, as** (artigos definidos, para algo específico) e **um, uma** (indefinidos, para algo qualquer). Em alemão: der, die, das e ein, eine.
-BR Em português o artigo mostra se a palavra é masculina (o carro) ou feminina (a casa). Em alemão também, mas há um terceiro gênero, o neutro.
-# Pronome
-Substitui um substantivo para não repetir. Em vez de "A Ana trabalha. A Ana mora em Berlim", dizemos "A Ana trabalha. **Ela** mora em Berlim". Os pronomes que indicam quem fala ou de quem se fala se chamam pronomes pessoais:
-| Pessoa | Português | Alemão |
-| 1ª do singular | eu | ich |
-| 2ª do singular | você (íntimo, tu) | du |
-| 3ª do singular | ele / ela / (coisa) | er / sie / es |
-| 1ª do plural | nós | wir |
-| 2ª do plural | vocês (íntimo) | ihr |
-| 3ª do plural | eles / elas | sie |
-| tratamento formal | o senhor / a senhora | Sie |
-# Verbo
-É a palavra da **ação** ou do **estado**: falar, comer, morar, ser, estar. A forma de dicionário se chama **infinitivo**: em português termina em -ar, -er, -ir (falar); em alemão quase sempre termina em **-en** (sprechen).
-# Conjugar
-É mudar o final do verbo conforme **quem** faz a ação. Você faz isso em português o tempo todo:
-| Pessoa | Português | Alemão |
-| eu | moro | ich wohne |
-| você | mora | du wohnst |
-| ele / ela | mora | er / sie wohnt |
-| nós | moramos | wir wohnen |
-> Em alemão as terminações são poucas e muito regulares. No dia 2 você aprende a regra que vale para centenas de verbos.
-# Sujeito
-É **quem faz a ação** ou de quem se fala. Para achar, pergunte "quem?" ao verbo. Em "A Ana come uma maçã": quem come? A Ana. Então "a Ana" é o sujeito.
-# Objeto
-É **quem recebe a ação**. Em "A Ana come uma maçã": come o quê? Uma maçã. Esse é o **objeto direto**. Em "A Ana dá um livro **ao Pedro**": dá a quem? Ao Pedro. Esse é o **objeto indireto**.
-# Adjetivo e advérbio
-O **adjetivo** descreve um substantivo: casa **grande**, café **quente**. O **advérbio** descreve a ação, o tempo ou o lugar: fala **rápido**, chega **hoje**, mora **aqui**.
-# Preposição e conjunção
-**Preposição** é a palavrinha de ligação: em, de, com, para, sobre. **Conjunção** liga duas frases: e, mas, porque, quando.
-# Caso: a ideia mais importante do alemão
-Em alemão, o artigo **muda conforme a função** da palavra na frase: um jeito quando é sujeito, outro quando é objeto. Parece estranho, mas o português faz isso com os pronomes:
-| Função | Português | Alemão |
-| sujeito | **eu** vejo | **ich** sehe |
-| objeto direto | ele **me** vê | er sieht **mich** |
-| depois de preposição | para **mim** | für **mich** |
-A palavra é a mesma pessoa, mas a forma muda: eu, me, mim. O alemão faz isso também com os artigos: o cachorro como sujeito é **der Hund**; como objeto direto vira **den Hund**. Essas formas se chamam **casos**. Você vai aprender um de cada vez, com calma: nominativo (dia 1), acusativo (dia 9) e dativo (dia 16).
-? Em "O Paulo compra pão", qual é o sujeito e qual é o objeto? || Sujeito: o Paulo (quem compra?). Objeto direto: pão (compra o quê?).
-? O que é o infinitivo? || A forma de dicionário do verbo: em alemão quase sempre termina em -en, como wohnen (morar).
-? Que palavras do português mudam de forma como os casos do alemão? || Os pronomes: eu, me, mim (ou ele, o, lhe).
+{ id: 'n03', cat: 'start', e: '🧠', t: 'Truques da memória', s: 'Como fazer o alemão grudar na cabeça', body: `
+Saber uma regra não basta: você precisa **usar sem pensar**, como faz com o português. Estes cinco truques vêm da ciência da memória. A trilha já aplica todos, mas quem conhece os truques estuda melhor.
+IMG guia-memoria | Cada revisão no momento certo faz a lembrança durar mais.
+# Truque 1: tente lembrar antes de olhar
+Reler dá a sensação de que você aprendeu, mas engana. O que fixa é **puxar da memória**: tentar lembrar antes de ver a resposta, mesmo que erre.
+> Nas cartas, diga a resposta **em voz alta** antes de virar.
+# Truque 2: revise pouco antes de esquecer
+Sem revisão, em um ou dois dias você esquece boa parte do que viu. Cada revisão feita **pouco antes de esquecer** faz a lembrança durar mais. Isso se chama **repetição espaçada**, e é o que as cartas fazem por você.
+@ P:As cartas voltam cada vez mais tarde;Hoje=você aprende;1 dia depois=1ª revisão;3 dias depois=2ª revisão;1 semana depois=3ª revisão;1 mês depois=a palavra já é sua
+# Truque 3: aprenda em blocos
+Decore **der Tisch**, nunca só "Tisch". Decore **Wie geht's?** inteiro, e não três palavras soltas. Blocos prontos saem rápido na conversa.
+~ der Tisch = a mesa
+~ Wie geht's? = Como vai?
+# Truque 4: faça eco
+Toque o áudio e repita **junto**, imitando o ritmo e a melodia, como um eco. Isso se chama **shadowing**. Parece bobo, mas treina ouvido e boca ao mesmo tempo. Tente agora:
+~ Ich lerne Deutsch. = Eu estou aprendendo alemão.
+# Truque 5: pouco todo dia, e durma
+O cérebro organiza o que você aprendeu **enquanto dorme**. Vinte minutos por dia durante uma semana rendem muito mais que 140 minutos num dia só.
+# E quando parecer que travou?
+Toda pessoa passa por **platôs**, semanas em que parece que nada melhora. É normal: o cérebro está arrumando a casa. Volte a uma lição antiga e veja como ela ficou fácil. Essa é a prova de que você avançou.
+?? Qual é o jeito certo de usar uma carta? || Dizer a resposta em voz alta e só depois virar || Virar logo para ver a resposta || Ler a carta três vezes >> Tentar lembrar, mesmo errando, é o que fixa.
+?? Por que decorar "der Tisch" e não só "Tisch"? || Porque o artigo faz parte da palavra || Porque soa mais bonito || Porque "Tisch" sozinho se escreve errado >> Você vai precisar do der em todas as frases com Tisch.
+?? O que é shadowing? || Repetir junto com o áudio, como um eco || Ler em silêncio || Traduzir palavra por palavra >> Imitar o ritmo treina ouvido e boca juntos.
 ` },
-{ id: 'g4', e: '🔊', t: 'Os sons do alemão', s: 'Alfabeto e pronúncia, com áudio para cada som', body: `
-Boa notícia: o alemão se lê **quase exatamente como se escreve**. Depois de aprender as regras desta página, você consegue ler em voz alta qualquer palavra, mesmo sem saber o que ela significa. Toque em 🔊 e repita cada exemplo.
-> Para o áudio sair em alemão, o navegador precisa ter uma voz alemã. Se a pronúncia parecer de português, veja o aviso em Perfil → Ajustes.
-# Vogais com trema: ä, ö, ü
-Os dois pontinhos (o trema) mudam o som da vogal. Eles não são enfeite: **schon** (já) e **schön** (bonito) são palavras diferentes.
-| Letra | Como fazer o som | Exemplo |
+// ---------- 🔊 Os sons do alemão ----------
+{ id: 'n04', cat: 'sons', e: '🅰️', t: 'Vogais e o trema', s: 'ä, ö, ü, ei, ie e eu: as vogais que mudam tudo', body: `
+Boa notícia: o alemão se lê **quase exatamente como se escreve**. Com os sons destas três aulas, você consegue ler em voz alta qualquer palavra, mesmo sem saber o que ela significa. Toque em 🔊 e repita cada exemplo.
+> Se a voz de algum exemplo parecer de português, veja o aviso em Perfil → Ajustes.
+# As vogais simples
+a, e, i, o, u soam quase como em português, só que mais "limpas": o **a** é sempre aberto, como em "pá", e o **u** é sempre "u".
+~ Mama = mamãe
+~ gut = bom
+~ Kino = cinema
+# O trema: ä, ö, ü
+Os dois pontinhos mudam o som da vogal. Não são enfeite: **schon** (já) e **schön** (bonito) são palavras diferentes!
+IMG guia-trema | O formato da boca para ä, ö e ü.
+| Letra | Como fazer | Exemplo |
 | ä | como o "é" de café | Käse (queijo) |
 | ö | diga "ê" com os lábios em bico, como para "ô" | schön (bonito) |
 | ü | diga "i" com os lábios em bico, como para "u" | müde (cansado) |
 ~ Käse = queijo
 ~ schön = bonito
 ~ müde = cansado
-# Encontros de vogais
+> Truque do bico: para o **ü**, faça um bico como se fosse assobiar e tente dizer "i". Para o **ö**, o mesmo bico, dizendo "ê".
+# Duplas de vogais
 | Escrita | Som | Exemplo |
 | ei | "ai" | drei (três), mein (meu) |
-| ie | "i" longo | vier (quatro), die (a) |
+| ie | "i" comprido | vier (quatro), die (a) |
 | eu e äu | "ói" | neu (novo), Häuser (casas) |
-! Cuidado com a troca mais comum: **ei soa "ai"** e **ie soa "i"**. Wein (vinho) é "vain"; Wien (Viena) é "viin".
+~ drei = três
+~ vier = quatro
+~ neu = novo
+! A troca mais comum: **ei soa "ai"** e **ie soa "i"**. Wein (vinho) soa "vain"; Wien (Viena) soa "viin".
 ~ Wein = vinho
 ~ Wien = Viena
-# Consoantes que mudam de som
+?? 🔊 schön || schön || schon >> Ouviu o bico? É o ö de schön (bonito).
+?? 🔊 Wien || Wien || Wein >> ie soa "i" comprido: Wien, a capital da Áustria.
+?? Como se pronuncia "drei"? || "drai" || "drêi", como em português || "dri" >> ei soa sempre "ai".
+?? Qual palavra tem o som "ói"? || neu || nie || nein >> eu soa "ói": neu (novo). nie soa "nii" e nein soa "nain".
+` },
+{ id: 'n05', cat: 'sons', e: '🐝', t: 'Consoantes surpresa', s: 'w soa v, z soa ts, sch soa ch', body: `
+A maioria das consoantes soa como em português. Algumas pregam peças, e são justamente as que mais aparecem. Aqui estão as surpresas, uma de cada vez.
+IMG guia-consoantes | As consoantes que mudam de som.
+# O trio W, V e Z
 | Escrita | Som | Exemplo |
 | w | "v" | Wasser (água) |
-| v | quase sempre "f" | Vater (pai), vier (quatro) |
-| z | "ts" | zehn (dez), Zeit (tempo) |
-| j | "i", como em "iate" | ja (sim) |
-| s antes de vogal | "z" | Sonne (sol), sieben (sete) |
-| ß | "ss" | Straße (rua) |
-| sch | "ch" de chá | Schule (escola) |
-| sp e st no início | "chp" e "cht" | Sport, Straße |
-| qu | "kv" | Quark (coalhada) |
+| v | quase sempre "f" | Vater (pai) |
+| z | "ts" | zehn (dez) |
 ~ Wasser = água
+~ Vater = pai
 ~ zehn = dez
-~ Schule = escola
+~ Zeit = tempo
+> Trava-língua para treinar: **Wie viel Zeit?** (Quanto tempo?) soa "vii fiil tsait".
+~ Wie viel Zeit? = Quanto tempo?
+# S, ß e J
+| Escrita | Som | Exemplo |
+| s antes de vogal | "z" | Sonne (sol) |
+| ß | "ss" | Straße (rua) |
+| j | "i", como em "iate" | ja (sim) |
+~ Sonne = sol
 ~ Straße = rua
-# O som de ch
-Ele tem dois sons, e quem decide é a vogal que vem antes:
-- Depois de **a, o, u**: um som raspado no fundo da garganta, parecido com o "rr" de "carro" no Rio: Buch (livro), acht (oito).
-- Depois de **i, e, ä, ö, ü** e de consoante: um chiado suave, como o ar de um gato bravo: ich (eu), nicht (não). Comece dizendo "hi" bem forte e solte o ar.
+~ ja = sim
+BR O **ß** (chamado "eszett") é só um jeito de escrever "ss" depois de vogal longa. Se o teclado não tiver, pode escrever ss.
+# Os grupos com S
+| Escrita | Som | Exemplo |
+| sch | "ch" de chá | Schule (escola) |
+| sp no início | "chp" | Sport (esporte) |
+| st no início | "cht" | Stadt (cidade) |
+| qu | "kv" | Quark (coalhada) |
+~ Schule = escola
+~ Sport = esporte
+~ Stadt = cidade
+?? 🔊 Wasser || Wasser || Vase || Fass >> w soa "v": Wasser, água.
+?? Como soa o z de "zehn"? || "ts" || "z", como em zebra || "s" >> zehn soa "tsêin".
+?? Como se lê "Sport" em alemão? || "chport" || "esport" || "sport" >> sp e st no começo da palavra soam "chp" e "cht".
+&& Wasser = água | Vater = pai | Schule = escola | Straße = rua
+` },
+{ id: 'n06', cat: 'sons', e: '🐱', t: 'ch, h, r e os finais', s: 'O chiado do gato, o r da garganta e o Hund que vira "hunt"', body: `
+Último trecho dos sons! São os detalhes que fazem você soar como quem fala alemão de verdade.
+# O ch tem dois sons
+Quem decide é a letra que vem **antes** dele:
+IMG guia-ch | O ch raspado e o ch chiado, como um gato bravo.
+| Depois de… | Som | Exemplo |
+| a, o, u | raspado no fundo da garganta, como o "rr" carioca de "carro" | Buch (livro), acht (oito) |
+| i, e, ä, ö, ü e consoantes | um chiado suave, como um gato bravo | ich (eu), nicht (não) |
 ~ Buch = livro
+~ acht = oito
 ~ ich = eu
 ~ nicht = não
-# O h, o r e o fim das palavras
-- **h no começo** é aspirado, um sopro leve: Haus (casa). **h depois de vogal** não se pronuncia e só alonga a vogal: sehr (muito), Bahn (trem).
+> Para o chiado do **ich**: diga "hi" bem forte e solte o ar com a língua na posição do "i". 🐱
+# O h e o r
+- **h no começo** é um sopro leve: Haus (casa).
+- **h depois de vogal** não soa e só deixa a vogal mais comprida: sehr (muito), Bahn (trem).
 - **r** é feito no fundo da garganta. No fim da palavra, **-er** soa quase como um "a" curto: Vater soa "fáta".
-- **b, d, g no fim** da palavra endurecem e viram p, t, k: Hund soa "hunt"; Tag soa "tak".
-- **-ig no fim** soa "ich": zwanzig (vinte).
 ~ Haus = casa
+~ sehr gut = muito bom
 ~ Vater = pai
+# Os finais que endurecem
+No fim da palavra, **b, d, g** perdem a força e viram **p, t, k**. E **-ig** no fim soa "ich".
+| Escrita | Som | Exemplo |
+| -d | "t" | Hund (cachorro) soa "hunt" |
+| -g | "k" | Tag (dia) soa "tak" |
+| -b | "p" | gelb (amarelo) soa "gelp" |
+| -ig | "ich" | zwanzig (vinte) |
 ~ Hund = cachorro
+~ Tag = dia
 ~ zwanzig = vinte
-# Onde fica a força da palavra
-Na maioria das palavras alemãs a sílaba mais forte é a **primeira**: **Va**ter, **Schu**le, **Was**ser. Palavras estrangeiras costumam ter o acento no fim: Muse**um**, Universi**tät**.
-? Como se pronuncia "vier" (quatro)? || "fiir": o v soa f e o ie soa i longo.
-? Qual a diferença entre Wein e Wien? || Wein (vinho) soa "vain"; Wien (Viena) soa "viin".
-? Como soa o d no fim de "Hund"? || Como t: "hunt".
+# Onde fica a força
+Na maioria das palavras alemãs a sílaba mais forte é a **primeira**: **Va**ter, **Schu**le, **Was**ser.
+?? Em "Buch", que ch você ouve? || o raspado, porque vem depois de u || o chiado, como em ich || nenhum, o ch é mudo >> Depois de a, o, u o ch é raspado.
+?? 🔊 nicht || nicht || Nacht >> nicht (não) tem o chiado suave; Nacht (noite) tem o ch raspado.
+?? Como soa o final de "Hund"? || "hunt" || "hunde" || "hund", com d forte >> b, d, g no fim viram p, t, k.
+?? Em "sehr", o h soa? || Não, só alonga o e || Sim, como um sopro || Sim, como rr >> h depois de vogal é mudo.
 ` },
-{ id: 'g5', e: '🔑', t: 'Quatro ideias-chave do alemão', s: 'O que faz o alemão ser diferente do português', body: `
-Antes de começar, vale conhecer as quatro ideias que aparecem em todas as lições. Não é preciso decorar nada agora: basta saber que elas existem.
-# 1. Todo substantivo começa com letra maiúscula
-Em alemão, qualquer nome de coisa é escrito com maiúscula, não só nomes de pessoas e lugares. É uma ajuda enorme: você bate o olho e já sabe o que é substantivo.
-~ Ich trinke Wasser. = Eu bebo água.
-# 2. Existem três gêneros: der, die, das
-Além de masculino (**der**) e feminino (**die**), o alemão tem o **neutro** (**das**). E o gênero muitas vezes **não bate com o português**: a lua é masculina em alemão (der Mond) e o sol é feminino (die Sonne).
-~ der Mond = a lua
-~ die Sonne = o sol
-~ das Mädchen = a menina
-> A plataforma pinta as palavras: **azul** para der, **vermelho** para die, **verde** para das. Decore a cor junto com a palavra. Com o tempo você aprende pistas (por exemplo: palavras terminadas em -ung são sempre die).
-# 3. O verbo fica na segunda posição
-Na frase alemã comum, o verbo conjugado ocupa **sempre o segundo lugar**. O primeiro lugar pode ser o sujeito, o tempo ou outra coisa, mas o verbo continua em segundo:
-~ Ich lerne heute Deutsch. = Eu estudo alemão hoje.
-~ Heute lerne ich Deutsch. = Hoje eu estudo alemão.
-BR Em português dizemos "Hoje eu estudo", com o sujeito antes do verbo. Em alemão, se "heute" (hoje) vem primeiro, o verbo vem logo depois e o sujeito passa para trás: Heute **lerne ich**.
-E quando o verbo tem duas partes, a segunda parte vai para o **fim da frase**, formando uma moldura: Ich **habe** Deutsch **gelernt** (eu estudei alemão).
-# 4. As palavras mudam conforme a função (os casos)
-Como você viu na aula de gramática, os artigos mudam se a palavra é sujeito ou objeto: **der** Hund (sujeito), **den** Hund (objeto). São quatro casos no total, e você vai conhecer um de cada vez, sem pressa.
-# Bônus: du e Sie
-Para falar com amigos, família e crianças usa-se **du** (você, informal). Com desconhecidos, no trabalho e em lojas usa-se **Sie** (o senhor, a senhora), sempre com maiúscula. Na dúvida, comece com Sie: é educado e ninguém se ofende.
-? Como você reconhece um substantivo num texto alemão? || Pela letra maiúscula no começo.
-? Em "Morgen fahre ich nach Berlin", em que posição está o verbo? || Na segunda: Morgen (1) fahre (2) ich nach Berlin.
-? Com quem se usa Sie? || Com desconhecidos, em situações formais, no trabalho e em lojas.
-` },
-{ id: 'g6', e: '🎒', t: 'Kit de sobrevivência', s: 'Frases para usar desde hoje, e para pedir ajuda', body: `
-Com estas frases você já consegue cumprimentar, agradecer e, principalmente, **pedir ajuda** quando não entender. Ouça cada uma, repita em voz alta três vezes e tente dizer de memória.
-# Cumprimentar e se despedir
-~ Hallo! = Olá! (em qualquer situação)
-~ Guten Morgen! = Bom dia! (até umas 11h)
-~ Guten Tag! = Bom dia! / Boa tarde! (formal, durante o dia)
-~ Guten Abend! = Boa noite! (ao chegar, à noite)
+// ---------- 💬 Primeiras frases ----------
+{ id: 'n07', cat: 'frases', e: '👋', t: 'Oi e tchau', s: 'Cumprimentar em qualquer hora do dia', body: `
+Hora de falar! 🎤 Com as frases desta categoria você já consegue cumprimentar, agradecer, pedir ajuda e contar. Ouça, repita três vezes em voz alta e tente dizer de memória.
+# Para qualquer hora
+~ Hallo! = Olá! (sempre funciona)
+~ Hi! = Oi! (entre amigos)
+# Pelo relógio
+IMG guia-relogio | Cada hora do dia tem o seu cumprimento.
+@ P:O dia em alemão;Guten Morgen!=de manhã, até umas 11h;Guten Tag!=durante o dia, mais formal;Guten Abend!=à noite, ao chegar;Gute Nacht!=na hora de dormir
+~ Guten Morgen! = Bom dia!
+~ Guten Tag! = Bom dia! / Boa tarde!
+~ Guten Abend! = Boa noite! (ao chegar)
+~ Gute Nacht! = Boa noite! (antes de dormir)
+BR Em português, "boa noite" serve para chegar e para sair. Em alemão são dois: **Guten Abend** ao chegar e **Gute Nacht** na hora de dormir.
+# Para ir embora
 ~ Tschüss! = Tchau!
 ~ Auf Wiedersehen! = Até logo! (formal)
-# Ser educada ou educado
-~ Danke! = Obrigado! / Obrigada!
+~ Bis morgen! = Até amanhã!
+~ Bis später! = Até mais tarde!
+# Como vai?
+~ Wie geht's? = Como vai?
+~ Gut, danke! Und dir? = Bem, obrigada! E você?
+~ Es geht. = Mais ou menos.
+> Wie geht's? é informal. Com quem você trata por Sie (a aula du ou Sie explica), diga **Wie geht es Ihnen?**
+~ Wie geht es Ihnen? = Como o senhor / a senhora está?
+?? São 8h da manhã e você entra na padaria. Você diz: || Guten Morgen! || Gute Nacht! || Guten Abend! >> Guten Morgen vale até umas 11h.
+?? Você sai de uma festa às 23h para ir dormir. Você diz: || Gute Nacht! || Guten Abend! || Guten Morgen! >> Gute Nacht é a despedida antes de dormir.
+?? Qual é a despedida formal? || Auf Wiedersehen! || Tschüss! || Hi! >> Tschüss é o tchau informal; Auf Wiedersehen é o "até logo" formal.
+&& Hallo = olá | Tschüss = tchau | Bis morgen = até amanhã | Es geht = mais ou menos
+` },
+{ id: 'n08', cat: 'frases', e: '✨', t: 'Palavras mágicas', s: 'Danke, Bitte, Entschuldigung e companhia', body: `
+Algumas palavras abrem portas em qualquer lugar. Com estas você já é uma pessoa educada em alemão! ✨
+IMG guia-magicas | As palavras mágicas do dia a dia.
+# Obrigada e por favor
+~ Danke! = Obrigada! / Obrigado!
+~ Danke schön! = Muito obrigada!
+~ Vielen Dank! = Muito obrigado!
 ~ Bitte! = Por favor! / De nada!
-~ Entschuldigung! = Com licença! / Desculpe!
-~ Ja. Nein. = Sim. Não.
-> **Bitte** tem dois usos: é "por favor" ao pedir e "de nada" ao responder um Danke.
+> **Bitte** tem dois usos: é "por favor" quando você pede e "de nada" quando responde a um Danke.
+~ Einen Kaffee, bitte. = Um café, por favor.
+~ Danke! – Bitte! = Obrigada! – De nada!
+# Desculpa e com licença
+~ Entschuldigung! = Com licença! / Desculpa!
+~ Entschuldigung, wo ist der Bahnhof? = Com licença, onde fica a estação?
+~ Kein Problem! = Sem problema!
+# Sim e não
+~ Ja. = Sim.
+~ Nein. = Não.
+~ Ja, gern! = Sim, com prazer!
+~ Nein, danke. = Não, obrigada.
+GO Na próxima vez que alguém te agradecer hoje, responda "Bitte!" em pensamento. 😄
+?? Alguém te diz "Danke!". Você responde: || Bitte! || Danke! || Tschüss! >> Bitte também quer dizer "de nada".
+?? Você esbarrou em alguém na rua. Você diz: || Entschuldigung! || Bitte schön! || Guten Abend! >> Entschuldigung serve para "desculpa" e para "com licença".
+?? Como recusar algo com educação? || Nein, danke. || Ja, gern! || Kein Problem! >> Nein, danke = não, obrigada.
+&& Danke = obrigada | Bitte = por favor | Entschuldigung = com licença | Ja, gern = sim, com prazer
+` },
+{ id: 'n09', cat: 'frases', e: '🆘', t: 'Socorro, não entendi!', s: 'Frases para pedir ajuda e ganhar tempo', body: `
+Não entender faz parte. O segredo é **saber pedir ajuda em alemão**: assim a conversa continua e você aprende no caminho. Estas frases são o seu kit de sobrevivência. 🆘
+IMG guia-socorro | Pedir ajuda mantém a conversa viva.
 # Quando não entender
 ~ Ich verstehe das nicht. = Eu não entendo isso.
 ~ Noch einmal, bitte. = Mais uma vez, por favor.
 ~ Langsam, bitte. = Devagar, por favor.
+~ Können Sie das bitte wiederholen? = O senhor pode repetir, por favor?
+# Para descobrir palavras
 ~ Was bedeutet das? = O que significa isso?
 ~ Wie sagt man das auf Deutsch? = Como se diz isso em alemão?
+~ Wie schreibt man das? = Como se escreve isso?
+# Para se apresentar como aprendiz
 ~ Ich lerne Deutsch. = Eu estou aprendendo alemão.
+~ Ich spreche nur ein bisschen Deutsch. = Eu falo só um pouquinho de alemão.
 ~ Sprechen Sie Englisch? = O senhor fala inglês?
-BR Em alemão não existe "estou aprendendo" com gerúndio: Ich lerne serve para "eu aprendo" e para "eu estou aprendendo".
-# Seu primeiro desafio
-Diga em voz alta, sem olhar: olá, obrigado, por favor, eu não entendo, mais uma vez por favor. Se conseguiu, você está pronta ou pronto para o dia 1.
-? Como se diz "Mais uma vez, por favor"? || Noch einmal, bitte.
-? Quais são os dois sentidos de "Bitte"? || "Por favor" ao pedir e "de nada" ao responder um obrigado.
-? Qual a diferença entre Tschüss e Auf Wiedersehen? || Tschüss é informal (tchau); Auf Wiedersehen é formal (até logo).
+BR Em alemão não existe "estou aprendendo" com gerúndio: **Ich lerne** serve para "eu aprendo" e para "eu estou aprendendo".
+> Quem diz "Ich lerne Deutsch" logo de cara costuma ganhar uma fala mais lenta e muita simpatia. 😊
+GO Diga em voz alta, sem olhar: "olá", "obrigada", "eu não entendo", "mais uma vez, por favor". Conseguiu? Você já sobrevive em alemão!
+?? A pessoa falou rápido demais. Você pede: || Langsam, bitte. || Noch ein Bier, bitte. || Guten Abend. >> Langsam = devagar.
+?? Como perguntar o que uma palavra significa? || Was bedeutet das? || Wie geht's? || Wo ist das? >> Was bedeutet das? = O que significa isso?
+?? "Noch einmal, bitte" quer dizer: || Mais uma vez, por favor || Não, obrigada || Até logo >> noch einmal = mais uma vez.
+&& Ich verstehe das nicht = eu não entendo isso | Langsam, bitte = devagar, por favor | Was bedeutet das? = o que significa isso? | Ich lerne Deutsch = estou aprendendo alemão
+` },
+{ id: 'n10', cat: 'frases', e: '🔢', t: 'Contar até 12', s: 'Os números que você usa já no dia 1', body: `
+Números estão em todo lugar: preços, horários, telefone, idade. De 0 a 12 é a base de todos os outros. Conte junto com o áudio! 🔢
+IMG guia-numeros | Contando de 0 a 12 nos dedos.
+# De 0 a 6
+~ null = zero
+~ eins = um
+~ zwei = dois
+~ drei = três
+~ vier = quatro
+~ fünf = cinco
+~ sechs = seis
+# De 7 a 12
+~ sieben = sete
+~ acht = oito
+~ neun = nove
+~ zehn = dez
+~ elf = onze
+~ zwölf = doze
+> Repare nos sons que você já aprendeu: **zwei** soa "tsvai", **vier** soa "fiir", **sechs** soa "zéks" e **neun** soa "nóin".
+BR **elf** é "onze" (nada de elfo!) e **zwölf** é "doze". Ao telefone muita gente diz **zwo** no lugar de zwei, para não confundir com drei.
+# Números em ação
+~ Das kostet drei Euro. = Isso custa três euros.
+~ Ich habe zwei Kinder. = Eu tenho dois filhos.
+~ Zimmer sieben, bitte. = Quarto sete, por favor.
+~ Um acht Uhr. = Às oito horas.
+?? 🔊 zwei || zwei || drei || zehn >> zwei soa "tsvai".
+?? Quanto é "neun"? || 9 || 7 || 11 >> neun soa "nóin": nove.
+?? Como se diz 12? || zwölf || zwanzig || elf >> zwölf = 12, elf = 11 e zwanzig = 20.
+?? Quanto é drei + vier? || sieben || acht || sechs >> 3 + 4 = 7: sieben.
+&& eins = 1 | fünf = 5 | acht = 8 | elf = 11
+` },
+// ---------- 🧩 Como o alemão funciona ----------
+{ id: 'n11', cat: 'base', e: '🧱', t: 'As peças da frase', s: 'Substantivo, verbo, artigo… com exemplos do português', body: `
+Gramática é só o **manual de montagem** de uma língua: quais peças existem e como elas se encaixam. Você já usa tudo isso em português sem perceber. Aqui damos nome às peças, porque esses nomes aparecem nas lições. 🧱
+IMG guia-pecas | Cada peça da frase tem uma cor e uma função.
+@ F:Uma frase, três peças;Quem?^s|Faz o quê?^v|O quê?^o;Anna|trinkt|Kaffee.;Ich|lerne|Deutsch.;Wir|kaufen|Brot.
+# Substantivo: o nome das coisas
+Pessoa, lugar, objeto, animal ou ideia: Ana, casa, Brasil, cachorro, amor.
+~ der Hund = o cachorro
+~ das Haus = a casa
+# Artigo: a palavrinha antes
+Em português: **o, a** (definidos) e **um, uma** (indefinidos). Em alemão: der, die, das e ein, eine.
+~ der Mann = o homem
+~ ein Mann = um homem
+# Verbo: a ação
+Falar, comer, morar, ser. A forma de dicionário se chama **infinitivo**: em português termina em -ar, -er ou -ir; em alemão, quase sempre em **-en**.
+~ wohnen = morar
+~ trinken = beber
+~ lernen = aprender
+# Adjetivo e advérbio
+O **adjetivo** descreve uma coisa: casa **grande**. O **advérbio** diz como, quando ou onde: fala **rápido**, chega **hoje**.
+~ Das Haus ist groß. = A casa é grande.
+~ Ich lerne heute. = Eu estudo hoje.
+# Preposição e conjunção
+**Preposição** é a palavrinha de ligação, como "em", "com" e "para". **Conjunção** liga duas ideias, como "e", "mas" e "porque".
+~ Kaffee mit Milch = café com leite
+~ Tee und Kaffee = chá e café
+?? Em "Anna trinkt Kaffee", qual palavra é o verbo? || trinkt || Anna || Kaffee >> trinkt (bebe) é a ação.
+?? Qual destas palavras é um infinitivo? || wohnen || Haus || groß >> É o verbo na forma de dicionário, terminado em -en.
+?? Em "café com leite", a palavra "com" é: || uma preposição || um verbo || um adjetivo >> Preposição é a palavrinha de ligação.
+&& Substantivo = nome de coisa | Verbo = ação | Adjetivo = descreve a coisa | Conjunção = liga ideias
+` },
+{ id: 'n12', cat: 'base', e: '🙋', t: 'Eu, você, ele: os pronomes', s: 'Quem é quem, e como o verbo muda com cada um', body: `
+Pronomes são atalhos para não repetir nomes: em vez de "a Ana mora em Berlim, a Ana trabalha muito", dizemos "**ela** trabalha muito". 🙋
+IMG guia-pronomes | Quem é quem: ich, du, er, sie, es.
+| Quem | Português | Alemão |
+| eu | eu | ich |
+| você (informal) | você, tu | du |
+| ele / ela | ele / ela | er / sie |
+| coisa neutra | ele / ela | es |
+| nós | nós | wir |
+| vocês (informal) | vocês | ihr |
+| eles / elas | eles / elas | sie |
+| formal | o senhor / a senhora | Sie |
+~ ich = eu
+~ du = você
+~ er = ele
+~ sie = ela
+~ wir = nós
+! Atenção ao trio **sie / sie / Sie**: minúsculo pode ser "ela" ou "eles"; com maiúscula no meio da frase, **Sie** é o tratamento formal. O verbo e o contexto mostram qual é.
+# Conjugar: o verbo muda com a pessoa
+Você faz isso em português o tempo todo: eu moro, você mora, nós moramos. Em alemão as terminações são poucas e muito regulares:
+@ E:A fórmula do verbo;radical (wohn)^s|+|terminação^v|=|ich wohne, du wohnst^p
+| Pessoa | Terminação | wohnen (morar) |
+| ich | -e | ich wohne |
+| du | -st | du wohnst |
+| er / sie / es | -t | er wohnt |
+| wir | -en | wir wohnen |
+| ihr | -t | ihr wohnt |
+| sie / Sie | -en | sie wohnen |
+~ Ich wohne in Berlin. = Eu moro em Berlim.
+~ Du wohnst in Rio. = Você mora no Rio.
+~ Wir wohnen hier. = Nós moramos aqui.
+# Sujeito e objeto
+**Sujeito** é quem faz a ação: pergunte "quem?". **Objeto** é quem recebe a ação: pergunte "o quê?" ou "a quem?". Em "A Ana come uma maçã": quem come? A Ana (sujeito). Come o quê? Uma maçã (objeto).
+?? Como se diz "nós"? || wir || ihr || sie >> wir = nós; ihr = vocês.
+?? Complete: du ___ (wohnen) || wohnst || wohne || wohnt >> du pede a terminação -st.
+?? "Wohnen Sie in Berlin?" quer dizer: || O senhor / a senhora mora em Berlim? || Ela mora em Berlim? || Vocês moram em Berlim? >> No meio da frase, Sie com maiúscula é o tratamento formal.
+&& ich = eu | du = você | er = ele | wir = nós
+` },
+{ id: 'n13', cat: 'base', e: '🎨', t: 'Maiúsculas e três gêneros', s: 'der, die, das e o truque das cores', body: `
+Duas ideias que aparecem em todas as lições. A primeira é uma ajuda enorme, e a segunda vira hábito rapidinho. 🎨
+# Todo substantivo começa com maiúscula
+Em alemão, qualquer nome de coisa leva letra maiúscula, e não só nomes de pessoas e lugares. Você bate o olho e já sabe o que é substantivo!
+~ Ich trinke Wasser. = Eu bebo água.
+~ Das Buch ist neu. = O livro é novo.
+~ Der Hund schläft. = O cachorro dorme.
+# Três gêneros: der, die, das
+Além do masculino (**der**) e do feminino (**die**), existe o **neutro** (**das**). E o gênero muitas vezes **não bate** com o português:
+IMG guia-generos | Três casinhas, três cores: der, die, das.
+@ V:Três famílias, três cores;der · azul|der Mond (a lua)|der Tisch (a mesa)|der Löffel (a colher);die · vermelho|die Sonne (o sol)|die Lampe (o abajur)|die Gabel (o garfo);das · verde|das Mädchen (a menina)|das Buch (o livro)|das Messer (a faca)
+~ der Mond = a lua
+~ die Sonne = o sol
+~ das Mädchen = a menina
+> A trilha pinta as palavras: **azul** para der, **vermelho** para die, **verde** para das. Decore a palavra **com o artigo e a cor**, como se fossem uma coisa só.
+# Pistas que ajudam
+| Terminação | Gênero | Exemplo |
+| -ung, -heit, -keit | die | die Zeitung (o jornal) |
+| -chen, -lein | das | das Mädchen (a menina) |
+| -er (pessoas, profissões) | der | der Lehrer (o professor) |
+~ die Zeitung = o jornal
+~ der Lehrer = o professor
+?? Quantos gêneros tem o alemão? || três: der, die, das || dois, como o português || quatro >> Masculino, feminino e neutro.
+?? Em "Ich trinke Wasser", qual palavra é substantivo? || Wasser || trinke || Ich >> A maiúscula entrega: Wasser. (Ich é maiúsculo só por abrir a frase.)
+?? Qual é o artigo de "Zeitung"? || die || der || das >> Palavras terminadas em -ung são sempre die.
+?? Como se diz "o sol"? || die Sonne || der Sonne || das Sonne >> O sol é feminino em alemão!
+&& der = azul | die = vermelho | das = verde
+` },
+{ id: 'n14', cat: 'base', e: '🚂', t: 'O verbo no vagão 2', s: 'A regra de ouro da frase alemã', body: `
+Esta é **a** regra de ouro do alemão. Imagine a frase como um trem: o vagão 2 é sempre do verbo conjugado. 🚂
+IMG guia-trem | O verbo conjugado sempre viaja no vagão 2.
+@ F:O verbo é sempre o vagão 2;Vagão 1^s|Vagão 2: verbo^v|Resto^c;Ich|lerne|heute Deutsch.;Heute|lerne|ich Deutsch.;Am Montag|arbeite|ich.
+# O vagão 1 pode mudar
+No vagão 1 pode ir o sujeito, o tempo, o lugar ou outra coisa. O verbo **não sai do vagão 2**:
+~ Ich lerne heute Deutsch. = Eu estudo alemão hoje.
+~ Heute lerne ich Deutsch. = Hoje eu estudo alemão.
+~ Am Montag arbeite ich. = Na segunda-feira eu trabalho.
+BR Em português dizemos "Hoje **eu estudo**", com o sujeito antes do verbo. Em alemão, se "heute" ocupa o vagão 1, o verbo vem logo depois e o sujeito passa para trás: Heute **lerne ich**.
+# A moldura: quando o verbo tem duas partes
+Algumas frases têm dois verbos. O conjugado fica no vagão 2 e o outro vai para o **último vagão**, fechando a frase como uma moldura:
+@ F:A moldura do verbo;Vagão 1^s|Vagão 2^v|Meio^c|Último^v2;Ich|kann|gut|schwimmen.;Ich|habe|Deutsch|gelernt.
+~ Ich kann gut schwimmen. = Eu sei nadar bem.
+~ Ich habe Deutsch gelernt. = Eu estudei alemão.
+# E nas perguntas?
+Nas perguntas de sim ou não, o verbo **sobe para o vagão 1**:
+~ Du wohnst hier. = Você mora aqui.
+~ Wohnst du hier? = Você mora aqui?
+?? Em "Morgen fahre ich nach Berlin", em que vagão está o verbo? || no 2 || no 1 || no último >> Morgen (1) fahre (2) ich nach Berlin.
+?? Qual frase está certa? || Heute lerne ich Deutsch. || Heute ich lerne Deutsch. || Heute Deutsch ich lerne. >> Com heute no vagão 1, o verbo vem logo em seguida.
+?? Em "Ich habe Deutsch gelernt", onde fica "gelernt"? || no fim, fechando a moldura || no vagão 2 || no começo >> A segunda parte do verbo vai para o fim.
+?? Como fica a pergunta de "Du wohnst hier"? || Wohnst du hier? || Du hier wohnst? || Hier du wohnst? >> Na pergunta de sim ou não, o verbo vai para a frente.
+` },
+{ id: 'n15', cat: 'base', e: '🎭', t: 'Casos sem medo', s: 'Por que der vira den, explicado com o português', body: `
+Esta é a ideia que mais assusta no alemão, mas você já usa algo parecido em português sem perceber. Respira: aqui é só para entender a ideia. Cada caso vem com calma, nas lições. 🎭
+# O português também faz isso
+Repare como a palavra para "eu" muda conforme a função na frase:
+| Função | Português | Alemão |
+| quem faz | **eu** vejo | **ich** sehe |
+| quem recebe | ele **me** vê | er sieht **mich** |
+| depois de preposição | para **mim** | für **mich** |
+É a mesma pessoa, mas a forma muda: eu, me, mim. O alemão faz isso também com os **artigos**. Essas formas se chamam **casos**.
+IMG guia-casos | A mesma palavra troca de roupa conforme o papel na frase.
+# O artigo troca de roupa
+Pense no artigo como um ator que troca de figurino conforme o papel. O cachorro como sujeito é **der Hund**; como objeto direto, vira **den Hund**:
+~ Der Hund schläft. = O cachorro dorme.
+~ Ich sehe den Hund. = Eu vejo o cachorro.
+~ Ich spiele mit dem Hund. = Eu brinco com o cachorro.
+@ M:Os quatro figurinos do der;Caso|Papel|Exemplo;Nominativo|quem faz|**der** Hund schläft;Acusativo|quem recebe|ich sehe **den** Hund;Dativo|a quem, com quem|mit **dem** Hund;Genitivo|de quem|das Bett **des** Hundes
+> Boa notícia: no acusativo, **só o masculino muda** (der vira den). die e das ficam iguais.
+# Quando cada um chega
+Nominativo no dia 1, acusativo no dia 9, dativo no dia 16. O genitivo só aparece no B1. Um de cada vez, sem pressa.
+?? Em português, qual trio mostra a mesma ideia dos casos? || eu, me, mim || o, a, os || ser, estar, ficar >> É a mesma pessoa com formas diferentes conforme a função.
+?? Em "Ich sehe den Hund", por que "den"? || Porque o cachorro é o objeto, quem recebe a ação || Porque é plural || Porque é feminino >> Objeto direto masculino: der vira den.
+?? No acusativo, qual gênero muda? || só o masculino || todos || só o neutro >> der vira den; die e das ficam iguais.
+` },
+{ id: 'n16', cat: 'base', e: '🤝', t: 'du ou Sie?', s: 'Informal ou formal: quando usar cada um', body: `
+Em alemão há duas formas de dizer "você": **du** (informal) e **Sie** (formal). Escolher bem faz diferença na primeira impressão. 🤝
+IMG guia-dusie | du com amigos, Sie com desconhecidos e no trabalho.
+@ V:du ou Sie?;du · informal|amigos e família|crianças|colegas de curso|quem ofereceu o du;Sie · formal|desconhecidos|lojas e restaurantes|trabalho|pessoas mais velhas
+# Sie: sempre com maiúscula
+~ Sprechen Sie Deutsch? = O senhor fala alemão?
+~ Woher kommen Sie? = De onde a senhora vem?
+~ Wie heißen Sie? = Como o senhor se chama?
+# du: entre amigos
+~ Sprichst du Deutsch? = Você fala alemão?
+~ Woher kommst du? = De onde você vem?
+~ Wie heißt du? = Como você se chama?
+BR O **Sie** é como o nosso "o senhor / a senhora", mas usado muito mais: até com pessoas jovens que você não conhece, em lojas e no trabalho.
+> Na dúvida, comece com **Sie**: é educado e ninguém se ofende. Se a pessoa disser **Wir können uns duzen**, pode relaxar!
+~ Wir können uns duzen. = Podemos nos tratar por você.
+?? Você pergunta o nome da atendente do banco: || Wie heißen Sie? || Wie heißt du? || Wie heißen du? >> Situação formal pede Sie.
+?? Numa festa, outra estudante da sua idade puxa conversa. O mais natural é: || Wie heißt du? || Wie heißt Sie? || Wie heißen du? >> Entre jovens numa festa, du é o normal. As outras duas misturam formas.
+?? Na dúvida, use: || Sie || du || nenhum dos dois >> Sie é sempre seguro.
+&& Sprichst du Deutsch? = informal | Sprechen Sie Deutsch? = formal
+` },
+{ id: 'n17', cat: 'base', e: '🏁', t: 'Desafio final', s: 'Revise tudo brincando e ganhe o selo Bereit!', body: `
+Você chegou ao fim do Comece aqui! 🎉 Antes do dia 1, um desafio rápido com um pouco de cada aula. Sem pressão: errou, leu a explicação, aprendeu.
+IMG guia-final | Mochila pronta para a trilha!
+# Rodada 1: sons
+?? 🔊 Wein || Wein || Wien >> ei soa "ai": Wein, vinho.
+?? 🔊 zehn || zehn || sehen || Zahn >> z soa "ts": zehn, dez.
+?? Como soa o final de "Tag"? || "tak" || "tag" || "taje" >> g no fim vira k.
+# Rodada 2: frases
+?? São 20h e você chega a um restaurante. Você diz: || Guten Abend! || Gute Nacht! || Guten Morgen! >> Guten Abend ao chegar, à noite.
+?? Você não entendeu nada. Você diz: || Noch einmal, bitte. || Bitte schön! || Bis morgen! >> Mais uma vez, por favor.
+&& Danke = obrigada | Entschuldigung = com licença | Tschüss = tchau | Langsam, bitte = devagar, por favor
+# Rodada 3: como o alemão funciona
+?? Qual frase respeita o vagão 2? || Am Montag arbeite ich. || Am Montag ich arbeite. || Arbeite am Montag ich. >> O verbo conjugado fica em 2º lugar.
+?? "das Mädchen" é de qual gênero? || neutro || feminino || masculino >> Palavras terminadas em -chen são sempre das.
+?? Com uma pessoa desconhecida numa loja, você usa: || Sie || du >> Sie, o tratamento formal.
+?? Quanto é "sieben"? || 7 || 6 || 9 >> sieben = sete.
+# Missão cumprida!
+Você já sabe ler em voz alta qualquer palavra, cumprimentar, agradecer, pedir ajuda e contar até 12, e conhece as ideias-chave do alemão. Isso é muito para um começo! 🏆
+GO Toque em "Concluir aula" para ganhar o selo **Bereit!** (pronta, pronto) e começar o dia 1.
 ` },
 ];
+// Progresso das seis aulas antigas (g1…g6) passa para as aulas novas que cobrem o mesmo conteúdo.
+const GUIDE_OLD = { g1: ['n01', 'n02'], g2: ['n03'], g3: ['n11', 'n12'], g4: ['n04', 'n05', 'n06'], g5: ['n13', 'n14', 'n15', 'n16'], g6: ['n07', 'n08', 'n09'] };
+function migrateGuide(st) {
+  const g = st.guide || (st.guide = {}), old = Object.keys(GUIDE_OLD).filter((k) => g[k]);
+  if (old.length === 6) GUIDE.forEach((x) => { if (!g[x.id]) g[x.id] = g.g6; }); // quem já tinha concluído tudo continua com tudo
+  else old.forEach((k) => GUIDE_OLD[k].forEach((id) => { if (!g[id]) g[id] = g[k]; }));
+  return st;
+}
 
 // Glossário: termo, explicação simples, exemplo.
 const GLOSS = [

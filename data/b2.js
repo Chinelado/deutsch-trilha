@@ -91,7 +91,7 @@ L("Das dürfte stimmen", "Fazer suposições", "Modais subjetivos: grau de certe
   "Er muss krank sein.=Ele deve estar doente (quase certeza).|Das dürfte stimmen.=Isso deve estar certo.|Sie könnte noch im Büro sein.=Ela pode ainda estar no escritório.",
   "die Vermutung=a suposição|die Annahme=a hipótese|annehmen=supor / aceitar|zweifellos=sem dúvida|offensichtlich=evidentemente|voraussichtlich=previsivelmente|anscheinend=ao que parece|scheinbar=só na aparência|sicherlich=certamente|keineswegs=de modo algum|ausgeschlossen=fora de cogitação|der Hinweis=o indício / a dica|der Verdacht=a suspeita|schätzen=estimar",
   "Wo bleibt Jonas? Er wollte um acht hier sein.=Cadê o Jonas? Ele queria estar aqui às oito.|Er dürfte im Stau stehen.=Ele deve estar no engarrafamento.|Oder er könnte den Termin vergessen haben.=Ou pode ter esquecido o compromisso.|Das kann nicht sein, er muss etwas Wichtiges haben.=Não pode ser, ele deve ter algo importante.",
-  "Das Licht ist an. Sie ___ zu Hause sein.=muss=soll=will|Er ___ etwa vierzig Jahre alt sein.=dürfte=darf=durfte|Sie ist im Urlaub. Sie ___ nicht im Büro sein.=kann=muss=will");
+  "Das Licht ist an. Sie ___ zu Hause sein.=muss=soll=will|Er ___ etwa vierzig Jahre alt sein.=dürfte=darf=durfte|Sie ist im Urlaub. Sie ___ unmöglich im Büro sein.=kann=muss=will");
 
 L("Er will nichts gesehen haben", "Alegações e boatos", "Modais subjetivos: sollen e wollen",
   "sollen = dizem que (a fonte é outra pessoa): Er soll reich sein. wollen = a própria pessoa afirma, e quem fala duvida: Er will nichts gesehen haben.",

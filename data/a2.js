@@ -62,7 +62,7 @@ L("Morgens im Bad", "Rotina pessoal", "Verbos reflexivos",
   "Ich freue mich.=Eu fico feliz.|Er zieht sich an.=Ele se veste.|Wir treffen uns morgen.=Nós nos encontramos amanhã.",
   "sich freuen=alegrar-se|sich waschen=lavar-se|sich anziehen=vestir-se|sich beeilen=apressar-se|sich fühlen=sentir-se|sich treffen=encontrar-se|sich ausruhen=descansar|sich erinnern=lembrar-se|duschen=tomar banho=🚿|die Zähne putzen=escovar os dentes=🪥",
   "Wie fühlst du dich heute?=Como você se sente hoje?|Ich fühle mich gut, danke.=Eu me sinto bem, obrigada.|Wann treffen wir uns?=Quando nos encontramos?|Um acht. Beeil dich!=Às oito. Anda logo!",
-  "Ich freue ___ auf das Wochenende.=mich=mir=sich|Er zieht ___ an.=sich=ihn=mich|Wir treffen ___ im Café.=uns=euch=sich");
+  "Ich freue ___ auf das Wochenende.=mich=mir=sich|Er zieht ___ an. (a si mesmo)=sich=ihn=mich|Wir treffen ___ im Café. (nos encontramos)=uns=euch=sich");
 
 L("Eine neue Wohnung", "Descrever com adjetivos (1)", "Adjetivo depois de ein/eine",
   "Depois de ein, o adjetivo mostra o gênero: ein neuer Tisch (der), eine neue Lampe (die), ein neues Buch (das). Acusativo masculino: einen neuen Tisch.",
@@ -91,7 +91,7 @@ L("Im Beruf", "Trabalho e profissão", "Präteritum dos modais",
   "Ich konnte nicht kommen.=Eu não pude ir.|Sie wollte Ärztin werden.=Ela queria ser médica.|Wir mussten viel lernen.=Tivemos que estudar muito.",
   "der Beruf=a profissão|die Firma=a empresa=🏢|das Büro=o escritório|die Stelle=a vaga / o emprego|verdienen=ganhar (dinheiro)|die Ausbildung=a formação profissional|der Kunde=o cliente|die Besprechung=a reunião|anstrengend=cansativo|die Erfahrung=a experiência",
   "Was wolltest du als Kind werden?=O que você queria ser quando criança?|Ich wollte Ärztin werden.=Eu queria ser médica.|Musstest du gestern lange arbeiten?=Você teve que trabalhar até tarde ontem?|Ja, ich konnte erst um acht gehen.=Sim, só pude sair às oito.",
-  "Ich ___ gestern nicht kommen.=konnte=könnte=kann|Als Kind ___ er Pilot werden.=wollte=will=gewollt|Wir ___ viel lernen.=mussten=müssten=musstet");
+  "Ich ___ gestern nicht kommen.=konnte=könnte=kann|Als Kind ___ er Pilot werden.=wollte=will=gewollt|Gestern ___ wir viel lernen.=mussten=müssten=musstet");
 
 L("Geschenke", "Presentes e gostos", "Verbos com Dativ",
   "helfen, gefallen, gehören, danken, schmecken e passen pedem dativo. geben e schenken levam pessoa no dativo + coisa no acusativo.",

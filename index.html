@@ -6,6 +6,7 @@
 <title>Deutsch-Trilha</title>
 <meta name="description" content="Trilha de alemão do A1 ao C2, com lições diárias, cartas de memorização, perfil de inteligências múltiplas e gamificação.">
 <meta name="theme-color" content="#0e1525">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +19,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
   // Tema antes de desenhar a tela (evita piscar escuro ao abrir no modo claro). Detalhes em app.js (applyTheme).
-  (function () { try { var p = localStorage.getItem('deutschTrilha.theme') || 'dark'; var t = p === 'auto' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.dataset.theme = t; if (t === 'light') document.querySelector('meta[name="theme-color"]').content = '#f4f6fb'; } catch (e) {} })();
+  (function () { try { var p = localStorage.getItem('deutschTrilha.theme') || 'dark'; var t = p === 'auto' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.dataset.theme = t; if (t === 'light') { document.querySelector('meta[name="theme-color"]').content = '#f4f6fb'; document.querySelector('meta[name="color-scheme"]').content = 'only light'; } } catch (e) {} })();
 </script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -57,6 +58,7 @@
 <script src="data/support2.js"></script>
 <script src="data/support3.js"></script>
 <script src="data/extras.js"></script>
+<script src="data/alts.js"></script>
 <script src="data/texts.js"></script>
 <script src="data/texts2.js"></script>
 <script src="data/vozes.js"></script>

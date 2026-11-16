@@ -107,6 +107,8 @@ const EXTRAS = [
   ['site', 'C2', 'Der Standard (Áustria)', 'Jornal austríaco de referência.', 'https://www.derstandard.at'],
   ['mus', 'C2', 'Max Raabe & Palast Orchester', 'Canções no estilo dos anos 1920, com linguagem elegante e irônica.'],
   ['mus', 'C1-C2', 'Tocotronic', 'Letras de rock alternativo cheias de referências e ironia.'],
+  // novos itens sempre no fim: o id (x + posição) marca o que já foi visto
+  ['mus', 'A1-C2', 'LyricsTraining (lyricstraining.com)', 'Complete as letras de músicas em alemão enquanto elas tocam, com quatro níveis de dificuldade. Treina escuta e ortografia brincando.', 'https://lyricstraining.com/de'],
 ].map(([t, lv, n, d, u], i) => {
   const L = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'], [a, b] = lv.split('-');
   const lvs = L.slice(L.indexOf(a), L.indexOf(b || a) + 1);

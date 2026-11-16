@@ -60,6 +60,7 @@ async function cloudAfterLogin(first) {
     if (remote && remote.data) {
       const hasLocal = !!S.start && (nDone() > 0 || S.xp > 0);
       S = hasLocal ? mergeStates(S, remote.data) : Object.assign(fresh(), remote.data);
+      if (typeof migrateGuide === 'function') migrateGuide(S);
       localStorage.setItem(KEY, JSON.stringify(S));
       if (first) toast(hasLocal ? '☁️ Progresso deste aparelho e da nuvem combinados' : '☁️ Progresso recuperado da nuvem');
     }

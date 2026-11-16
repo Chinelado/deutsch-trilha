@@ -198,7 +198,7 @@ L("Liebe Grüße", "E-mail informal", "Convidar, recusar e propor",
   "Vielen Dank für deine Einladung.=Muito obrigada pelo seu convite.|Wie wäre es mit Samstag?=Que tal sábado?|Ich melde mich morgen.=Eu dou notícias amanhã.",
   "Liebe Grüße=beijos / abraços (despedida)|sich entschuldigen=desculpar-se|verschieben=adiar|der Vorschlag=a sugestão|ausmachen=combinar|sich melden=dar notícias|Bescheid geben=avisar|spontan=espontâneo|sich verabreden=marcar um encontro|die Verabredung=o encontro marcado",
   "Hast du am Freitag Zeit? Wir grillen.=Você tem tempo na sexta? Vamos fazer churrasco.|Leider nicht, ich muss arbeiten. Können wir das verschieben?=Infelizmente não, preciso trabalhar. Podemos adiar?|Wie wäre es mit Samstag?=Que tal sábado?|Perfekt! Ich melde mich morgen bei dir.=Perfeito! Eu te dou notícias amanhã.",
-  "Vielen Dank ___ deine Einladung.=für=um=über|Leider kann ich nicht kommen, ___ ich krank bin.=weil=denn=deshalb|Wie wäre es ___ Sonntag?=mit=am=für");
+  "Vielen Dank ___ deine Einladung.=für=um=über|Leider kann ich nicht kommen, ___ ich krank bin.=weil=denn=deshalb|Wie wäre es ___ einem Kaffee?=mit=am=für");
 
 L("Gemeinsam planen", "Planejar em dupla (prova oral, parte 1)", "Propor e combinar",
   "Wollen wir …? · Lass uns … · Ich schlage vor, dass … · Was hältst du davon? · Einverstanden. · Abgemacht!",
