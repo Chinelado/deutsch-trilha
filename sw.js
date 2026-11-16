@@ -40,6 +40,17 @@ self.addEventListener('fetch', (e) => {
   const font = /^fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (url.origin !== self.location.origin && !font) return; // links externos (extras) seguem direto para a internet
   if (/\/audio\/[^/]+\/[^/]+\.mp3$/.test(url.pathname)) { e.respondWith(audio(url.origin + url.pathname).catch(() => Response.error())); return; }
+  // Pedido explícito de versão nova (botão "Atualizar" no Perfil): internet primeiro, e guarda a resposta.
+  if (req.cache === 'no-store' || req.cache === 'reload') {
+    e.respondWith((async () => {
+      try {
+        const res = await fetch(req);
+        if (res.ok && res.status === 200) await (await caches.open(CACHE)).put(url.origin + url.pathname, res.clone());
+        return res;
+      } catch (err) { return (await caches.match(req, { ignoreSearch: true })) || Response.error(); }
+    })());
+    return;
+  }
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const hit = await c.match(req, { ignoreSearch: !font });

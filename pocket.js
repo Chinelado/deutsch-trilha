@@ -7,14 +7,17 @@ fetch('images/pocket/index.json').then((r) => (r.ok ? r.json() : [])).then((j) =
 
 // Grupos da lista em Extras: o que não estiver em "viagem" aparece em "Morar na Alemanha".
 const PK_VIAGEM = new Set(['flughafen', 'weg', 'restaurant', 'kneipe', 'einkaufen', 'sehenswuerdigkeiten', 'hotel', 'bahnhof', 'baeckerei', 'taxi', 'weihnachtsmarkt', 'biergarten', 'stadion', 'fahrrad', 'auto', 'wandern', 'kino']);
+let pkGroup = 'viagem';
 function pocketList() {
   const done = S.pockets || {}, n = Object.keys(done).filter((id) => POCKETS.some((p) => p.id === id)).length;
   const card = (p) => { const r = done[p.id];
-    return `<button class="pkc" data-pk="${p.id}"><span class="pke">${p.e}</span><span class="grow"><b>${esc(p.t)}</b><small>${esc(p.pt)} · ${p.lv}${r ? ` · ✓ ${r.ok}/${r.n}` : ''}</small></span></button>`; };
-  return `<h2>🧳 Lições Pocket <small class="mut">${n}/${POCKETS.length} feitas</small></h2>
-  <p class="mut">Situações reais em 5 a 10 minutos: painéis, placas, cardápios e etiquetas com áudio em cada palavra.</p>
-  <h3>✈️ Viagem e passeio</h3><div class="pkgrid">${POCKETS.filter((p) => PK_VIAGEM.has(p.id)).map(card).join('')}</div>
-  <h3>🏠 Morar na Alemanha</h3><div class="pkgrid">${POCKETS.filter((p) => !PK_VIAGEM.has(p.id)).map(card).join('')}</div>`;
+    return `<button class="pkc ${r ? 'ok' : ''}" data-pk="${p.id}"><span class="pke">${p.e}</span><span class="grow"><b>${esc(p.t)}</b><small>${esc(p.pt)} · ${p.lv}${r ? ` · ✓ ${r.ok}/${r.n}` : ''}</small></span></button>`; };
+  const groups = { viagem: ['✈️', 'Viagem e passeio', POCKETS.filter((p) => PK_VIAGEM.has(p.id))], vida: ['🏠', 'Morar na Alemanha', POCKETS.filter((p) => !PK_VIAGEM.has(p.id))] };
+  const [, , list] = groups[pkGroup] || groups.viagem;
+  return `<p class="mut">Situações reais em 5 a 10 minutos: painéis, placas, cardápios e etiquetas com áudio em cada palavra.</p>
+  <div class="xprog"><div class="bar"><i style="width:${Math.round((n / POCKETS.length) * 100)}%"></i></div><small>${n} de ${POCKETS.length} feitas</small></div>
+  <div class="chips seg">${Object.entries(groups).map(([id, [e, t, l]]) => `<button class="chipb ${id === pkGroup ? 'on' : ''}" data-pkg="${id}">${e} ${t} <small>${l.filter((p) => done[p.id]).length}/${l.length}</small></button>`).join('')}</div>
+  <div class="pkgrid">${list.map(card).join('')}</div>`;
 }
 
 const pkSay = (t) => (/\p{L}/u.test(t) ? ` data-say="${esc(t)}"` : '');
@@ -62,7 +65,7 @@ function pkIll(il) {
 
 function pocket(id) {
   const p = POCKETS.find((x) => x.id === id);
-  if (!p) return go('extras');
+  if (!p) return go('extras', 'pocket');
   S.pockets = S.pockets || {};
   const fr = pkPairs(p.frases), ou = pkPairs(p.ouvir), dl = pkDlg(p), r = S.pockets[id];
   const ck = (j) => 'p:' + id + ':' + j, inCards = fr.filter((_, j) => S.cards[ck(j)]).length;
@@ -82,7 +85,7 @@ function pocket(id) {
   <h2>✅ Teste rápido</h2><div class="card">${r ? `<p class="mut">Você já fez: ${r.ok}/${r.n} acertos. Pode refazer para treinar.</p>` : ''}
     ${p.quiz.map((q, i) => `<div class="tq" data-q="${i}"><p>${i + 1}. ${esc(q.q)}</p><div class="opts col">${q.o.map((o, j) => `<button data-a="${j}">${esc(o)}</button>`).join('')}</div></div>`).join('')}
     <button class="pri big" id="pkCheck">Conferir respostas</button><div id="pkRes"></div></div>`;
-  $('#bk').onclick = () => go('extras');
+  $('#bk').onclick = () => go('extras', 'pocket');
   $('#pkPlay').onclick = () => readFrom(paras, 0);
   $('#pkStop').onclick = stopRead;
   $$('.tpara').forEach((el) => (el.ondblclick = () => readFrom(paras, +el.dataset.i)));

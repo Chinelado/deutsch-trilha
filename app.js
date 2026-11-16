@@ -508,28 +508,58 @@ function guide(id) {
 }
 
 /* ---------- extras ---------- */
-let xLevel = null, xType = 'all';
-function extras(lv) {
-  if (lv) xLevel = lv;
-  if (!xLevel) xLevel = curLevel();
-  const top = ranking().slice(0, 2).map((r) => r.k);
-  const list = EXTRAS.filter((x) => x.lvs.includes(xLevel) && (xType === 'all' || x.t === xType));
-  const mine = list.filter(fitsProfile), rest = list.filter((x) => !fitsProfile(x));
-  app.innerHTML = `<h1>🎬 Conteúdos de apoio</h1>
-  <p class="mut">Músicas, filmes, séries, vídeos, podcasts, livros e leituras para usar o alemão fora da plataforma. Cada item marcado como visto vale 10 XP e conta para as conquistas.</p>
-  ${pocketList()}
-  ${textsList()}
-  ${lvTabs(xLevel, 'data-xl')}
-  <div class="chips">${['all', ...Object.keys(XT)].map((t) => `<button class="chipb ${t === xType ? 'on' : ''}" data-xt="${t}">${t === 'all' ? 'Tudo' : XT[t][0] + ' ' + XT[t][1]}</button>`).join('')}</div>
-  ${mine.length ? `<h2>Para o seu perfil <small class="mut">${top.map((k) => INT[k].e + ' ' + INT[k].n).join(' · ')}</small></h2><div class="xgrid">${mine.map(extraCard).join('')}</div>` : ''}
-  ${rest.length ? `<h2>${mine.length ? 'Mais para o nível' : 'Para o nível'} ${xLevel}</h2><div class="xgrid">${rest.map(extraCard).join('')}</div>` : ''}
-  ${list.length ? '' : '<p class="mut">Nada desse tipo para este nível. Experimente outro filtro.</p>'}
-  <div class="card tip"><h3>💡 Como tirar mais proveito</h3><ul class="pts"><li>Use legenda em alemão, não em português. Se travar, volte 10 segundos e ouça de novo.</li><li>Anote três palavras novas de cada conteúdo e use cada uma numa frase no exercício de diário.</li><li>Repita em voz alta uma fala curta, imitando ritmo e entonação (shadowing).</li><li>Os links sem site oficial abrem uma busca, para você escolher a fonte que preferir.</li></ul></div>`;
-  $$('[data-xl]').forEach((b) => (b.onclick = () => extras(b.dataset.xl)));
-  $$('[data-tx]').forEach((b) => (b.onclick = () => go('texto', b.dataset.tx)));
+// Extras em três subpáginas, uma por vez na tela: lições Pocket, leitura e escuta, e conteúdos externos.
+// A última aberta fica lembrada neste aparelho.
+const XTABS = [['pocket', '🧳', 'Lições Pocket'], ['textos', '📖', 'Leitura e escuta'], ['conteudos', '🎬', 'Filmes, músicas e mais']];
+let xTab = (() => { try { return localStorage.getItem('deutschTrilha.xtab') || 'pocket'; } catch (e) { return 'pocket'; } })();
+let xLevel = null, xType = 'all', xMode = 'voce', tLevel = null;
+function extras(arg) {
+  if (XTABS.some(([id]) => id === arg)) xTab = arg;
+  else if (PHASES.some((p) => p.id === arg)) { xTab = 'conteudos'; xMode = 'explorar'; xLevel = arg; }
+  try { localStorage.setItem('deutschTrilha.xtab', xTab); } catch (e) { /* só lembra a aba */ }
+  const nPk = Object.keys(S.pockets || {}).filter((id) => POCKETS.some((p) => p.id === id)).length;
+  const sub = { pocket: `${nPk} de ${POCKETS.length} feitas`, textos: `${Object.keys(S.reads).length} de ${TEXTS.length} lidos`, conteudos: `${Object.keys(S.seen).length} vistos` };
+  app.innerHTML = `<h1>🎬 Extras</h1>
+  <div class="xtabs" role="tablist">${XTABS.map(([id, e, n]) => `<button class="xtab ${id === xTab ? 'on' : ''}" role="tab" aria-selected="${id === xTab}" data-xtab="${id}"><span>${e}</span><b>${n}</b><small>${sub[id]}</small></button>`).join('')}</div>
+  <div class="xbody">${xTab === 'pocket' ? pocketList() : xTab === 'textos' ? textsPage() : contentPage()}</div>`;
+  $$('[data-xtab]').forEach((b) => (b.onclick = () => extras(b.dataset.xtab)));
   $$('[data-pk]').forEach((b) => (b.onclick = () => go('pocket', b.dataset.pk)));
-  $$('[data-xt]').forEach((b) => (b.onclick = () => { xType = b.dataset.xt; extras(); }));
-  wireSeen(app, () => extras());
+  $$('[data-pkg]').forEach((b) => (b.onclick = () => { pkGroup = b.dataset.pkg; extras('pocket'); }));
+  $$('[data-tx]').forEach((b) => (b.onclick = () => go('texto', b.dataset.tx)));
+  $$('[data-tl]').forEach((b) => (b.onclick = () => { tLevel = b.dataset.tl; extras('textos'); }));
+  $$('[data-xm]').forEach((b) => (b.onclick = () => { xMode = b.dataset.xm; extras('conteudos'); }));
+  $$('[data-xl]').forEach((b) => (b.onclick = () => { xLevel = b.dataset.xl; extras('conteudos'); }));
+  $$('[data-xt]').forEach((b) => (b.onclick = () => { xType = b.dataset.xt; extras('conteudos'); }));
+  wireSeen(app, () => extras('conteudos'));
+}
+
+// Leitura e escuta: um nível por vez (começa no nível atual da trilha).
+function textsPage() {
+  if (!tLevel) tLevel = curLevel();
+  const lvs = PHASES.map((p) => p.id), list = tLevel === 'all' ? TEXTS : TEXTS.filter((t) => t.lv === tLevel);
+  return `<p class="mut">Textos longos e cenas de áudio no formato das provas, um por semana da trilha. Cada texto libera na semana dele.</p>
+  <div class="chips">${[...lvs, 'all'].map((l) => { const n = TEXTS.filter((t) => l === 'all' || t.lv === l).length;
+    return `<button class="chipb ${l === tLevel ? 'on' : ''}" data-tl="${l}">${l === 'all' ? 'Todos' : l} <small>${n}</small></button>`; }).join('')}</div>
+  ${textsList(list)}`;
+}
+
+// Conteúdos externos: "Para você" (nível atual + perfil) ou "Explorar" (todos os níveis e tipos).
+function contentPage() {
+  const top = ranking().slice(0, 2).map((r) => r.k), cl = curLevel();
+  const modes = `<div class="chips seg"><button class="chipb ${xMode === 'voce' ? 'on' : ''}" data-xm="voce">⭐ Para você</button><button class="chipb ${xMode === 'explorar' ? 'on' : ''}" data-xm="explorar">🔎 Explorar</button></div>`;
+  const tip = `<div class="card tip"><h3>💡 Como tirar mais proveito</h3><ul class="pts"><li>Use legenda em alemão, não em português. Se travar, volte 10 segundos e ouça de novo.</li><li>Anote três palavras novas de cada conteúdo e use cada uma numa frase no exercício de diário.</li><li>Repita em voz alta uma fala curta, imitando ritmo e entonação (shadowing).</li><li>Os links sem site oficial abrem uma busca, para você escolher a fonte que preferir.</li></ul></div>`;
+  if (xMode === 'voce') {
+    const lv = EXTRAS.filter((x) => x.lvs.includes(cl)), mine = lv.filter(fitsProfile), pick = (mine.length >= 4 ? mine : lv);
+    const todo = pick.filter((x) => !S.seen[x.id]), seen = pick.filter((x) => S.seen[x.id]);
+    return `${modes}<p class="mut">Escolhidos para o seu nível (<b>${cl}</b>)${mine.length >= 4 ? ` e para o seu perfil: ${top.map((k) => INT[k].e + ' ' + INT[k].n).join(' · ')}` : ''}. Cada item visto vale 10 XP.</p>
+    ${todo.length ? `<div class="xgrid">${todo.map(extraCard).join('')}</div>` : '<p class="mut">Você já viu todas as sugestões deste nível. Abra "Explorar" para ver mais.</p>'}
+    ${seen.length ? `<details class="card"><summary>✓ Já vistos (${seen.length})</summary><div class="xgrid">${seen.map(extraCard).join('')}</div></details>` : ''}${tip}`;
+  }
+  if (!xLevel) xLevel = cl;
+  const list = EXTRAS.filter((x) => x.lvs.includes(xLevel) && (xType === 'all' || x.t === xType));
+  return `${modes}${lvTabs(xLevel, 'data-xl')}
+  <div class="chips">${['all', ...Object.keys(XT)].map((t) => `<button class="chipb ${t === xType ? 'on' : ''}" data-xt="${t}">${t === 'all' ? 'Tudo' : XT[t][0] + ' ' + XT[t][1]}</button>`).join('')}</div>
+  ${list.length ? `<div class="xgrid">${list.map(extraCard).join('')}</div>` : '<p class="mut">Nada desse tipo para este nível. Experimente outro filtro.</p>'}${tip}`;
 }
 
 /* ---------- abertura da lição ---------- */
@@ -938,6 +968,7 @@ function perfil() {
   <div class="badges">${BADGES.map(([id, e, n, d]) => `<div class="badge ${S.badges[id] ? '' : 'off'}" title="${d}"><b>${e}</b>${n}<br><small>${d}</small></div>`).join('')}</div>
   <h2>📔 Diário</h2>
   <div class="card">${S.diary.length ? S.diary.slice(-8).reverse().map((x) => `<p>${spk(x.t)}<span class="de">${esc(x.t)}</span><br><small>${x.d} · ${esc(x.x ? '🎬 ' + x.x : LESSONS[x.l].de)}</small></p>`).join('') : '<p class="mut">Suas frases dos exercícios intrapessoais aparecem aqui.</p>'}</div>
+  ${lookCard()}
   ${cloudCard()}
   ${offlineCard()}
   ${appCard(false)}
@@ -952,7 +983,7 @@ function perfil() {
   <div class="row" style="margin-top:10px"><button id="exp">⬇️ Exportar backup</button><button id="imp">⬆️ Importar backup</button><input type="file" id="file" accept=".json" hidden></div>
   <p class="mut">O progresso fica só neste navegador. Use o backup para levar a outro dispositivo.</p>
   <button class="link" id="reset">Apagar todo o progresso</button></div>`;
-  wireAppCard(); wireCloud(); wireOffline();
+  wireAppCard(); wireCloud(); wireOffline(); wireLook();
   $('#toP').onclick = () => go('nivel');
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
@@ -964,6 +995,72 @@ function perfil() {
     catch (err) { console.error('Erro ao importar backup:', err); toast('⚠️ Não consegui importar: ' + err.message); }
   };
   $('#reset').onclick = () => { if (confirm('Apagar todo o progresso deste dispositivo? Isso não pode ser desfeito.')) { localStorage.removeItem(KEY); S = fresh(); go('onboard'); } };
+}
+
+/* ---------- aparência (tema claro ou escuro) ---------- */
+// Preferência deste aparelho: 'dark' (padrão), 'light' ou 'auto' (segue o sistema). O index.html aplica antes de desenhar a tela.
+const THEME_KEY = 'deutschTrilha.theme';
+const themePref = () => { try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch (e) { return 'dark'; } };
+const mqLight = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
+function applyTheme(pref = themePref()) {
+  const t = pref === 'auto' ? (mqLight && mqLight.matches ? 'light' : 'dark') : pref;
+  document.documentElement.dataset.theme = t;
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === 'light' ? '#f4f6fb' : '#0e1525';
+}
+if (mqLight && mqLight.addEventListener) mqLight.addEventListener('change', () => { if (themePref() === 'auto') applyTheme(); });
+applyTheme();
+function setTheme(p) { try { localStorage.setItem(THEME_KEY, p); } catch (e) { /* vale só até fechar */ } applyTheme(p); }
+
+/* ---------- versão do app ---------- */
+const APP_CACHE = 'deutsch-trilha-v1';
+async function appVersionText() {
+  try {
+    const r = ('caches' in window && await caches.match('index.html', { ignoreSearch: true })) || await fetch('index.html', { method: 'HEAD' });
+    const lm = r && r.headers.get('last-modified');
+    return lm ? 'Versão publicada em ' + new Date(lm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + '.' : '';
+  } catch (e) { return ''; }
+}
+// Baixa de novo os arquivos do app, compara com o que está guardado e recarrega se algo mudou.
+async function updateApp() {
+  const btn = $('#updBtn'), msg = (t) => { const m = $('#updMsg'); if (m) m.textContent = t; };
+  if (btn) btn.disabled = true;
+  msg('Procurando a versão mais recente…');
+  try {
+    if (!('caches' in window) || !('serviceWorker' in navigator)) { location.reload(); return; }
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      await reg.update().catch(() => {});
+      if (reg.installing || reg.waiting) await new Promise((ok) => { navigator.serviceWorker.addEventListener('controllerchange', ok, { once: true }); setTimeout(ok, 6000); });
+    }
+    const html = await (await fetch('index.html', { cache: 'no-store' })).text();
+    const files = [...new Set(['index.html', 'manifest.webmanifest', ...[...html.matchAll(/(?:src|href)="([^"#:]+)"/g)].map((m) => m[1]), 'audio/index.json', 'audio/levels.json', 'images/pocket/index.json'])];
+    const c = await caches.open(APP_CACHE);
+    let changed = 0;
+    await Promise.all(files.map(async (f) => {
+      const old = await c.match(f, { ignoreSearch: true }), ot = old ? await old.text() : null;
+      const res = await fetch(f, { cache: 'no-store' }); if (!res.ok) return;
+      const nt = await res.clone().text();
+      if (nt !== ot) { changed++; await c.put(f, res); if (f === 'index.html') await c.put('./', new Response(nt, { headers: res.headers })); }
+    }));
+    if (changed) { msg(`✓ ${changed} arquivo${changed > 1 ? 's' : ''} atualizado${changed > 1 ? 's' : ''}. Reiniciando o app…`); setTimeout(() => location.reload(), 900); }
+    else { msg('✓ Você já está na versão mais recente.'); if (btn) btn.disabled = false; }
+  } catch (e) {
+    console.error('Erro ao atualizar o app:', e);
+    msg('⚠️ Não consegui verificar agora. Confira a internet e tente de novo.'); if (btn) btn.disabled = false;
+  }
+}
+function lookCard() {
+  const p = themePref();
+  return `<div class="card" id="lookCard"><h3>🎨 Aparência</h3>
+  <div class="chips seg">${[['dark', '🌙 Escuro'], ['light', '☀️ Claro'], ['auto', '🖥️ Automático']].map(([id, n]) => `<button class="chipb ${id === p ? 'on' : ''}" data-theme-set="${id}">${n}</button>`).join('')}</div>
+  <p class="mut">O tema vale para este aparelho. "Automático" segue o modo claro ou escuro do celular ou do computador.</p></div>
+  <div class="card" id="updCard"><h3>🔄 Versão do app</h3><p class="mut" id="updInfo"></p>
+  <button id="updBtn">Atualizar para a versão mais recente</button><p class="mut" id="updMsg"></p></div>`;
+}
+function wireLook() {
+  $$('[data-theme-set]').forEach((b) => (b.onclick = () => { setTheme(b.dataset.themeSet); $$('[data-theme-set]').forEach((x) => x.classList.toggle('on', x === b)); }));
+  if ($('#updBtn')) $('#updBtn').onclick = updateApp;
+  appVersionText().then((t) => { const el = $('#updInfo'); if (el) el.textContent = t || 'Toque para buscar a versão mais recente do app.'; });
 }
 
 /* ---------- áudios para usar sem internet ---------- */
@@ -1048,9 +1145,8 @@ function wireOffline() { if (offOK()) renderOffline(); }
 
 /* ---------- textos longos: leitura e escuta ---------- */
 const textOpen = (t) => { const c = currentDay() || TOTAL + 1; return (t.w - 1) * 7 + 1 <= c || !!S.reads[t.id]; };
-function textsList() {
-  return `<h2>📖 Leitura e escuta</h2><p class="mut">Textos longos e cenas de áudio no formato das provas. Um novo a cada checkpoint.</p>
-  <div class="txlist">${TEXTS.map((t) => { const o = textOpen(t), r = S.reads[t.id];
+function textsList(list = TEXTS) {
+  return `<div class="txlist">${list.map((t) => { const o = textOpen(t), r = S.reads[t.id];
     return `<button class="txi ${o ? '' : 'lock'}" ${o ? `data-tx="${t.id}"` : 'disabled'}><span class="tag">${t.lv}</span><span class="grow"><b>${t.kind === 'escuta' ? '🎧' : '📖'} ${esc(t.t)}</b><small>${o ? (r ? `✓ ${r.ok}/${r.n} acertos` : 'Semana ' + t.w) : '🔒 libera na semana ' + t.w}</small></span></button>`; }).join('')}</div>`;
 }
 let readTok = 0, RATE = 0.9;
@@ -1096,7 +1192,7 @@ function texto(id) {
   ${t.qs.map((q, i) => `<div class="tq" data-q="${i}"><p>${i + 1}. ${esc(q.q)}</p><div class="opts ${q.o ? 'col' : ''}">${(q.o || ['richtig', 'falsch']).map((o, j) => `<button data-a="${j}">${esc(o)}</button>`).join('')}</div></div>`).join('')}
   <button class="pri big" id="tCheck">Conferir respostas</button><div id="tRes"></div></div>`;
   const ans = {};
-  $('#bk').onclick = () => history.length > 1 && view === 'texto' ? go('extras') : go('home');
+  $('#bk').onclick = () => go('extras', 'textos');
   $('#tPlay').onclick = () => readFrom(t.paras, 0);
   $('#tStop').onclick = stopRead;
   $('#tRate').onchange = (e) => { RATE = +e.target.value; };
