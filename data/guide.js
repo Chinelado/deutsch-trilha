@@ -412,6 +412,7 @@ Algumas frases têm dois verbos. O conjugado fica no vagão 2 e o outro vai para
 Nas perguntas de sim ou não, o verbo **sobe para o vagão 1**:
 ~ Du wohnst hier. = Você mora aqui.
 ~ Wohnst du hier? = Você mora aqui?
+@ W:Agora é com você: monte o trem;@ich|*lerne|heute|Deutsch=Eu estudo alemão hoje.;heute|*lerne|@ich|Deutsch=Hoje eu estudo alemão.;am Montag|*arbeite|@ich=Na segunda-feira eu trabalho.;morgen|*fahre|@ich|nach Berlin=Amanhã eu vou para Berlim.;@ich|*habe|Deutsch|^gelernt=Eu estudei alemão.
 ?? Em "Morgen fahre ich nach Berlin", em que vagão está o verbo? || no 2 || no 1 || no último >> Morgen (1) fahre (2) ich nach Berlin.
 ?? Qual frase está certa? || Heute lerne ich Deutsch. || Heute ich lerne Deutsch. || Heute Deutsch ich lerne. >> Com heute no vagão 1, o verbo vem logo em seguida.
 ?? Em "Ich habe Deutsch gelernt", onde fica "gelernt"? || no fim, fechando a moldura || no vagão 2 || no começo >> A segunda parte do verbo vai para o fim.

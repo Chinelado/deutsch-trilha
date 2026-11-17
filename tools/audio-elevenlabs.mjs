@@ -44,7 +44,7 @@ function loadApp() {
   const ctx = { console, esc };
   vm.createContext(ctx);
   const code = files.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n')
-    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, IMG_CAP: typeof IMG_CAP === "undefined" ? {} : IMG_CAP, KATZE: typeof KATZE === "undefined" ? [] : KATZE, uhrText: typeof uhrText === "undefined" ? null : uhrText, isGerman, visHTML, vozDe, splitFala,'
+    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, IMG_CAP: typeof IMG_CAP === "undefined" ? {} : IMG_CAP, KATZE: typeof KATZE === "undefined" ? [] : KATZE, ZEITEN: typeof ZEITEN === "undefined" ? [] : ZEITEN, DEKL: typeof DEKL === "undefined" ? {} : DEKL, BRIEF: typeof BRIEF === "undefined" ? [] : BRIEF, GEWISS: typeof GEWISS === "undefined" ? [] : GEWISS, uhrText: typeof uhrText === "undefined" ? null : uhrText, isGerman, visHTML, vozDe, splitFala,'
     + ' POCKETS: typeof POCKETS === "undefined" ? [] : POCKETS, pocketTexts: typeof pocketTexts === "undefined" ? () => [] : pocketTexts };';
   vm.runInContext(code, ctx, { filename: 'deutsch-trilha' });
   return ctx.__app;
@@ -73,7 +73,8 @@ function inventory(A) {
     (md.match(/\*\*(.+?)\*\*/g) || []).forEach((b) => { if (A.isGerman(b)) add(b, 'a', cat); });
   };
   const visSpec = (spec) => {
-    if (/^[UK]:/.test(spec)) return; // relógio e gata: os textos vêm de data/interativos.js
+    if (/^W:/.test(spec)) { spec.split(';').slice(1).forEach((s) => { const t = s.split('=')[0].split('|').map((x) => x.trim().replace(/^[*@^]/, '')).join(' '); add(t[0].toUpperCase() + t.slice(1) + '.', 'a', 'interativos'); }); return; }
+    if (/^[UKZABG]:/.test(spec)) return; // interativos: os textos vêm de data/interativos.js
     let html = ''; try { html = A.visHTML(spec); } catch { return; }
     // elementos sem outros blocos dentro (célula, chip, palavra), que é onde o app põe o botão de áudio
     for (const m of html.matchAll(/<(div|span|b|td|th)\b[^>]*>((?:(?!<\/?(?:div|span|td|th)\b).)*?)<\/\1>/gs)) {
@@ -108,6 +109,10 @@ function inventory(A) {
   // relógio (todas as horas de 5 em 5 minutos) e a gata no caixote
   if (A.uhrText) for (let h = 1; h <= 12; h++) for (let m = 0; m < 60; m += 5) add(A.uhrText(h, m), 'a', 'interativos');
   A.KATZE.forEach((k) => { add(k.wo, 'a', 'interativos'); add(k.wohin, 'a', 'interativos'); });
+  A.ZEITEN.forEach((z) => { add(z.ex, 'a', 'interativos'); add(z.lern, 'a', 'interativos'); });
+  Object.values(A.DEKL).forEach((t) => ['m', 'f', 'n', 'p'].forEach((g) => t[g].forEach((s) => add(s.replace('|', ''), 'a', 'interativos'))));
+  A.BRIEF.forEach((b) => add(b.z.replace(/\n/g, ' '), 'a', 'interativos'));
+  A.GEWISS.forEach((g) => { add(g.jetzt, 'a', 'interativos'); add(g.past, 'a', 'interativos'); });
   return [...items.values()];
 }
 

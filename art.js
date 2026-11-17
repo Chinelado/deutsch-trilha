@@ -210,6 +210,12 @@ function visHTML(spec) {
   const seg = spec.split(';'), k = seg[0][0], title = seg[0].slice(2), rest = seg.slice(1);
   if (k === 'U') return typeof uhrHTML === 'function' ? uhrHTML(title) : ''; // relógio interativo (interativo.js)
   if (k === 'K') return typeof katzHTML === 'function' ? katzHTML(title, rest[0]) : ''; // a gata e o caixote
+  // mais interativos (interativo2.js): linha do tempo, trem do vagão 2, declinação, carta oficial, medidor de certeza
+  if (k === 'Z') return typeof zeitHTML === 'function' ? zeitHTML(title, rest[0], rest[1]) : '';
+  if (k === 'W') return typeof zugHTML === 'function' ? zugHTML(title, rest) : '';
+  if (k === 'A') return typeof deklHTML === 'function' ? deklHTML(title, rest[0], rest[1]) : '';
+  if (k === 'B') return typeof briefHTML === 'function' ? briefHTML(title) : '';
+  if (k === 'G') return typeof gewissHTML === 'function' ? gewissHTML(title, rest[0]) : '';
   let body = '';
   if (k === 'F') {
     const hs = rest[0].split('|').map((h) => h.split('^'));
