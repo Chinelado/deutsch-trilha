@@ -522,3 +522,6 @@ button.sel.ok { border-color: var(--ok); background: var(--okbg); box-shadow: no
 .kz-btns button small { color: var(--mut); font-size: .78rem; }
 .kz-btns button.on { border-color: var(--acc); background: rgba(255, 138, 61, .12); }
 @media (max-width: 560px) { .uhr { grid-template-columns: 1fr; } .uhr-face { max-width: 260px; margin: 0 auto; display: block; } }
+
+/* imagens didáticas nunca são cortadas (mapas e diagramas precisam aparecer inteiros) */
+.gimg img { object-fit: contain; max-height: 460px; }

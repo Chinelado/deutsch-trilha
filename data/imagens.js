@@ -10,5 +10,5 @@ const IMG_CAP = {
   'licao-108': 'À esquerda, separável: **Er setzt uns über.** (leva para a outra margem). À direita, inseparável: **Sie übersetzt den Text.** (traduz). O acento muda junto.',
   'licao-123': 'Na Alemanha, para desejar sorte se aperta o polegar dentro da mão, e não se cruzam os dedos: **Ich drücke dir die Daumen!**',
   'licao-191': '1 Deutschland: **Hallo!** · 2 Österreich: **Servus!** e **Grüß Gott!** · 3 Schweiz: **Grüezi!**',
-  'licao-201': '1 Norte: **Moin!** · 2 Berlim: **Tach!** · 3 Baviera: **Servus!** · 4 Baden-Württemberg: **Grüß Gott!**',
+  'licao-201': '1 Norte, sobretudo perto do mar: **Moin!** · 2 Leste, com Berlim: **Tach!** · 3 Baviera: **Servus!** · 4 Baden-Württemberg: **Grüß Gott!** As fronteiras são aproximadas: cumprimentos não param na divisa.',
 };

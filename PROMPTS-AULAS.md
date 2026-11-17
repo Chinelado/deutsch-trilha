@@ -137,10 +137,12 @@ Split image. Left half: a small wooden ferry boat crossing a calm river, a ferry
 ```
 Legenda: separável, **über·setzen** (Er setzt uns über) = levar para a outra margem. Inseparável, **übersetzen** (Sie übersetzt den Text) = traduzir. O acento muda junto: **ü**bersetzen × übers**e**tzen.
 
-### Lição 123 · Dia 143 · Ich drücke dir die Daumen — `licao-123.png` (estilo B)
+### Lição 123 · Dia 143 · Ich drücke dir die Daumen — `licao-123.png` (estilo A)
+> **Refazer.** A primeira versão (foto) saiu com um punho comum, com o polegar **por fora** dos dedos: ensinaria o gesto errado. Como geradores têm dificuldade com mãos em foto, o prompt agora é um diagrama, com o polegar desenhado "por transparência" para mostrar onde ele fica.
 ```
-Close-up photo of two hands in front of a person's chest, each hand making a fist with the thumb tucked inside the fingers (the German "pressing thumbs" good-luck gesture), squeezed tightly. Neutral light background, the person's hopeful smile slightly out of focus above. No text.
+Two large simple hand diagrams side by side, seen from the front at chest height, clean flat vector with thick outlines. LEFT: a closed fist where the THUMB IS TUCKED INSIDE the fist, underneath the four curled fingers; the four fingers are drawn semi-transparent so the thumb is visible inside, and the hidden thumb is colored orange. The thumb tip must NOT stick out and must NOT rest on top of the fingers. Small teal check mark icon above this hand. RIGHT, smaller and faded gray: a hand with the index and middle fingers crossed (the Brazilian/English good-luck sign), with a small gray cross-out mark above it. Plain off-white background. No letters or words.
 ```
+Antes de salvar, confira: na mão da esquerda o polegar laranja tem que estar **dentro**, coberto pelos dedos.
 Legenda: na Alemanha, para desejar sorte se **aperta o polegar dentro da mão**, e não se cruzam os dedos. Daí *Ich drücke dir die Daumen!*
 
 ### Lição 191 · Dia 222 · Servus und Grüezi — `licao-191.png` (mapa)
