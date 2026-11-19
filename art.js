@@ -87,19 +87,27 @@ function isGerman(t) {
   ws.forEach((w) => { if (deSet().has(w)) de++; else if (PT_STOP.has(w) || /[ãõçáéíóúâêôà]/.test(w)) pt++; });
   return de > 0 && de >= pt && de / ws.length >= 0.5;
 }
+// O que a voz lê de fato: setas, barras, pontos médios, sinais de igual e de mais, traços e marcadores viram pausa
+// (vírgula); depois de ponto final a pausa já existe. Nenhum símbolo é pronunciado. A chave do áudio não muda (sayText).
+const falavel = (t) => String(t).replace(/___/g, ' ').replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+  .replace(/([.!?…:])\s*(?:→|->|⇒|←|·|•|×|\||\/|=|\+|–|—)\s*/g, '$1 ')
+  .replace(/\s*(?:→|->|⇒|←|·|•|×|\||\/|=|\+|–|—)\s*/g, ', ')
+  .replace(/\s+([,.!?;:])/g, '$1').replace(/,(\s*,)+/g, ',').replace(/^[\s,]+|[\s,]+$/g, '').replace(/\s+/g, ' ');
 const sayText = (t) => t.replace(/\*\*/g, '').replace(/\(.*?\)/g, ' ').replace(/\s+/g, ' ').trim();
 function enhanceAudio(root) {
   if (!hasTTS || !S.audio) return;
   root.querySelectorAll('.dt td, .dt th, .fc, .vcol span, .vcol b, .sitems b, .fstep b, .fstep .de, .tli b, .tli .de, .gloss .de').forEach((el) => {
     if (el.dataset.au || el.closest('#ex')) return; el.dataset.au = '1';
-    const t = el.textContent.trim(); if (!t || t.startsWith('-') || !isGerman(t)) return;
+    const t = el.textContent.trim(); if (!t || t.length < 2 || t.startsWith('-') || !isGerman(t)) return;
     el.insertAdjacentHTML('afterbegin', `<button class="spk sm" data-say="${esc(sayText(t))}" aria-label="Ouvir">🔊</button>`);
   });
   root.querySelectorAll('.deep p > b, .deep li > b, .box b, .why b, .quiz details > p, .bw, .hint b, figcaption b').forEach((el) => {
     if (el.dataset.au || el.closest('#ex .opts, .line, .pool') || el.closest('[data-say]')) return; el.dataset.au = '1';
     const t = (el.matches('.bw') ? (el.querySelector('b') || el).textContent : el.textContent).trim();
     // nas legendas das imagens todo negrito é alemão (nomes como Bierdeckel não estão no vocabulário das lições)
-    if (!t || !(el.matches('figcaption b') ? /\p{L}{2}/u.test(t) : isGerman(t))) return;
+    // letras e terminações soltas (u, w, -er) não ganham áudio: a voz leria "menos er"; o gerador também as ignora
+    if (!t || t.length < 2 || t.startsWith('-')) return;
+    if (!(el.matches('figcaption b') ? /\p{L}{2}/u.test(t) : isGerman(t))) return;
     el.classList.add('sayw'); el.dataset.say = sayText(t); el.title = 'Toque para ouvir';
   });
 }

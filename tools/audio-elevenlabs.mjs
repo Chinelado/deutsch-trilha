@@ -44,7 +44,7 @@ function loadApp() {
   const ctx = { console, esc };
   vm.createContext(ctx);
   const code = files.map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n')
-    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, IMG_CAP: typeof IMG_CAP === "undefined" ? {} : IMG_CAP, KATZE: typeof KATZE === "undefined" ? [] : KATZE, ZEITEN: typeof ZEITEN === "undefined" ? [] : ZEITEN, DEKL: typeof DEKL === "undefined" ? {} : DEKL, BRIEF: typeof BRIEF === "undefined" ? [] : BRIEF, GEWISS: typeof GEWISS === "undefined" ? [] : GEWISS, uhrText: typeof uhrText === "undefined" ? null : uhrText, isGerman, visHTML, vozDe, splitFala,'
+    + '\n;this.__app = { LESSONS, SUP, TEXTS, GUIDE, GLOSS: typeof GLOSS === "undefined" ? [] : GLOSS, PHASES, VIS: typeof VIS === "undefined" ? {} : VIS, IMG_CAP: typeof IMG_CAP === "undefined" ? {} : IMG_CAP, KATZE: typeof KATZE === "undefined" ? [] : KATZE, ZEITEN: typeof ZEITEN === "undefined" ? [] : ZEITEN, DEKL: typeof DEKL === "undefined" ? {} : DEKL, BRIEF: typeof BRIEF === "undefined" ? [] : BRIEF, GEWISS: typeof GEWISS === "undefined" ? [] : GEWISS, uhrText: typeof uhrText === "undefined" ? null : uhrText, isGerman, falavel, visHTML, vozDe, splitFala,'
     + ' POCKETS: typeof POCKETS === "undefined" ? [] : POCKETS, pocketTexts: typeof pocketTexts === "undefined" ? () => [] : pocketTexts };';
   vm.runInContext(code, ctx, { filename: 'deutsch-trilha' });
   return ctx.__app;
@@ -84,6 +84,7 @@ function inventory(A) {
   const levelOf = (i) => { const w = Math.floor(i / 6); return (A.PHASES.find((p) => w >= p.weeks[0] && w < p.weeks[1]) || A.PHASES[A.PHASES.length - 1]).id; };
   grupo = 'A1';
   A.GUIDE.forEach((g) => deepLines(g.body, 'guia'));
+  (A.GLOSS || []).forEach(([, , e]) => { if (A.isGerman(e)) add(e, 'a', 'guia'); }); // exemplos do Dicionário de termos
   A.LESSONS.forEach((l) => {
     grupo = levelOf(l.i);
     l.v.forEach((v) => add(v.de, 'a', 'vocabulário'));
@@ -161,7 +162,7 @@ async function credits() {
 }
 let realCost = 0; // créditos realmente cobrados (cabeçalho character-cost da resposta)
 // o que a voz lê: a barra de alternativas ("bin / heiße") vira pausa, para não ser pronunciada
-const spoken = (t) => t.replace(/([.!?…])\s*\/\s*/g, '$1 ').replace(/\s*\/\s*/g, ', ').replace(/,\s*,/g, ',');
+let spoken = (t) => t; // trocado por falavel() de art.js quando o app é carregado (mesma regra do navegador)
 async function tts(cfg, item) {
   const voice = voiceFor(cfg, item.slot);
   const body = {
@@ -326,7 +327,8 @@ const opt = (name) => { const i = rest.indexOf('--' + name); return i >= 0 ? res
 try {
   const cfg = loadCfg();
   const needItems = cmd !== 'vozes';
-  const items = needItems ? inventory(loadApp()) : [];
+  const app = needItems ? loadApp() : null; if (app) spoken = app.falavel;
+  const items = needItems ? inventory(app) : [];
   allItems = items;
   if (cmd === 'simular') await simulate(items, cfg);
   else if (cmd === 'vozes') await listVoices();
@@ -343,6 +345,13 @@ try {
       if (!fs.readdirSync(dir).length) fs.rmdirSync(dir);
     }
     console.log(`${n} áudios sem uso apagados. Índice com ${writeIndex(items)} áudios.`);
+  }
+  else if (cmd === 'simbolos') {
+    // regrava os áudios cujo texto falado muda com falavel() (setas, pontos médios, sinais, traços, emojis); só "/" já foi regravado antes
+    const hit = items.filter((x) => spoken(x.text) !== x.text.replace(/\s+/g, ' ').trim() && (/[→⇒←·•|=+–—]|->/.test(x.text) || /\p{Extended_Pictographic}/u.test(x.text)));
+    console.log(hit.length + ' áudios com símbolos ' + (rest.includes('--simular') ? 'seriam regravados (simulação, nada foi apagado)' : 'serão regravados'));
+    if (rest.includes('--simular')) hit.slice(0, 60).forEach((x) => console.log('  ' + x.text + '  →  ' + spoken(x.text)));
+    else { hit.forEach((x) => { const f = fileOf(x.hash); if (fs.existsSync(f)) fs.unlinkSync(f); }); await generate(hit, cfg, 'tudo'); }
   }
   else if (cmd === 'barras') { const hit = items.filter((x) => x.text.includes('/')); hit.forEach((x) => { const f = fileOf(x.hash); if (fs.existsSync(f)) fs.unlinkSync(f); }); console.log(hit.length + ' áudios com barra serão regravados'); await generate(hit, cfg, 'tudo'); }
   else if (cmd === 'listar') { const re = new RegExp(rest.filter((x) => !x.startsWith('--')).join(' ') || '/'); const hit = items.filter((x) => re.test(x.text)); hit.forEach((x) => console.log('[' + x.slot + '] ' + x.text)); console.log(hit.length + ' textos'); }

@@ -71,7 +71,7 @@ function ttsSay(t, rate) {
   if (!hasTTS) return;
   stopClip(); speechSynthesis.cancel();
   // a barra de alternativas ("bin / heiße") vira pausa, como nos áudios gravados
-  const u = new SpeechSynthesisUtterance(t.replace(/___/g, ' ').replace(/([.!?…])\s*\/\s*/g, '$1 ').replace(/\s*\/\s*/g, ', '));
+  const u = new SpeechSynthesisUtterance(falavel(t));
   u.lang = 'de-DE'; if (deVoice) u.voice = deVoice; u.rate = rate; speechSynthesis.speak(u);
 }
 function say(t, rate = 0.9, slot) {
@@ -1308,7 +1308,7 @@ function readFrom(paras, from) {
     const { who: w, txt } = splitWho(paras[i]), adv = () => { if (tok === readTok) { i++; next(); } };
     const tts = () => {
       if (!hasTTS || tok !== readTok) return adv();
-      const u = new SpeechSynthesisUtterance(txt);
+      const u = new SpeechSynthesisUtterance(falavel(txt));
       u.lang = 'de-DE'; const v = voiceFor(w); if (v) u.voice = v; u.rate = RATE;
       u.onend = () => { i++; next(); }; u.onerror = adv;
       speechSynthesis.speak(u);
