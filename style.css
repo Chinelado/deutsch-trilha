@@ -589,3 +589,21 @@ button.sel.ok { border-color: var(--ok); background: var(--okbg); box-shadow: no
 .gw-verb { font-size: 1.15rem; margin: 6px 0; } .gw-verb b { color: var(--acc); }
 .gw-quiz p { margin: 6px 0; }
 @media (max-width: 560px) { .zt-track { margin: 6px 8% 6px; } .zt-chip { font-size: .72rem; padding: 4px 7px; } .zg-slot { min-width: 64px; } .dk-tabs button { font-size: .8rem; } .gw-tick { font-size: .7rem; } .br-paper { padding: 12px; font-size: .82rem; } }
+
+/* ---------- exercício de fala ---------- */
+.mic { padding: 4px 8px; min-height: 0; font-size: .9rem; margin-right: 6px; border-color: transparent; background: transparent; vertical-align: middle; }
+.mic:hover:not(:disabled) { border-color: var(--acc); }
+.fala { margin: 8px 0 14px; padding: 12px; border: 1px solid var(--line); border-left: 4px solid var(--acc); border-radius: 10px; background: var(--bg2); }
+.fl-alvo { margin: 0 0 8px; } .fl-alvo .de { font-size: 1.05rem; }
+.fl-row { display: flex; flex-wrap: wrap; gap: 8px; } .fl-row .ghost { margin-left: auto; }
+.fl-live { margin: 8px 0 0; min-height: 1.3em; }
+.fl-res:empty { display: none; } .fl-res { margin-top: 8px; }
+.fl-frase { font-size: 1.15rem; line-height: 2.2; margin: 4px 0; }
+.fl-w { display: inline-flex; flex-direction: column; align-items: center; padding: 0 6px; border-radius: 6px; line-height: 1.5; font-weight: 600; }
+.fl-w small { font-size: .7rem; font-weight: 400; line-height: 1.1; opacity: .9; }
+.fl-w.ok { color: var(--ok); background: var(--okbg); }
+.fl-w.quase { color: var(--acc); background: rgba(255, 138, 61, .14); }
+.fl-w.troca { color: var(--no); background: var(--nobg); }
+.fl-w.falta { color: var(--mut); text-decoration: line-through; background: var(--bg3); }
+.fl-dicas { margin: 6px 0; padding-left: 20px; } .fl-dicas li { margin: 3px 0; }
+.fl-heard { font-size: .85rem; margin: 6px 0 0; }

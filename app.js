@@ -20,7 +20,7 @@ const app = $('#app'), nav = $('#nav');
 const KEY = 'deutschTrilha.v1';
 const WEEKS = LESSONS.length / 6, TOTAL = WEEKS * 7;
 const fresh = () => ({
-  name: '', goal: 60, audio: true, sfx: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
+  name: '', goal: 60, audio: true, sfx: true, fala: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
   done: {}, cards: {}, stats: Object.fromEntries(IK.map((k) => [k, { n: 0, ok: 0, rn: 0, rok: 0, t: 0 }])),
   prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {}, reads: {}, pockets: {},
 });
@@ -663,7 +663,8 @@ function nextEx() {
   <div class="chip">${I.e} ${I.n}${it.retry ? ' · mais uma chance' : ''}</div><div id="ex"></div><div id="fb"></div>`;
   $('#quit').onclick = () => { if (confirm('Sair da sessão? O que você já respondeu fica registrado.')) go('home'); };
   const t0 = Date.now();
-  GEN[it.k](les, $('#ex'), (ok, keys = [], ans = '', sayT = '', why = '') => {
+  GEN[it.k](les, $('#ex'), (ok, keys = [], ans = '', sayT = '', why = '', fala = false) => {
+    it.fala = fala;
     if (sess !== my) return;
     const st = S.stats[it.k]; st.n++; if (ok) st.ok++; st.t += (Date.now() - t0) / 1000;
     keys.forEach((k) => { const c = S.cards[k]; if (c) c.mods[it.k] = (c.mods[it.k] || 0) + 1; });
@@ -676,27 +677,19 @@ function nextEx() {
     $('#fb').innerHTML = `<div class="fb ${ok ? 'ok' : 'no'}"><b>${ok ? pick(PRAISE) + ' +' + gain + ' XP' : 'Quase! Essa volta no fim da sessão.'}</b>
     ${ans ? `<p>${ok ? '' : '<b>Certo:</b> '}${esc(ans)}</p>` : ''}
     ${!ok && why ? `<div class="why"><b>Por que errou</b>${why}</div>` : ''}
-    <div class="row">${sayT ? spk(sayT) : ''}${sayT && SR ? '<button id="mic">🎤 Falar em voz alta</button>' : ''}<span class="grow"></span><button class="pri" id="next">Continuar</button></div><p id="micres" class="mut"></p></div>`;
+    <div class="row">${sayT ? spk(sayT) : ''}${sayT && !it.fala && falaOn() ? '<button id="mic">🎤 Repita em voz alta</button>' : ''}<span class="grow"></span><button class="pri" id="next">Continuar</button></div><div id="micres"></div></div>`;
     $('#next').onclick = nextEx;
     setTimeout(() => { if (sess === my) sess.onEnter = nextEx; }, 250);
-    if ($('#mic')) $('#mic').onclick = () => listen(sayT, $('#micres'), $('#mic'));
+    if ($('#mic')) $('#mic').onclick = () => { $('#mic').remove(); $('#micres').innerHTML = falaPanel(sayT); if (FALA_SR) falaStart($('#micres .fala')); };
     $('#next').scrollIntoView({ block: 'nearest' });
   });
 }
 addEventListener('keydown', (e) => { if (e.key === 'Enter' && sess && sess.onEnter) { const f = sess.onEnter; sess.onEnter = null; f(); } });
-function listen(target, out, btn) {
-  try {
-    const r = new SR(); r.lang = 'de-DE';
-    r.onresult = (e) => {
-      const t = e.results[0][0].transcript, a = norm(target).split(' '), b = norm(t).split(' ');
-      const hit = a.filter((w) => b.includes(w)).length / a.length;
-      out.innerHTML = `Entendi: <i>${esc(t)}</i> — ${Math.round(hit * 100)}% ${hit >= 0.7 ? '✅ +5 XP' : 'tente de novo'}`;
-      if (hit >= 0.7) { btn.disabled = true; addXP(5); S.spoken++; checkBadges(); save(); }
-    };
-    r.onerror = () => { out.textContent = 'Não consegui ouvir. Confira a permissão do microfone.'; };
-    out.textContent = '🎙️ Ouvindo…'; r.start();
-  } catch (err) { console.error('Erro no reconhecimento de voz:', err); out.textContent = 'Reconhecimento de voz indisponível neste navegador.'; }
-}
+// Frase dita direito (80% ou mais) em qualquer painel de fala: +5 XP uma vez por painel e conta para a conquista "Laut!".
+document.addEventListener('fala', (e) => {
+  const el = e.target; if (e.detail.score < 0.8 || el.dataset.xp) return;
+  el.dataset.xp = '1'; S.spoken++; addXP(5); toast('🎤 Frase dita! +5 XP'); checkBadges(); save();
+});
 function finish() {
   const s = sess, acc = s.first ? s.firstOk / s.first : 1, stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
   let bonus = 20;
@@ -947,6 +940,21 @@ const GEN = {
   },
   // Musical: reconhecer pelo som.
   mus(les, el, done) {
+    const sents = [...les.ge, ...les.ex, ...les.dlg].filter((s) => { const n = s.de.split(' ').length; return n >= 3 && n <= 9; });
+    if (FALA_SR && falaOn() && sess && !sess.noFala && sents.length && Math.random() < 0.35) {
+      // Fale a frase: até 3 tentativas; passa com 80% da frase entendida
+      const s = pick(sents);
+      el.innerHTML = `<p class="q">🎤 Fale a frase em voz alta<b>${esc(s.de)}</b></p><p class="hint">${esc(s.pt)} · ouça o modelo antes, se quiser</p>${falaPanel(s.de, s.pt, 'exercicio')}`;
+      const fl = $('.fala', el); let tries = 0, best = 0;
+      fl.addEventListener('fala', (e) => {
+        tries++; best = Math.max(best, e.detail.score);
+        if (e.detail.score >= 0.8) return done(true, [], s.de + ' = ' + s.pt, s.de, '', true);
+        if (tries >= 3) done(false, [], s.de + ' = ' + s.pt, s.de, `<p>Em 3 tentativas, o melhor foi ${Math.round(best * 100)}% da frase. Ouça o modelo devagar (🐢), repita em voz baixa duas vezes e tente de novo no fim da sessão. As palavras em laranja e vermelho acima mostram onde o som se perdeu.</p>`, true);
+        else fl.querySelector('.fl-live').insertAdjacentHTML('beforeend', ` Tentativa ${tries} de 3.`);
+      });
+      fl.addEventListener('falaskip', () => { sess.noFala = true; GEN.mus(les, el, done); }); // sem microfone agora: troca por "ouça e escolha"
+      return;
+    }
     const pool = Math.random() < 0.4 ? les.dlg : sample(les.v, 4), tgt = pick(pool);
     mcq(el, `<p class="q">Ouça e escolha o que foi dito</p><div class="row"><button class="play" id="play" aria-label="Ouvir">🔊</button><button id="slow">🐢 Devagar</button></div>`,
       shuffle(pool.map((p) => p.de)), tgt.de, (ok, g) => done(ok, tgt.k ? [tgt.k] : [], tgt.de + ' = ' + tgt.pt, tgt.de, whyHear(pool, tgt, g)), pool === les.dlg ? 'col' : '');
@@ -1113,6 +1121,7 @@ function perfil() {
   <div class="card"><label>Meta diária (min)<select id="goal">${[30, 60, 90, 120, 180].map((g) => `<option ${g === S.goal ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
   <label class="row"><input type="checkbox" id="aud" ${S.audio ? 'checked' : ''}> Áudio em alemão (voz do navegador)</label>
   <label class="row"><input type="checkbox" id="sfxT" ${S.sfx !== false ? 'checked' : ''}> Sons de conclusão (lição, tarefa e conquista)</label>
+  <label class="row"><input type="checkbox" id="falaT" ${S.fala !== false ? 'checked' : ''}> Exercícios de fala com microfone (desligue se estiver em lugar público)</label>
   <label class="row"><input type="checkbox" id="supc" ${supOn() ? 'checked' : ''}> Incluir as palavras de apoio (🆕) nas cartas de revisão</label>
   ${AUD ? `<p class="mut">🎙️ ${AUD.size.toLocaleString('pt-BR')} áudios gravados com voz natural (ElevenLabs). O que ainda não foi gravado usa a voz do navegador.</p>` : ''}
   ${hasTTS && deVoice ? `<p class="mut">Voz do navegador: ${esc(deVoice.name)} ${spk('Guten Tag! Ich bin deine deutsche Stimme.')}</p>` : ''}
@@ -1126,6 +1135,7 @@ function perfil() {
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
   $('#sfxT').onchange = (e) => { S.sfx = e.target.checked; save(); if (S.sfx) sfx('tarefa'); };
+  $('#falaT').onchange = (e) => { S.fala = e.target.checked; save(); };
   $('#supc').onchange = (e) => { S.supCards = e.target.checked; if (S.supCards) backfillSup(); save(); toast(S.supCards ? '🃏 Palavras de apoio incluídas nas cartas' : 'Palavras de apoio fora das cartas'); };
   $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = 'deutsch-trilha-' + today() + '.json'; a.click(); };
   $('#imp').onclick = () => $('#file').click();

@@ -127,7 +127,7 @@ function deepHTML(md) {
     } else if (l.startsWith('- ')) h += `<ul class="pts">${take('- ').map((x) => `<li>${inl(x)}</li>`).join('')}</ul>`;
     else if (l.startsWith('~ ')) {
       h += `<div class="exs">${take('~ ').map((x) => { const k = x.indexOf(' = '), de = k > 0 ? x.slice(0, k) : x, pt = k > 0 ? x.slice(k + 3) : '';
-        return `<p>${spk(de.replace(/\*\*/g, ''))}<span class="de">${inl(de)}</span>${pt ? `<br><small>${inl(pt)}</small>` : ''}</p>`; }).join('')}</div>`;
+        return `<p>${spk(de.replace(/\*\*/g, ''))}${typeof micBtn === 'function' ? micBtn(sayText(de), pt.replace(/\*\*/g, '')) : ''}<span class="de">${inl(de)}</span>${pt ? `<br><small>${inl(pt)}</small>` : ''}</p>`; }).join('')}</div>`;
     } else if (l.startsWith('?? ')) {
       // desafio de múltipla escolha: "pergunta || certa || errada… >> explicação"; "🔊 alemão" no lugar da pergunta = ouvir e escolher
       h += `<div class="quiz gquiz"><h4>🎯 Desafio</h4>${take('?? ').map((x) => {

@@ -88,7 +88,7 @@ function pocket(id) {
   <h2>🗺️ Toque e ouça</h2><p class="mut">Toque em qualquer palavra das ilustrações para ouvir a pronúncia.</p>
   ${p.ill.map((il) => `<div class="pk-ill">${pkIll(il)}</div>`).join('')}
   ${(p.img || []).filter((im) => PK_LOOK[im.f] && PKIMG.has(im.f)).map((im) => `<div class="card pk-look"><h3>👀 Repare</h3><figure class="pk-img"><img src="images/pocket/${im.f}.webp" decoding="async" alt="${esc(im.alt)}" onload="this.parentNode.classList.add('ok')" onerror="this.closest('.pk-look').remove()"><figcaption>${inl(PK_LOOK[im.f])}</figcaption></figure></div>`).join('')}
-  <h2>💬 Você diz</h2><div class="card pk-list">${fr.map((x) => `<p>${spk(x.de)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}
+  <h2>💬 Você diz</h2><div class="card pk-list">${fr.map((x) => `<p>${spk(x.de)}${micBtn(x.de, x.pt)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}
     <button id="pkCards" ${inCards === fr.length ? 'disabled' : ''}>${inCards === fr.length ? '✓ Frases nas cartas de revisão' : `🃏 Pôr as ${fr.length} frases nas cartas de revisão`}</button></div>
   <h2>👂 Você vai ouvir</h2><div class="card pk-list">${ou.map((x) => `<p>${spk(x.de)}<span class="de">${esc(x.de)}</span><br><small>${esc(x.pt)}</small></p>`).join('')}</div>
   <h2>🎭 A cena em diálogo</h2><div class="card tplayer"><div class="row"><button class="pri" id="pkPlay">▶ Ouvir a cena</button><button id="pkStop">⏹ Parar</button></div></div>
