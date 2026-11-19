@@ -20,7 +20,7 @@ const app = $('#app'), nav = $('#nav');
 const KEY = 'deutschTrilha.v1';
 const WEEKS = LESSONS.length / 6, TOTAL = WEEKS * 7;
 const fresh = () => ({
-  name: '', goal: 60, audio: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
+  name: '', goal: 60, audio: true, sfx: true, start: null, xp: 0, streak: 0, best: 0, lastDay: null, freezes: 0,
   done: {}, cards: {}, stats: Object.fromEntries(IK.map((k) => [k, { n: 0, ok: 0, rn: 0, rok: 0, t: 0 }])),
   prior: {}, time: {}, daily: {}, badges: {}, diary: [], reviews: 0, maxCombo: 0, spoken: 0, perfect: 0, seen: {}, guide: {}, hw: {}, wq: {}, reads: {}, pockets: {},
 });
@@ -128,7 +128,20 @@ const level = (xp = S.xp) => Math.floor(Math.sqrt(xp / 60)) + 1;
 const TITLES = ['Anfängerin', 'Entdeckerin', 'Sprecherin', 'Erzählerin', 'Denkerin', 'Könnerin', 'Meisterin'];
 const levelTitle = () => TITLES[Math.min(TITLES.length - 1, Math.floor((level() - 1) / 4))];
 function toast(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; $('#toasts').append(el); setTimeout(() => el.remove(), 3200); }
-function addXP(n) { const l = level(); S.xp += n; if (level() > l) toast('⬆️ Nível ' + level() + ' — ' + levelTitle()); }
+/* ---------- sons de conclusão ----------
+   conclusao: fim de lição, checkpoint, treino, aula do guia, Pocket, texto longo e revisão de cartas.
+   tarefa: uma tarefa específica feita (tarefa de casa, desafio interativo certo).
+   conquista: nova conquista, novo nível ou dia perfeito.
+   Uma fila evita que dois sons se atropelem (lição concluída + conquista nova, por exemplo). */
+const SFX_VOL = { conclusao: 0.55, tarefa: 0.5, conquista: 0.65 };
+const SFX = typeof Audio === 'undefined' ? {} : Object.fromEntries(Object.keys(SFX_VOL).map((k) => { const a = new Audio('sounds/' + k + '.mp3'); a.preload = 'auto'; return [k, a]; }));
+let sfxAt = 0;
+function sfx(name) {
+  if (S.sfx === false || !SFX[name]) return;
+  const now = Date.now(), wait = Math.max(0, sfxAt - now); sfxAt = now + wait + 650;
+  setTimeout(() => { const a = SFX[name].cloneNode(); a.volume = SFX_VOL[name]; a.play().catch(() => {}); }, wait);
+}
+function addXP(n) { const l = level(); S.xp += n; if (level() > l) { toast('⬆️ Nível ' + level() + ' — ' + levelTitle()); sfx('conquista'); } }
 function shownStreak() {
   if (!S.lastDay) return 0;
   const gap = dayDiff(S.lastDay, today());
@@ -152,7 +165,7 @@ function mission() {
 }
 function checkDaily() {
   const m = mission(), d = daily();
-  if (m.lesson && m.cards && m.time && m.extra && !d.perfect) { d.perfect = true; S.perfect++; addXP(30); toast('🌟 Dia perfeito! +30 XP'); checkBadges(); save(); }
+  if (m.lesson && m.cards && m.time && m.extra && !d.perfect) { d.perfect = true; S.perfect++; addXP(30); toast('🌟 Dia perfeito! +30 XP'); sfx('conquista'); checkBadges(); save(); }
 }
 const levelDone = (a, b) => { for (let d = a * 7 + 1; d <= b * 7; d++) if (!S.done[d]) return false; return true; };
 const nDone = () => Object.keys(S.done).length;
@@ -195,7 +208,7 @@ const BADGES = [
   ['x20', '🌍', 'Imersão', '20 conteúdos extras vistos', () => Object.keys(S.seen).length >= 20],
 ];
 function checkBadges() {
-  BADGES.forEach(([id, e, n, , test]) => { if (!S.badges[id] && test()) { S.badges[id] = today(); addXP(20); toast(e + ' Conquista: ' + n); } });
+  BADGES.forEach(([id, e, n, , test]) => { if (!S.badges[id] && test()) { S.badges[id] = today(); addXP(20); toast(e + ' Conquista: ' + n); sfx('conquista'); } });
 }
 
 /* ---------- relógio de estudo ---------- */
@@ -312,7 +325,7 @@ function wireHw(root, rerender) {
     const [i, k] = b.dataset.hw.split(':'), t = hwTasks(+i).find((x) => x.k === k);
     (S.hw[i] = S.hw[i] || {})[k] = today();
     if (t.x && !S.seen[t.x.id]) S.seen[t.x.id] = today();
-    addXP(15); toast('🏠 Tarefa feita! +15 XP'); markActive(); weekCheck(); checkBadges(); checkDaily(); save();
+    sfx('tarefa'); addXP(15); toast('🏠 Tarefa feita! +15 XP'); markActive(); weekCheck(); checkBadges(); checkDaily(); save();
     if (rerender) rerender(); else { b.disabled = true; b.textContent = '✓ Feito'; b.closest('.hwt').classList.add('ok'); }
   }));
 }
@@ -498,7 +511,7 @@ function guide(id) {
     $('#gdone').onclick = () => {
       if (!S.guide[g.id]) {
         const sc = quizScore(app), bonus = sc.ok * 2;
-        S.guide[g.id] = today(); addXP(20 + bonus);
+        sfx('conclusao'); S.guide[g.id] = today(); addXP(20 + bonus);
         toast(`📘 Aula concluída! +${20 + bonus} XP${sc.n ? ` · desafios: ${sc.ok} de ${sc.n} de primeira` : ''}`); markActive(); checkBadges(); save();
       }
       if (nx) go('guide', nx.id); else go('intro', 1);
@@ -692,6 +705,7 @@ function finish() {
     S.done[s.day] = { s: Math.max(stars, (S.done[s.day] || {}).s || 0), d: today() };
     daily().lesson = true;
   }
+  sfx('conclusao');
   addXP(bonus); markActive(); checkBadges(); checkDaily(); save();
   const due = dueKeys().length, cur = currentDay(), left = Math.max(0, S.goal - Math.floor(secsToday() / 60));
   sess = null; nav.hidden = false;
@@ -1022,7 +1036,7 @@ function cards() {
   const top = ranking()[0].k;
   const show = () => {
     if (!queue.length) {
-      if (n >= 5) markActive(); checkBadges(); checkDaily(); save();
+      if (n) sfx('conclusao'); if (n >= 5) markActive(); checkBadges(); checkDaily(); save();
       const next = Object.values(S.cards).map((c) => c.due).sort((a, b) => a - b)[0];
       app.innerHTML = `<h1>🃏 Cartas</h1><div class="card"><h3>${n ? 'Revisão concluída: ' + n + ' cartas' : 'Nada para revisar agora'}</h3>
       <p class="mut">${nWords() ? nWords() + ' palavras no baralho. ' + (dueKeys().length ? 'Ainda há ' + dueKeys().length + ' pendentes.' : next ? 'Próxima revisão: ' + new Date(next).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' }) + '.' : '') : 'As palavras entram aqui um dia depois de cada lição.'}</p>
@@ -1098,6 +1112,7 @@ function perfil() {
   <h2>Ajustes</h2>
   <div class="card"><label>Meta diária (min)<select id="goal">${[30, 60, 90, 120, 180].map((g) => `<option ${g === S.goal ? 'selected' : ''}>${g}</option>`).join('')}</select></label>
   <label class="row"><input type="checkbox" id="aud" ${S.audio ? 'checked' : ''}> Áudio em alemão (voz do navegador)</label>
+  <label class="row"><input type="checkbox" id="sfxT" ${S.sfx !== false ? 'checked' : ''}> Sons de conclusão (lição, tarefa e conquista)</label>
   <label class="row"><input type="checkbox" id="supc" ${supOn() ? 'checked' : ''}> Incluir as palavras de apoio (🆕) nas cartas de revisão</label>
   ${AUD ? `<p class="mut">🎙️ ${AUD.size.toLocaleString('pt-BR')} áudios gravados com voz natural (ElevenLabs). O que ainda não foi gravado usa a voz do navegador.</p>` : ''}
   ${hasTTS && deVoice ? `<p class="mut">Voz do navegador: ${esc(deVoice.name)} ${spk('Guten Tag! Ich bin deine deutsche Stimme.')}</p>` : ''}
@@ -1110,6 +1125,7 @@ function perfil() {
   $('#toP').onclick = () => go('nivel');
   $('#goal').onchange = (e) => { S.goal = +e.target.value; save(); };
   $('#aud').onchange = (e) => { S.audio = e.target.checked; save(); };
+  $('#sfxT').onchange = (e) => { S.sfx = e.target.checked; save(); if (S.sfx) sfx('tarefa'); };
   $('#supc').onchange = (e) => { S.supCards = e.target.checked; if (S.supCards) backfillSup(); save(); toast(S.supCards ? '🃏 Palavras de apoio incluídas nas cartas' : 'Palavras de apoio fora das cartas'); };
   $('#exp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' })); a.download = 'deutsch-trilha-' + today() + '.json'; a.click(); };
   $('#imp').onclick = () => $('#file').click();
@@ -1333,7 +1349,7 @@ function texto(id) {
       if (ans[i] === right) ok++;
     });
     const first = !S.reads[id], xp = first ? ok * 10 + (ok === t.qs.length ? 20 : 0) : 0;
-    S.reads[id] = { ok, n: t.qs.length, d: today() };
+    sfx('conclusao'); S.reads[id] = { ok, n: t.qs.length, d: today() };
     if (xp) addXP(xp); markActive(); checkBadges(); save();
     $('#tText').classList.remove('hid'); if ($('#tShow')) $('#tShow').remove();
     $('#tRes').innerHTML = `<div class="fb ${ok >= t.qs.length - 1 ? 'ok' : 'no'}"><b>${ok}/${t.qs.length} acertos${xp ? ' · +' + xp + ' XP' : ''}</b><p>${ok === t.qs.length ? 'Perfeito! Entendeu tudo.' : 'Releia os trechos das respostas marcadas em vermelho, agora com o texto aberto, e ouça de novo.'}</p></div>`;

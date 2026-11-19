@@ -161,7 +161,7 @@ if (typeof document !== 'undefined') document.addEventListener('click', (e) => {
   const b = e.target.closest('.gq .gqo button');
   if (b) {
     const q = b.closest('.gq'); if (q.dataset.done) return;
-    const ok = b.dataset.c === '1'; q.dataset.done = ok ? 'ok' : 'no';
+    const ok = b.dataset.c === '1'; q.dataset.done = ok ? 'ok' : 'no'; if (ok && typeof sfx === 'function') sfx('tarefa');
     q.querySelectorAll('.gqo button').forEach((x) => { x.disabled = true; if (x.dataset.c === '1') x.classList.add('ok'); });
     if (!ok) b.classList.add('no');
     const w = q.querySelector('.gqw'); w.innerHTML = `<b>${ok ? '✅ Isso!' : '❌ Quase!'}</b> ${w.innerHTML}`; w.hidden = false;
@@ -175,7 +175,7 @@ if (typeof document !== 'undefined') document.addEventListener('click', (e) => {
   cur.classList.remove('sel');
   if (cur.dataset.k === p.dataset.k) {
     [cur, p].forEach((x) => { x.classList.add('ok'); x.disabled = true; });
-    if (box.querySelectorAll('.gpc button.ok').length === 2 * box.dataset.n) { box.dataset.done = box.dataset.miss ? 'no' : 'ok'; box.querySelector('.gpm').textContent = box.dataset.miss ? '🎉 Todos os pares ligados!' : '🎉 Todos os pares de primeira!'; }
+    if (box.querySelectorAll('.gpc button.ok').length === 2 * box.dataset.n) { if (typeof sfx === 'function') sfx('tarefa'); box.dataset.done = box.dataset.miss ? 'no' : 'ok'; box.querySelector('.gpm').textContent = box.dataset.miss ? '🎉 Todos os pares ligados!' : '🎉 Todos os pares de primeira!'; }
   } else {
     box.dataset.miss = '1';
     [cur, p].forEach((x) => { x.classList.add('no'); setTimeout(() => x.classList.remove('no'), 650); });

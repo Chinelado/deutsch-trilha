@@ -63,6 +63,7 @@ function zugCheck(el) {
   const txt = zugText(line);
   if (errs.length) { fb.innerHTML = `<p class="nomsg">❌ Quase!</p><ul>${errs.map((e) => `<li>${e}</li>`).join('')}</ul>`; el.querySelectorAll('.zg-slot').forEach((x) => x.classList.add('shake')); setTimeout(() => el.querySelectorAll('.zg-slot').forEach((x) => x.classList.remove('shake')), 400); return; }
   const model = zugText(s.w);
+  sfx('tarefa');
   fb.innerHTML = `<p class="okmsg">✅ Isso! O trem andou.</p><p>${sayBtn(txt)}<span class="de">${esc(txt)}</span></p>${txt !== model ? `<p class="mut">Também vale: ${esc(model)}</p>` : ''}`;
   el.querySelector('.zg-train').classList.add('go'); el.querySelectorAll('.zg-w').forEach((b) => (b.disabled = true));
   say(txt);
@@ -105,6 +106,7 @@ function deklQuiz(el) {
 function deklAnswer(el, x) {
   const key = el.dataset.quiz, ok = x === el.dataset.right, T = DEKL[el.dataset.typ], s = T[key[0]][+key[1]];
   delete el.dataset.quiz; el.dataset.sel = key; deklRender(el);
+  if (ok) sfx('tarefa');
   el.dataset.score = (+el.dataset.score || 0) + (ok ? 1 : 0); el.dataset.tries = (+el.dataset.tries || 0) + 1;
   el.querySelector('.dk-out').insertAdjacentHTML('afterbegin', `<p class="${ok ? 'okmsg' : 'nomsg'}">${ok ? '✅ Isso!' : `❌ Quase! É <b>-${esc(el.dataset.right)}</b>, e não -${esc(x)}.`} <small class="mut">Acertos: ${el.dataset.score} de ${el.dataset.tries}</small></p>`);
   say(deklText(s));
@@ -182,7 +184,7 @@ if (typeof document !== 'undefined') {
       if (v === 'quiz') { const [q, id] = pickOne(BRIEF_QUIZ); el.dataset.quiz = id; el.querySelectorAll('.br-z').forEach((x) => x.classList.remove('on', 'ok', 'no')); info.innerHTML = `<p><b>Toque na parte da carta que diz:</b> ${esc(q)}.</p>`; return; }
       if (el.dataset.quiz) {
         const right = el.dataset.quiz, ok = v === right; delete el.dataset.quiz;
-        el.querySelector(`[data-br="${right}"]`).classList.add('ok'); if (!ok) b.classList.add('no');
+        el.querySelector(`[data-br="${right}"]`).classList.add('ok'); if (!ok) b.classList.add('no'); else sfx('tarefa');
         briefShow(el, right); info.insertAdjacentHTML('afterbegin', `<p class="${ok ? 'okmsg' : 'nomsg'}">${ok ? '✅ Isso!' : '❌ Não é essa parte. A certa está marcada em verde.'}</p>`);
         return;
       }
@@ -196,7 +198,7 @@ if (typeof document !== 'undefined') {
         el.querySelector('.gw-out').innerHTML = ''; b.hidden = true; el.querySelector('[data-gw="check"]').hidden = false; return;
       }
       const right = GEWISS.find((g) => g.de === el.dataset.quiz), mine = gewNear(+el.querySelector('.gw-r').value), ok = mine === right;
-      delete el.dataset.quiz; el.querySelector('.gw-r').value = right.v; gewShow(el, false);
+      delete el.dataset.quiz; el.querySelector('.gw-r').value = right.v; gewShow(el, false); if (ok) sfx('tarefa');
       qb.insertAdjacentHTML('beforeend', `<p class="${ok ? 'okmsg' : 'nomsg'}">${ok ? '✅ Isso!' : `❌ Você marcou <b>${esc(mine.de)}</b>; com essa pista o certo é <b>${esc(right.de)}</b>.`}</p>`);
       b.hidden = true; el.querySelector('[data-gw="quiz"]').hidden = false; say(right[el.dataset.mode]);
     }

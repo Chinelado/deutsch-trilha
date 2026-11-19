@@ -117,7 +117,7 @@ function pocket(id) {
       if (ans[i] === q.a) ok++;
     });
     const n = p.quiz.length, first = !S.pockets[id], xp = first ? ok * 10 + (ok === n ? 20 : 0) : 0;
-    S.pockets[id] = { ok, n, d: today() };
+    sfx('conclusao'); S.pockets[id] = { ok, n, d: today() };
     if (xp) addXP(xp); markActive(); checkBadges(); save();
     $('#pkRes').innerHTML = `<div class="fb ${ok >= n - 1 ? 'ok' : 'no'}"><b>${ok}/${n} acertos${xp ? ' · +' + xp + ' XP' : ''}</b><p>${ok === n ? 'Perfeito! Você está pronta para essa situação.' : 'Volte às ilustrações e às frases das respostas em vermelho e ouça de novo.'}</p></div>`;
     $('#pkCheck').disabled = true;

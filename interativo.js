@@ -60,6 +60,7 @@ function uhrCheck(u) {
   delete u.dataset.quiz; u.classList.remove('quiz');
   if (!ok) uhrSet(u, h, m); else uhrSet(u, +u.dataset.h, +u.dataset.m);
   u.querySelector('.uhr-show').hidden = false;
+  if (ok) sfx('tarefa');
   q.innerHTML = ok ? '<p class="okmsg">✅ Isso! O relógio está certo.</p>' : `<p class="nomsg">❌ Quase! Você marcou ${mine}; o certo é ${h}:${String(m).padStart(2, '0')}. Veja os ponteiros agora.</p>`;
   u.dataset.score = (+u.dataset.score || 0) + (ok ? 1 : 0); u.dataset.tries = (+u.dataset.tries || 0) + 1;
   q.innerHTML += `<p class="mut">Acertos: ${u.dataset.score} de ${u.dataset.tries}</p>`;
@@ -159,6 +160,7 @@ if (typeof document !== 'undefined') {
       if (kz.dataset.quiz) {
         const right = kz.dataset.quiz, ok = p === right; delete kz.dataset.quiz;
         const k = KATZE.find((x) => x.p === right);
+        if (ok) sfx('tarefa');
         fb.innerHTML = ok ? '<p class="okmsg">✅ Isso!</p>' : `<p class="nomsg">❌ Quase! Não é <b>${p}</b>, é <b>${right}</b> (${k.pt}).</p>`;
         kz.dataset.score = (+kz.dataset.score || 0) + (ok ? 1 : 0); kz.dataset.tries = (+kz.dataset.tries || 0) + 1;
         fb.innerHTML += `<p class="mut">Acertos: ${kz.dataset.score} de ${kz.dataset.tries}</p>`;
