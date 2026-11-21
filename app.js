@@ -1007,6 +1007,7 @@ const GEN = {
       if (r.pt) fails.push('Parece que a frase está em português. Escreva em alemão.');
       if (r.struct === false) fails.push(r.msg);
       if (r.conc && !r.conc.ok) fails.push(r.conc.msg);
+      r.gram.forEach((e) => fails.push(e.msg)); // erros de gramática, com o motivo
       if (fails.length && tries++ < 2) { // duas chances de ajustar antes de fechar
         box.innerHTML = `<p class="warn">Quase! Ajuste e confira de novo:</p><ul class="ownchk">${fails.map((f) => `<li class="no">✗ ${f}</li>`).join('')}</ul>`;
         ta.focus(); return;
@@ -1017,6 +1018,7 @@ const GEN = {
         rule ? (r.struct ? '<li class="ok">✓ segue a estrutura pedida</li>' : `<li class="no">✗ ${r.msg}</li>`) : (r.pt ? '' : '<li class="ok">✓ frase em alemão</li>'),
         r.conc ? (r.conc.ok ? '<li class="ok">✓ o verbo combina com o sujeito</li>' : `<li class="no">✗ ${r.conc.msg}</li>`) : '',
         r.pt ? '<li class="no">✗ a frase parece estar em português</li>' : '',
+        r.gram.length ? r.gram.map((e) => `<li class="no">✗ ${e.msg}</li>`).join('') : (r.pt ? '' : '<li class="ok">✓ sem erros de gramática que eu reconheça</li>'),
         r.word ? `<li class="ok">★ usou a palavra sugerida (${esc(v.de)})</li>` : '',
       ].join('');
       box.innerHTML = `<ul class="ownchk">${items}</ul>`;

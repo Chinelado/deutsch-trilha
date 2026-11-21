@@ -33,26 +33,42 @@ const verbLast = (text, conj) => clausesRaw(text).some((raw) => {
 
 /* Concordância no presente: pronome + verbo conjugado (antes ou depois dele). */
 const PRON = { ich: 'ich', du: 'du', er: 'er', es: 'er', man: 'er', sie: 'sie', wir: 'wir', ihr: 'ihr' };
-const NAO_VERBO = /^(und|aber|oder|auch|gern|nicht|kein|keine|sehr|heute|morgen|jetzt|hier|dort|da|schon|noch|immer|oft|nie|gerade|wirklich|so|ganz|mit|in|im|am|um|aus|nach|von|zu|für|bei|der|die|das|den|dem|ein|eine|einen|mein|meine|dein|deine|sein|seine|ihr|ihre|unser|euer)$/;
+const NAO_VERBO = /^(und|aber|oder|auch|gern|nicht|kein|keine|sehr|heute|morgen|jetzt|hier|dort|da|schon|noch|immer|oft|nie|gerade|wirklich|so|ganz|dagegen|jedoch|also|nämlich|persönlich|selbst|allein|zwar|wenn|ob|weil|dass|als|indem|denn|sondern|doch|eben|halt|mal|wohl|vielleicht|leider|natürlich|trotzdem|deshalb|mit|in|im|am|um|aus|nach|von|zu|für|bei|der|die|das|den|dem|ein|eine|einen|mein|meine|dein|deine|sein|seine|ihr|ihre|unser|euer)$/;
 const IRR = { // presente irregular frequente
   ich: /^(bin|kann|muss|will|darf|soll|mag|weiß|möchte|habe|hab|werde|war|hatte|konnte|musste|wollte|durfte|sollte|mochte|würde|hätte|wäre|könnte)$/,
   du: /^(bist|hast|kannst|musst|willst|darfst|sollst|magst|weißt|wirst|liest|isst|heißt)$/,
-  er: /^(ist|hat|kann|muss|will|darf|soll|mag|weiß|möchte|wird|war|hatte|konnte|musste|wollte|durfte|sollte|würde|hätte|wäre|könnte|gibt)$/,
+  er: /^(ist|hat|kann|muss|will|darf|soll|mag|weiß|möchte|wird|war|hatte|konnte|musste|wollte|durfte|sollte|würde|hätte|wäre|könnte|gibt|liest|bläst|reist|löst|weist|beweist|preist|rast|wächst|ließt)$/, // er liest: radical em -s + t
   wir: /^(sind|haben|werden)$/, ihr: /^(seid|habt|werdet)$/,
 };
 const END = { ich: /e$/, du: /(st|ßt|zt|tzt|xt)$/, er: /t$/, wir: /(en|n)$/, ihr: /t$/ };
-const DICA = { ich: 'termina em -e (ich wohne)', du: 'termina em -st (du wohnst)', er: 'termina em -t (er wohnt)', wir: 'termina em -en (wir wohnen)', ihr: 'termina em -t (ihr wohnt)' };
+const DICA = { sie: 'termina em -t (sie wohnt) ou, no plural, em -en (sie wohnen)', ich: 'termina em -e (ich wohne)', du: 'termina em -st (du wohnst)', er: 'termina em -t (er wohnt)', wir: 'termina em -en (wir wohnen)', ihr: 'termina em -t (ihr wohnt)' };
+// Só olha os lugares em que dá para ter certeza de qual é o verbo do pronome:
+//   sujeito no início (Ich wohne…), depois de und/aber/oder/denn (…, denn ich habe…),
+//   pergunta ou inversão com o verbo antes (Wohnst du…? / Heute lerne ich…),
+//   e oração com weil/dass/wenn… (o verbo é a última palavra: …, weil ich krank bin).
+const COORD = /^(und|aber|oder|denn|sondern)$/;
+const SUBORD = /^(weil|dass|wenn|ob|obwohl|damit|nachdem|bevor|während|als|da|seit|seitdem|sobald|bis|falls|indem|ohne|statt|sodass|solange|ehe|sofern)$/;
 function concord(text) {
-  for (const c of clauses(text)) {
-    for (let p = 0; p < c.length; p++) {
-      const k = PRON[c[p]]; if (!k) continue;
-      const v = p === 0 ? c[1] : c[p - 1];
-      if (!v || NAO_VERBO.test(v) || v.length < 2) continue;
-      if (k === 'sie') { if (IRR.er.test(v) || IRR.wir.test(v) || END.er.test(v) || END.wir.test(v)) continue; return { ok: false, msg: `Com <b>sie</b>, o verbo termina em -t (sie wohnt) ou, no plural, em -en (sie wohnen). Você escreveu <b>${esc(v)}</b>.` }; }
-      if (IRR[k] && IRR[k].test(v)) continue;
-      if (END[k].test(v)) continue;
-      return { ok: false, msg: `Com <b>${esc(c[p])}</b>, o verbo ${DICA[k]}. Você escreveu <b>${esc(v)}</b>.` };
-    }
+  const rawCl = String(text).split(/[,;.!?:–—]+/).map((c) => c.replace(/[„“"»«]/g, '').split(/[^\p{L}ß]+/u).filter(Boolean)).filter((c) => c.length);
+  for (const rc of rawCl) {
+    const c = rc.map((w) => w.toLowerCase());
+    let p = -1, v = null;
+    if (PRON[c[0]] && !(c[0] === 'ihr' && /^\p{Lu}/u.test(rc[1] || ''))) { p = 0; v = c[1]; }                 // Ich wohne… (Ihr Mann = possessivo)
+    else if (COORD.test(c[0]) && PRON[c[1]] && !(c[1] === 'ihr' && /^\p{Lu}/u.test(rc[2] || ''))) { p = 1; v = c[2]; }                                               // …, denn ich habe…
+    else if (SUBORD.test(c[0]) && PRON[c[1]] && c.length >= 3 && !(c[1] === 'ihr' && /^\p{Lu}/u.test(rc[2] || ''))) { p = 1; v = c[c.length - 1]; }                 // …, weil ich krank bin
+    else if (PRON[c[1]] && c[1] !== 'sie' && c[1] !== 'es' && /^\p{Ll}/u.test(rc[0]) === false && !PRON[c[0]] && !NAO_VERBO.test(c[0])) { p = 1; v = c[0]; } // Wohnst du…? / Kommt ihr…?
+    else if (PRON[c[2]] && c[2] !== 'sie' && c[2] !== 'es' && /^(heute|morgen|gestern|jetzt|dann|hier|dort|oft|manchmal|immer|leider|deshalb|trotzdem|danach|zuerst|später|bald)$/.test(c[0])) { p = 2; v = c[1]; } // Heute lerne ich…
+    if (p < 0 || !v || NAO_VERBO.test(v) || v.length < 2 || /^\p{Lu}/u.test(rc[c.indexOf(v)] || '') && p !== 1) continue;
+    const k = PRON[c[p]];
+    if (IRR[k] && IRR[k].test(v)) continue;
+    if (k === 'sie' && (IRR.er.test(v) || IRR.wir.test(v))) continue;
+    // -st de du × -st de er/sie quando o radical termina em s, ß, z, x (er liest, sie lässt, er isst)
+    const duSt = /st$/.test(v) && !/[sßzx]st$/.test(v) && !/^(ist)$/.test(v);
+    const es = c[p] === 'es';
+    const errado = { ich: /(st|[^ß]t|en)$/.test(v), du: !/(st|ßt|zt|xt)$/.test(v), er: duSt || (!es && /en$/.test(v) && v !== 'sein'), sie: duSt, wir: /(st|t)$/.test(v), ihr: /(st|en)$/.test(v) }[k];
+    if (!errado) continue; // ex.: er kam, sie sah, er sei, ich ging, es fehlen (es de enchimento) passam
+    if (SUBORD.test(c[0]) && (isInf(v) || isPart(v))) continue; // …, weil ich arbeiten muss → a última palavra pode ser infinitivo/particípio antes do auxiliar
+    return { ok: false, msg: `Com <b>${esc(c[p])}</b>, o verbo ${DICA[k]}. Você escreveu <b>${esc(v)}</b>.` };
   }
   return { ok: true };
 }
@@ -109,12 +125,125 @@ const RULE_OF = {
 };
 const ruleOfLesson = (les) => RULES[RULE_OF[les.i]] || null;
 
+/* ---------- erros de gramática (valem em todas as lições) ----------
+   Regras para os erros mais comuns de quem fala português, cada uma com o motivo em português e a forma certa.
+   Só acusam o que é claramente errado; na dúvida, não acusam. */
+let GEN_N = null; // substantivo → gênero (m, f, n), a partir do vocabulário das lições e do guia
+const genOf = (w) => {
+  if (!GEN_N) {
+    GEN_N = {};
+    const add = (de) => { const m = /^(der|die|das) (\p{Lu}[\p{L}-]+)$/u.exec(String(de).trim()); if (!m) return; const g = { der: 'm', die: 'f', das: 'n' }[m[1]]; GEN_N[m[2]] = GEN_N[m[2]] && GEN_N[m[2]] !== g ? '?' : g; };
+    LESSONS.forEach((l) => l.v.forEach((v) => add(v.de)));
+    if (typeof GUIDE !== 'undefined') GUIDE.forEach((g) => g.body.split('\n').forEach((x) => { if (x.startsWith('~ ')) add(x.slice(2).split(' = ')[0]); }));
+    ['Eltern', 'Leute', 'Geschwister', 'Ferien', 'Kosten', 'Nachrichten'].forEach((p) => { GEN_N[p] = 'p'; });
+  }
+  const g = GEN_N[w]; return g === '?' ? null : g || null;
+};
+const ART = { // artigo → gêneros possíveis no singular (qualquer caso)
+  ein: 'mn', eine: 'f', einen: 'm', einem: 'mn', einer: 'f', eines: 'mn',
+  der: 'mf', das: 'n', dem: 'mn', des: 'mn',
+};
+const POSS_ART = /^(mein|dein|sein|ihr|unser|euer|kein)(|e|en|em|er|es)$/;
+const ACC_VERB = /^(habe|hab|hast|hat|haben|habt|brauche|brauchst|braucht|brauchen|kaufe|kaufst|kauft|kaufen|sehe|siehst|sieht|sehen|möchte|möchtest|möchten|mag|magst|mögen|trinke|trinkst|trinkt|trinken|esse|isst|essen|nehme|nimmst|nimmt|nehmen|suche|suchst|sucht|suchen|finde|findest|findet|finden|liebe|liebst|liebt|lieben|kenne|kennst|kennt|kennen|besuche|besuchst|besucht|besuchen|lese|liest|lesen|bestelle|bestellst|bestellt|bestellen|gibt)$/;
+const ADV1 = /^(heute|morgen|gestern|jetzt|dann|danach|hier|dort|oft|manchmal|immer|leider|natürlich|zuerst|später|abends|morgens|mittags|nachmittags|samstags|sonntags|montags|deshalb|trotzdem|auch|nur|bald|endlich|vielleicht)$/;
+const PREP1 = /^(am|im|um|in|nach|vor|seit|mit|an|bei|zum|zur|jeden|jede|jedes|letzte|letzten|letztes|nächste|nächsten|nächstes)$/;
+const SUBJ = /^(ich|du|er|sie|es|man|wir|ihr)$/;
+const FUNC = /^(der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines|mein|meine|meinem|meinen|meiner|dein|deine|deinem|deinen|sein|seine|seinem|seinen|ihr|ihre|ihrem|ihren|unser|unsere|unserem|unseren|euer|eure|diese|dieser|diesem|diesen|dieses|links|rechts|hier|dort|oben|unten|draußen|drinnen|der|einen|zwei|drei|vier|fünf|jeden|jede|allen|alle|ganz|meiner|ruhe|ordnung)$/;
+const ERR = (msg, fix = '') => ({ msg, fix });
+let LOWER_OK = null;
+const lowerOk = (w) => {
+  if (!LOWER_OK) {
+    LOWER_OK = new Set();
+    const add = (t) => String(t).split(/[^\p{L}ß]+/u).forEach((x) => { if (/^\p{Ll}/u.test(x)) LOWER_OK.add(x); });
+    LESSONS.forEach((l) => { l.v.forEach((v) => add(v.de)); [...l.ge, ...l.ex, ...l.dlg].forEach((e) => add(e.de)); l.cz.forEach((c) => add(c.q.replace('___', c.a))); });
+    if (typeof TEXTS !== 'undefined') TEXTS.forEach((t) => t.paras.forEach(add));
+  }
+  return LOWER_OK.has(w);
+};
+function grammarErrors(text) {
+  const out = [], raw = clausesRaw(text);
+  raw.forEach((rc, ci) => {
+    const c = rc.map((w) => w.toLowerCase()), has2 = (re) => c.some((w) => re.test(w));
+    // 1. preposições que o português confunde
+    if (has2(/^wohn/) && c.includes('aus')) out.push(ERR('<b>wohnen</b> pede <b>in</b> (onde você mora): <i>Ich wohne in Curitiba.</i> <b>aus</b> é para a origem: <i>Ich komme aus Brasilien.</i>', 'wohnen in'));
+    const iIn = c.indexOf('in');
+    if (iIn > 1 && /^(komme|kommst|kommt|kommen)$/.test(c[iIn - 1]) && SUBJ.test(c[iIn - 2]) && /^\p{Lu}/u.test(rc[iIn + 1] || '') && !/^(Frage|Betracht|Kontakt|Gefahr|Mode|Schwung|Ordnung)$/.test(rc[iIn + 1]) && last(c) !== 'an') out.push(ERR('Para dizer de onde você vem, use <b>aus</b>: <i>Ich komme aus Brasilien.</i> (<b>in</b> é para onde você mora ou está.)', 'kommen aus'));
+    const iZu = c.indexOf('zu');
+    if (iZu > 0 && c[iZu + 1] === 'hause' && has2(/^(gehe|gehst|geht|gehen|fahre|fährst|fährt|fahren|laufe|läufst|läuft|komme|kommst|kommt|kommen|fliege|fliegt)$/)) out.push(ERR('Com movimento (ir para casa), é <b>nach Hause</b>: <i>Ich gehe nach Hause.</i> <b>zu Hause</b> é estar em casa.', 'nach Hause'));
+    const iNach = c.indexOf('nach');
+    if (iNach > 0 && c[iNach + 1] === 'hause' && has2(SEIN) && !c.some(isPart)) out.push(ERR('Estar em casa é <b>zu Hause</b>: <i>Ich bin zu Hause.</i> <b>nach Hause</b> é o movimento de ir para casa.', 'zu Hause'));
+    // 2. idade e sensações usam outro verbo que o português
+    if (has2(HABEN) && c.includes('jahre') && (last(c) === 'jahre' || last(c) === 'alt') && !c.some(isPart)) out.push(ERR('Idade se diz com <b>sein</b>: <i>Ich bin 25 Jahre alt.</i> (e não "ich habe…")', 'Ich bin … Jahre alt.'));
+    if (has2(SEIN) && has2(/^(hunger|durst|angst|lust)$/)) out.push(ERR('Fome, sede, medo e vontade se dizem com <b>haben</b>: <i>Ich habe Hunger.</i>', 'Ich habe Hunger.'));
+    // 3. verbo na 2ª posição: "Heute ich lerne" → "Heute lerne ich"
+    if (ci === 0 && c.length >= 3) {
+      const p = c.findIndex((w) => SUBJ.test(w));
+      const head = c.slice(0, Math.max(p, 0));
+      const prev = c[p - 1] || '', prevVerbo = /^\p{Ll}/u.test(rc[p - 1] || '') && !ADV1.test(prev) && !PREP1.test(prev) && !NAO_VERBO.test(prev) && !FUNC.test(prev);
+      const inicio = p > 0 && !prevVerbo && (ADV1.test(c[0]) || (PREP1.test(c[0]) && p <= 3));
+      if (inicio && !head.some((w) => SUBORD.test(w)) && head.every((w) => !FIN(w)) && c[p + 1] && /^\p{Ll}/u.test(rc[p + 1]) && /(e|st|t|en)$/.test(c[p + 1]) && !ADV1.test(c[p + 1]) && !/^(gern|nicht|sehr|auch|schon|noch|immer)$/.test(c[p + 1])) {
+        const fixed = [rc.slice(0, p).join(' '), rc[p + 1], rc[p], ...rc.slice(p + 2)].join(' ');
+        out.push(ERR(`O verbo conjugado fica sempre na <b>2ª posição</b>. Se a frase começa com <b>${esc(rc.slice(0, p).join(' '))}</b>, o verbo vem logo depois e o sujeito passa para trás: <i>${esc(fixed[0].toUpperCase() + fixed.slice(1))}</i>`, fixed));
+      }
+    }
+    // 4. verbo separável sem separar: "Ich aufstehe" → "Ich stehe … auf"
+    if (ci === 0 && !c.some((w) => /^(weil|dass|wenn|ob|als|obwohl|damit|nachdem|bevor|während)$/.test(w))) {
+      c.forEach((w, i) => {
+        const m = /^(auf|an|ein|aus|mit|zurück|fern|ab|vor|nach|los|weg|zu)(\p{Ll}{2,})(e|st|t)$/u.exec(w);
+        if (!m || i > 2 || !SUBJ.test(c[i - 1] || c[i + 1] || '')) return;
+        const base = m[2] + 'en', inf = m[1] + base;
+        if (typeof deSet !== 'function' || !deSet().has(base) || !deSet().has(inf)) return;
+        out.push(ERR(`<b>${esc(inf)}</b> é um verbo separável: o prefixo <b>${esc(m[1])}</b> vai para o fim da frase. <i>Ich ${esc(m[2] + m[3])} … ${esc(m[1])}.</i>`, `${m[2] + m[3]} … ${m[1]}`));
+      });
+    }
+    // 5. artigo que não combina com o gênero do substantivo
+    c.forEach((w, i) => {
+      const n = rc[i + 1]; if (!n || !/^\p{Lu}/u.test(n)) return;
+      const g = genOf(n); if (!g || g === 'p') return;
+      const pm = POSS_ART.exec(w); if (pm && pm[2] === 'e') return; // meine/ihre/keine + substantivo pode ser plural
+      if (w === 'der' && g === 'n') return; // der + neutro pode ser genitivo plural (der Kinder); não arrisca
+      const a = pm ? (pm[2] === '' ? 'ein' : 'ein' + pm[2]) : w;
+      const ok = ART[a]; if (!ok || ok.includes(g)) return;
+      const nome = { m: 'masculino (der)', f: 'feminino (die)', n: 'neutro (das)' }[g];
+      out.push(ERR(`<b>${esc(n)}</b> é ${nome}: <b>${esc(rc[i])} ${esc(n)}</b> não combina. Ex.: <i>${g === 'f' ? 'eine / die' : g === 'm' ? 'ein / der' : 'ein / das'} ${esc(n)}</i>.`, ''));
+    });
+    // 6. acusativo do masculino depois de haben, kaufen, sehen… ("Ich habe ein Hund" → "einen Hund")
+    c.forEach((w, i) => {
+      if (!ACC_VERB.test(w)) return;
+      const subjDepois = SUBJ.test(c[i + 1] || ''); if (!SUBJ.test(c[i - 1] || '') && !subjDepois) return;
+      for (let j = i + (subjDepois ? 2 : 1); j <= i + 3 && j < c.length - 1; j++) {
+        const n = rc[j + 1]; if (!/^\p{Lu}/u.test(n || '') || genOf(n) !== 'm') continue;
+        const pm = POSS_ART.exec(c[j]);
+        if (c[j] === 'der' || c[j] === 'ein' || (pm && pm[2] === '')) {
+          const certo = c[j] === 'der' ? 'den' : c[j] + 'en';
+          out.push(ERR(`Depois de <b>${esc(rc[i])}</b>, <b>${esc(n)}</b> é o objeto (acusativo). No masculino o artigo muda: <b>${esc(certo)} ${esc(n)}</b>, e não ${esc(rc[j])} ${esc(n)}.`, `${certo} ${n}`));
+        }
+        break;
+      }
+    });
+    // 7. substantivos e nomes próprios começam com maiúscula
+    rc.forEach((w, i) => {
+      if (i === 0 && ci === 0) return;
+      const cap = w[0].toUpperCase() + w.slice(1);
+      if (/^\p{Ll}/u.test(w) && genOf(cap) && !FUNC.test(w) && !lowerOk(w)) out.push(ERR(`Em alemão, todo substantivo começa com maiúscula: <b>${esc(cap)}</b>.`, cap));
+      else if (/^\p{Ll}/u.test(w) && i > 0 && /^(in|aus|nach)$/.test(c[i - 1]) && !FUNC.test(w) && !lowerOk(w)) out.push(ERR(`Nomes de cidades e países começam com maiúscula: <b>${esc(cap)}</b>.`, cap));
+    });
+    // 8. sujeito no singular com verbo no plural: "Meine Mutter heißen Eva" → "heißt"
+    if (ci === 0 && c.length >= 3 && /^(mein|meine|dein|deine|sein|seine|ihr|ihre|der|die|das|unser|unsere)$/.test(c[0]) && /^\p{Lu}/u.test(rc[1]) && genOf(rc[1]) && genOf(rc[1]) !== 'p' && (!/(e|die)$/.test(c[0]) || genOf(rc[1]) === 'f') && /^\p{Ll}/u.test(rc[2]) && /\p{L}{2,}en$/u.test(c[2]) && !/^(sein|ihren|einen|keinen|meinen|deinen)$/.test(c[2])) {
+      const v = c[2].replace(/(en)$/, 't').replace(/tt$/, 'tet');
+      out.push(ERR(`<b>${esc(rc[0])} ${esc(rc[1])}</b> é uma pessoa ou coisa só (singular): o verbo termina em <b>-t</b>, como com er/sie. Ex.: <i>${esc(rc[0])} ${esc(rc[1])} ${esc(c[2] === 'sind' ? 'ist' : v)} …</i>`, v));
+    }
+  });
+  // mesma mensagem uma vez só
+  return out.filter((e, i) => out.findIndex((x) => x.msg === e.msg) === i);
+}
+
 // Conferência completa. Devolve { pt, struct: true|false|null, msg, conc: {ok,msg}|null, word }.
 function checkFrase(text, les, sug) {
   const toks = fT(text), pt = toks.filter((w) => /^(eu|você|voce|não|nao|é|um|uma|meu|minha|que|com|para|muito|gosto|tenho|sou|estou|moro|do|da|no|na)$/.test(w)).length >= Math.max(2, toks.length * 0.4);
   const rule = ruleOfLesson(les), r = rule ? rule.c(text, toks) : null;
-  const conc = (rule ? rule.pres : les.i <= 16) ? concord(text) : null;
-  return { pt, rule, struct: rule ? r === true : null, msg: r === true ? '' : r, conc, word: sug ? wordIn(text, sug.de) : null };
+  const conc = concord(text); // concordância vale em todas as lições (passado e Konjunktiv incluídos)
+  return { pt, rule, struct: rule ? r === true : null, msg: r === true ? '' : r, conc, gram: pt ? [] : grammarErrors(text), word: sug ? wordIn(text, sug.de) : null };
 }
 // Exemplo da própria lição que segue a regra (para mostrar como modelo, sem obrigar a copiar).
 function modelOf(les) {
@@ -123,5 +252,5 @@ function modelOf(les) {
 }
 
 // só isto fica visível para o resto do app
-Object.assign(window, { checkFrase, modelOf, ruleOfLesson, fraseConcord: concord });
+Object.assign(window, { checkFrase, modelOf, ruleOfLesson, fraseConcord: concord, grammarErrors });
 })();
