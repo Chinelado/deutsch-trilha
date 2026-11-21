@@ -607,3 +607,6 @@ button.sel.ok { border-color: var(--ok); background: var(--okbg); box-shadow: no
 .fl-w.falta { color: var(--mut); text-decoration: line-through; background: var(--bg3); }
 .fl-dicas { margin: 6px 0; padding-left: 20px; } .fl-dicas li { margin: 3px 0; }
 .fl-heard { font-size: .85rem; margin: 6px 0 0; }
+
+/* frase livre: o que precisa ter, molde e sugestão */
+.ownreq { padding: 10px 12px; border-left: 4px solid var(--acc); border-radius: 8px; background: var(--bg2); margin: 6px 0 12px; } .ownreq p { margin: 6px 0; }

@@ -133,7 +133,7 @@ function toast(t) { const el = document.createElement('div'); el.className = 'to
    tarefa: uma tarefa específica feita (tarefa de casa, desafio interativo certo).
    conquista: nova conquista, novo nível ou dia perfeito.
    Uma fila evita que dois sons se atropelem (lição concluída + conquista nova, por exemplo). */
-const SFX_VOL = { conclusao: 0.55, tarefa: 0.5, conquista: 0.65 };
+const SFX_VOL = { conclusao: 1, tarefa: 1, conquista: 1 }; // volume no máximo: os arquivos já vêm equilibrados entre si
 const SFX = typeof Audio === 'undefined' ? {} : Object.fromEntries(Object.keys(SFX_VOL).map((k) => { const a = new Audio('sounds/' + k + '.mp3'); a.preload = 'auto'; return [k, a]; }));
 let sfxAt = 0;
 function sfx(name) {
@@ -944,7 +944,7 @@ const GEN = {
     if (FALA_SR && falaOn() && sess && !sess.noFala && sents.length && Math.random() < 0.35) {
       // Fale a frase: até 3 tentativas; passa com 80% da frase entendida
       const s = pick(sents);
-      el.innerHTML = `<p class="q">🎤 Fale a frase em voz alta<b>${esc(s.de)}</b></p><p class="hint">${esc(s.pt)} · ouça o modelo antes, se quiser</p>${falaPanel(s.de, s.pt, 'exercicio')}`;
+      el.innerHTML = `<p class="q">🎤 Fale a frase em voz alta<b>${esc(falaAlvo(s.de))}</b></p><p class="hint">${esc(s.pt)} · ouça o modelo antes, se quiser</p>${falaPanel(s.de, s.pt, 'exercicio')}`;
       const fl = $('.fala', el); let tries = 0, best = 0;
       fl.addEventListener('fala', (e) => {
         tries++; best = Math.max(best, e.detail.score);
@@ -987,39 +987,42 @@ const GEN = {
       shuffle([b.de, ...ds.map((d) => d.de)]), b.de, (ok, g) => done(ok, [], b.de + ' = ' + b.pt, b.de, whyReply(a, b, ds, g)), 'col');
     setTimeout(() => { if (el.isConnected) say(a.de); }, 350);
   },
-  // Intrapessoal: ligar a língua à própria vida. Não existe uma resposta única: o app confere se a frase usa a palavra
-  // pedida e a estrutura do dia (formas que aparecem nas lacunas da lição) e mostra exemplos possíveis, não um gabarito.
+  // Intrapessoal: ligar a língua à própria vida. Não há gabarito: o app confere a ESTRUTURA da lição (frase.js), com qualquer
+  // verbo, e a concordância do verbo com o sujeito no presente. A palavra da lição é só uma sugestão (vale um bônus nas cartas).
   intra(les, el, done) {
-    const v = pick(les.v);
-    el.innerHTML = `<p class="q">Escreva uma frase verdadeira sobre você usando:<b class="${gcls(v.de)}">${esc(v.de)}</b></p><p class="hint">${esc(v.pt)} · estrutura do dia: ${esc(les.gt)}. Qualquer frase verdadeira vale, não existe uma resposta única.</p><textarea id="ta" rows="3" spellcheck="false" placeholder="Uma frase sobre a sua vida"></textarea>${UML}<button class="pri" id="chk">Conferir</button><div id="self"></div>`;
+    const v = pick(les.v), rule = ruleOfLesson(les), m = modelOf(les);
+    el.innerHTML = `<p class="q">✍️ Escreva uma frase verdadeira sobre você</p>
+      <div class="ownreq">
+        <p><b>Precisa ter:</b> ${rule ? rule.d : 'uma frase completa em alemão (pelo menos 3 palavras) sobre a sua vida. Qualquer verbo serve.'}</p>
+        <p><b>Molde</b> <small class="mut">(não precisa copiar; troque pelas suas palavras)</small><br>${spk(m.de)}<span class="de">${esc(m.de)}</span> <small>${esc(m.pt)}</small></p>
+        <p class="mut"><b>Palavra sugerida</b> (opcional): <span class="${gcls(v.de)}">${esc(v.de)}</span> · ${esc(v.pt)}</p>
+      </div>
+      <textarea id="ta" rows="3" spellcheck="false" placeholder="Escreva em alemão"></textarea>${UML}<button class="pri" id="chk">Conferir</button><div id="self"></div>`;
     const ta = $('#ta', el); ta.focus(); wireUml(el, ta);
     let tries = 0;
     $('#chk', el).onclick = () => {
       const text = ta.value.trim(), box = $('#self', el);
       if (text.split(/\s+/).length < 3) { box.innerHTML = '<p class="warn">Escreva uma frase completa, com pelo menos 3 palavras.</p>'; return; }
-      const r = checkOwn(text, v, les);
-      if ((!r.word || r.pt) && tries++ < 2) { // dá a chance de corrigir antes de mostrar os exemplos
-        box.innerHTML = `<p class="warn">${r.pt ? 'Parece que a frase está em português. Tente escrever em alemão.' : `Quase! Falta usar <b>${esc(v.de)}</b> (${esc(v.pt)}) na frase. Pode mudar a forma da palavra (plural, conjugação).`}</p>`;
+      const r = checkFrase(text, les, v), fails = [];
+      if (r.pt) fails.push('Parece que a frase está em português. Escreva em alemão.');
+      if (r.struct === false) fails.push(r.msg);
+      if (r.conc && !r.conc.ok) fails.push(r.conc.msg);
+      if (fails.length && tries++ < 2) { // duas chances de ajustar antes de fechar
+        box.innerHTML = `<p class="warn">Quase! Ajuste e confira de novo:</p><ul class="ownchk">${fails.map((f) => `<li class="no">✗ ${f}</li>`).join('')}</ul>`;
         ta.focus(); return;
       }
       ta.disabled = true; $('#chk', el).disabled = true;
-      const ok = r.word && !r.pt;
-      const exs = [...les.ge, ...les.ex, ...les.dlg].filter((s) => wordIn(s.de, v.de));
-      const shown = (exs.length ? exs : les.ge).slice(0, 2);
-      const st = r.struct === null ? `<li class="mut">• estrutura do dia (${esc(les.gt)}): confira nos exemplos abaixo</li>`
-        : r.struct ? '<li class="ok">✓ usa a estrutura do dia</li>'
-        : `<li class="mut">• não reconheci a estrutura do dia (${esc(les.gt)}); se usou outra forma correta, tudo bem</li>`;
-      box.innerHTML = `<ul class="ownchk"><li class="${r.word ? 'ok' : 'no'}">${r.word ? '✓' : '✗'} usa <b>${esc(v.de)}</b></li>${st}</ul>
-      <p>${ok ? 'Boa! A sua frase segue o que foi pedido.' : 'Veja como a palavra pode entrar numa frase.'} Exemplos possíveis (há muitas respostas certas):</p>
-      ${shown.map((m) => `<p>${spk(m.de)}<span class="de">${esc(m.de)}</span> <small>${esc(m.pt)}</small></p>`).join('')}
-      <p>Como foi escrever a sua?</p><div class="opts col"><button data-r="2">Saiu fácil</button><button data-r="1">Saiu com esforço</button><button data-r="0">Não consegui montar</button></div>`;
-      $$('#self button[data-r]', el).forEach((b) => (b.onclick = () => {
-        $$('#self button', el).forEach((x) => (x.disabled = true)); b.classList.add('sel');
-        S.diary.push({ d: today(), t: text, l: les.i });
-        const m = shown[0];
-        done(ok && +b.dataset.r > 0, [v.k], 'Sua frase foi para o diário.', text,
-          `<p>${ok ? 'Sem problema: travar aqui mostra o que ainda falta fixar.' : `A palavra pedida era <b>${esc(v.de)}</b> (${esc(v.pt)}).`} Use um exemplo como molde e troque só as palavras pelo seu caso: <b>${esc(m.de)}</b> (${esc(m.pt)}).</p>${ruleOf(les)}`);
-      }));
+      const ok = !fails.length;
+      const items = [
+        rule ? (r.struct ? '<li class="ok">✓ segue a estrutura pedida</li>' : `<li class="no">✗ ${r.msg}</li>`) : (r.pt ? '' : '<li class="ok">✓ frase em alemão</li>'),
+        r.conc ? (r.conc.ok ? '<li class="ok">✓ o verbo combina com o sujeito</li>' : `<li class="no">✗ ${r.conc.msg}</li>`) : '',
+        r.pt ? '<li class="no">✗ a frase parece estar em português</li>' : '',
+        r.word ? `<li class="ok">★ usou a palavra sugerida (${esc(v.de)})</li>` : '',
+      ].join('');
+      box.innerHTML = `<ul class="ownchk">${items}</ul>`;
+      S.diary.push({ d: today(), t: text, l: les.i });
+      done(ok, r.word ? [v.k] : [], ok ? 'Sua frase foi para o diário.' : 'Molde: ' + m.de + ' = ' + m.pt, m.de,
+        `<p>O que faltou:</p><ul>${fails.map((f) => `<li>${f}</li>`).join('')}</ul><p>Use o molde e troque só as palavras pelo seu caso: <b>${esc(m.de)}</b> (${esc(m.pt)}).</p>${ruleOf(les)}`);
     };
   },
   // Naturalista: classificar por gênero ou achar o intruso do tema.

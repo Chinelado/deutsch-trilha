@@ -48,7 +48,10 @@ function falaAlign(target, heard) {
 }
 
 /* ---------- painel ---------- */
+// A frase cobrada é só o alemão: sai o que é ajuda, como "(ela)", "(a mim)" e lacunas "___".
+const falaAlvo = (t) => String(t).replace(/\*\*/g, '').replace(/\([^)]*\)/g, ' ').replace(/___/g, ' ').replace(/\s+([,.!?;:])/g, '$1').replace(/\s+/g, ' ').trim();
 function falaPanel(target, pt = '', mode = 'livre') {
+  target = falaAlvo(target);
   const sr = !!FALA_SR;
   return `<div class="fala" data-t="${esc(target)}" data-mode="${mode}">
     ${mode === 'exercicio' ? '' : `<p class="fl-alvo"><span class="de">${esc(target)}</span>${pt ? `<br><small>${esc(pt)}</small>` : ''}</p>`}
